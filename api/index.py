@@ -6,6 +6,11 @@ from openai import OpenAI
 app = Flask(__name__)
 CORS(app)
 
+# Configurar API Key do ambiente (seguro)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+if not OPENAI_API_KEY:
+    print("⚠️ AVISO: OPENAI_API_KEY não configurada nas variáveis de ambiente")
+
 @app.route('/')
 def home():
     return send_from_directory('.', 'index.html')
@@ -18,7 +23,6 @@ def static_files(path):
 def chat():
     try:
         data = request.json
-        api_key = data.get('api_key')
         messages = data.get('messages', [])
         model = data.get('model', 'gpt-4')
         max_tokens = data.get('max_tokens', 2000)
@@ -27,14 +31,15 @@ def chat():
         print("🚀 === NOVA REQUISIÇÃO DE ANÁLISE ===")
         print(f"📧 Modelo: {model}")
         print(f"🔢 Max Tokens: {max_tokens}")
+        print(f"🌡️ Temperatura: {temperature}")
         print(f"📝 Total de mensagens: {len(messages)}")
         print("=" * 50)
         
-        if not api_key:
-            return jsonify({'error': 'API Key é obrigatória'}), 400
+        if not OPENAI_API_KEY:
+            return jsonify({'error': 'Serviço temporariamente indisponível. API Key não configurada no servidor.'}), 503
         
-        # Criar cliente OpenAI com a chave fornecida
-        client = OpenAI(api_key=api_key)
+        # Criar cliente OpenAI com a chave do servidor (seguro)
+        client = OpenAI(api_key=OPENAI_API_KEY)
         
         response = client.chat.completions.create(
             model=model,
