@@ -448,10 +448,11 @@
         const temperature = localStorage.getItem("openai_temperature");
         const maxTokens = localStorage.getItem("max_tokens");
         const chunkSize = localStorage.getItem("chunk_size");
-        
+
         if (apiKey) document.getElementById("apiKey").value = apiKey;
         if (model) document.getElementById("model").value = model;
-        if (temperature) document.getElementById("temperature").value = temperature;
+        if (temperature)
+          document.getElementById("temperature").value = temperature;
         if (maxTokens) document.getElementById("maxTokens").value = maxTokens;
         if (chunkSize) document.getElementById("chunkSize").value = chunkSize;
       }
@@ -462,16 +463,16 @@
         const temperature = document.getElementById("temperature").value;
         const maxTokens = document.getElementById("maxTokens").value;
         const chunkSize = document.getElementById("chunkSize").value;
-        
+
         localStorage.setItem("openai_api_key", apiKey);
         localStorage.setItem("openai_model", model);
         localStorage.setItem("openai_temperature", temperature);
         localStorage.setItem("max_tokens", maxTokens);
         localStorage.setItem("chunk_size", chunkSize);
-        
+
         // Mostrar confirmação
         addMessage("assistant", "✅ Configurações salvas com sucesso!");
-        
+
         // Fechar painel após salvar
         const panel = document.getElementById("configPanel");
         panel.classList.remove("open");
@@ -1273,10 +1274,10 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
         messageDiv.id = messageId;
         messageDiv.innerHTML = `
           <div class="avatar ${sender}">${
-            sender === "user"
-              ? "<img src='Tools Avatar sem fundo.png' alt='Logo Tools' class='logo-tools-avatar'/>"
-              : "<span class='robot-emoji'>🤖</span>"
-          }</div>
+          sender === "user"
+            ? "<img src='Tools Avatar sem fundo.png' alt='Logo Tools' class='logo-tools-avatar'/>"
+            : "<span class='robot-emoji'>🤖</span>"
+        }</div>
           <div class="message-content">${content}</div>
         `;
         chatContainer.appendChild(messageDiv);
@@ -1327,18 +1328,28 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
       // Função para chamar o backend com API Key
       async function callBackend(systemPrompt, userMessage) {
         console.log("🔗 INICIANDO callBackend()");
-        console.log("🎯 Model:", document.getElementById("model").value || "gpt-4");
-        console.log("🔢 MaxTokens:", parseInt(document.getElementById("maxTokens").value) || 2000);
+        console.log(
+          "🎯 Model:",
+          document.getElementById("model").value || "gpt-4"
+        );
+        console.log(
+          "🔢 MaxTokens:",
+          parseInt(document.getElementById("maxTokens").value) || 2000
+        );
 
         const model = document.getElementById("model").value || "gpt-4";
-        const maxTokens = parseInt(document.getElementById("maxTokens").value) || 2000;
+        const maxTokens =
+          parseInt(document.getElementById("maxTokens").value) || 2000;
 
         // Buscar configurações salvas (incluindo API Key)
         const apiKey = localStorage.getItem("openai_api_key");
-        const temperature = parseFloat(localStorage.getItem("openai_temperature")) || 0.7;
-        
+        const temperature =
+          parseFloat(localStorage.getItem("openai_temperature")) || 0.7;
+
         if (!apiKey) {
-          throw new Error("API Key não configurada! Clique no ⚙️ para configurar.");
+          throw new Error(
+            "API Key não configurada! Clique no ⚙️ para configurar."
+          );
         }
 
         // Calcular tamanho aproximado dos tokens
@@ -1375,7 +1386,9 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
         if (finalTokenCount + maxTokens > 6000) {
           const truncatedUserMessage =
             userMessage.length > 2000
-              ? userMessage.substring(0, 1000) + "\n\n[CONTEÚDO TRUNCADO]" + userMessage.substring(userMessage.length - 1000)
+              ? userMessage.substring(0, 1000) +
+                "\n\n[CONTEÚDO TRUNCADO]" +
+                userMessage.substring(userMessage.length - 1000)
               : userMessage;
 
           messages[messages.length - 1].content = truncatedUserMessage;
@@ -1412,7 +1425,10 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
 
         const data = await response.json();
         console.log("✅ Dados recebidos do backend");
-        console.log("📄 Tamanho da resposta:", data.choices[0].message.content.length);
+        console.log(
+          "📄 Tamanho da resposta:",
+          data.choices[0].message.content.length
+        );
         return data.choices[0].message.content;
       }
     </script>
