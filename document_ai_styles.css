@@ -317,38 +317,17 @@ body {
   color: #374151;
 }
 
-.config-group input,
-.config-group select {
+.config-group input {
   width: 100%;
-  padding: 8px 10px;
+  padding: 6px 8px;
   border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
-  transition: border-color 0.2s;
+  border-radius: 4px;
 }
 
-.config-group input:focus,
-.config-group select:focus {
-  outline: none;
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-}
-
-.save-config-btn {
-  width: 100%;
-  background: #10b981;
-  color: white;
-  border: none;
-  padding: 10px;
-  border-radius: 6px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s;
-  margin-top: 16px;
-}
-
-.save-config-btn:hover {
-  background: #059669;
+.protected-key {
+  color: #10b981;
+  font-weight: bold;
+  font-size: 0.9em;
 }
 
 .loading {
