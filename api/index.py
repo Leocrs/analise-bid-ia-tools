@@ -1,12 +1,10 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os
-import openai
+from openai import OpenAI
 
 app = Flask(__name__)
 CORS(app)
-
-openai.api_key = os.getenv("OPENAI_API_KEY")
 
 @app.route('/')
 def home():
@@ -20,15 +18,23 @@ def static_files(path):
 def chat():
     try:
         data = request.json
+        api_key = data.get('api_key')
         messages = data.get('messages', [])
         model = data.get('model', 'gpt-4')
         max_tokens = data.get('max_tokens', 2000)
+        temperature = data.get('temperature', 0.3)
         
-        response = openai.ChatCompletion.create(
+        if not api_key:
+            return jsonify({'error': 'API Key é obrigatória'}), 400
+        
+        # Criar cliente OpenAI com a chave fornecida
+        client = OpenAI(api_key=api_key)
+        
+        response = client.chat.completions.create(
             model=model,
             messages=messages,
             max_tokens=max_tokens,
-            temperature=0.7
+            temperature=temperature
         )
         
         return jsonify({
@@ -37,7 +43,7 @@ def chat():
                     'content': response.choices[0].message.content
                 }
             }],
-            'usage': response.usage._asdict() if hasattr(response.usage, '_asdict') else {}
+            'usage': response.usage.dict() if hasattr(response.usage, 'dict') else {}
         })
         
     except Exception as e:

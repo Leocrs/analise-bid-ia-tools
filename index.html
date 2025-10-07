@@ -64,8 +64,19 @@
     <div id="configPanel" class="config-panel">
       <h3>Configurações</h3>
       <div class="config-group">
+        <label for="apiKey">OpenAI API Key:</label>
+        <input type="password" id="apiKey" placeholder="sk-proj-..." />
+      </div>
+      <div class="config-group">
         <label for="model">Modelo:</label>
-        <input type="text" id="model" value="gpt-4" placeholder="gpt-4" />
+        <select id="model">
+          <option value="gpt-4">GPT-4</option>
+          <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+        </select>
+      </div>
+      <div class="config-group">
+        <label for="temperature">Temperatura:</label>
+        <input type="number" id="temperature" value="0.3" min="0" max="1" step="0.1" />
       </div>
       <div class="config-group">
         <label for="maxTokens">Max Tokens:</label>
@@ -75,11 +86,7 @@
         <label for="chunkSize">Tamanho do Chunk (caracteres):</label>
         <input type="number" id="chunkSize" value="3000" placeholder="3000" />
       </div>
-      <div class="config-group">
-        <span class="protected-key"
-          >🔒 Sua chave está protegida no servidor!</span
-        >
-      </div>
+      <button onclick="saveSettings()" class="save-config-btn">Salvar Configurações</button>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
@@ -443,27 +450,38 @@
       loadSettings();
 
       function loadSettings() {
+        const apiKey = localStorage.getItem("openai_api_key");
         const model = localStorage.getItem("openai_model");
+        const temperature = localStorage.getItem("openai_temperature");
         const maxTokens = localStorage.getItem("max_tokens");
         const chunkSize = localStorage.getItem("chunk_size");
+        
+        if (apiKey) document.getElementById("apiKey").value = apiKey;
         if (model) document.getElementById("model").value = model;
+        if (temperature) document.getElementById("temperature").value = temperature;
         if (maxTokens) document.getElementById("maxTokens").value = maxTokens;
         if (chunkSize) document.getElementById("chunkSize").value = chunkSize;
       }
 
       function saveSettings() {
-        localStorage.setItem(
-          "openai_model",
-          document.getElementById("model").value
-        );
-        localStorage.setItem(
-          "max_tokens",
-          document.getElementById("maxTokens").value
-        );
-        localStorage.setItem(
-          "chunk_size",
-          document.getElementById("chunkSize").value
-        );
+        const apiKey = document.getElementById("apiKey").value;
+        const model = document.getElementById("model").value;
+        const temperature = document.getElementById("temperature").value;
+        const maxTokens = document.getElementById("maxTokens").value;
+        const chunkSize = document.getElementById("chunkSize").value;
+        
+        localStorage.setItem("openai_api_key", apiKey);
+        localStorage.setItem("openai_model", model);
+        localStorage.setItem("openai_temperature", temperature);
+        localStorage.setItem("max_tokens", maxTokens);
+        localStorage.setItem("chunk_size", chunkSize);
+        
+        // Mostrar confirmação
+        showMessage("✅ Configurações salvas com sucesso!", "system");
+        
+        // Fechar painel após salvar
+        const panel = document.getElementById("configPanel");
+        panel.classList.remove("open");
       }
 
       function toggleConfig() {
@@ -1068,15 +1086,25 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
           max_tokens: maxTokens,
         });
 
+        // Buscar configurações salvas
+        const apiKey = localStorage.getItem("openai_api_key");
+        const temperature = parseFloat(localStorage.getItem("openai_temperature")) || 0.3;
+        
+        if (!apiKey) {
+          throw new Error("API Key não configurada! Clique no ⚙️ para configurar.");
+        }
+
         const response = await fetch("/api/chat", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
+            api_key: apiKey,
             model: model,
             messages: messages,
             max_tokens: maxTokens,
+            temperature: temperature,
           }),
         });
 
