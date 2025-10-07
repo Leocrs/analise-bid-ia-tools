@@ -1,9 +1,6 @@
-{{
-
-  "functions": {  "runtime": "@vercel/python"
-
-    "api/index.py": {}
-
+{
+  "functions": {
+    "api/index.py": {
       "runtime": "python3.9"
     }
   },
