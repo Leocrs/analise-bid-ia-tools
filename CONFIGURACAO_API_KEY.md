@@ -13,7 +13,7 @@ A API Key da OpenAI **NUNCA** deve estar exposta no frontend. Ela fica protegida
 
 ### Passo 2: Adicionar Variável
 1. **Name**: `OPENAI_API_KEY`
-2. **Value**: `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`
+2. **Value**: `[SUA_CHAVE_OPENAI_AQUI]` (copie do arquivo ANOTACOES_IMPORTANTES.txt)
 3. **Environment**: Production, Preview, Development (todos)
 4. Clique em **Save**
 
