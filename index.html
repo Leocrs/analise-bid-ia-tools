@@ -331,30 +331,66 @@
 
         // Exibir mensagem de boas-vindas melhorada
         setTimeout(() => {
-          const welcomeMessage = `🎯 <strong>SISTEMA AVANÇADO DE ANÁLISE DE BID</strong><br><br>
 
-      ✅ <strong>Sistema Carregado:</strong><br>
-      • Base histórica: <strong>${baseHistorica.length} análises</strong> registradas<br>
-      • Análise comparativa: <strong>Ativada</strong><br>
-      • Exportação Excel/PDF: <strong>Disponível</strong><br>
-      • Tabelas visuais: <strong>Habilitada</strong><br><br>
-
-      🚀 <strong>Recursos Disponíveis:</strong><br>
-      • Upload simultâneo de múltiplos arquivos<br>
-      • Comparação automática item por item<br>
-      • Destaque visual de melhores/piores preços<br>
-      • Ranking automático de fornecedores<br>
-      • Consulta à base histórica<br>
-      • Recomendações estratégicas<br><br>
-
-      📋 <strong>Para começar:</strong> Anexe o mapa de concorrência e as propostas comerciais.<br><br>
-
-      💡 <strong>Exemplo do resultado esperado:</strong><br>
-      <table border='1' style='border-collapse:collapse;font-size:12px;margin:10px 0'>
-      <tr style='background:#0e938f;color:white'><th>Item</th><th>Empresa A</th><th>Empresa B</th><th>Melhor</th></tr>
-      <tr><td>Ar Condicionado</td><td style='background:#fecaca'>R$ 50.000</td><td style='background:#dcfce7'>R$ 45.000</td><td>Empresa B</td></tr>
-      <tr><td>Instalação</td><td style='background:#dcfce7'>R$ 10.000</td><td style='background:#fecaca'>R$ 12.000</td><td>Empresa A</td></tr>
-      </table>`;
+          const welcomeMessage = `
+          <div class="welcome-panel">
+            <div class="welcome-header">
+              <span class="logo-circle"><img src="Logo Verde.png" alt="Logo Tools" /></span>
+              <span class="welcome-title">SISTEMA AVANÇADO DE ANÁLISE DE BID</span>
+            </div>
+            <div class="welcome-section">
+              <span class="welcome-section-title success">✅ Sistema Carregado:</span>
+              <ul>
+                <li>Base histórica: <b>${baseHistorica.length} análises</b> registradas</li>
+                <li>Análise comparativa: <b>Ativada</b></li>
+                <li>Exportação Excel/PDF: <b>Disponível</b></li>
+                <li>Tabelas visuais: <b>Habilitada</b></li>
+              </ul>
+            </div>
+            <div class="welcome-section">
+              <span class="welcome-section-title info">🚀 Recursos Disponíveis:</span>
+              <ul>
+                <li>Upload simultâneo de múltiplos arquivos</li>
+                <li>Comparação automática item por item</li>
+                <li>Destaque visual de melhores/piores preços</li>
+                <li>Ranking automático de fornecedores</li>
+                <li>Consulta à base histórica</li>
+                <li>Recomendações estratégicas</li>
+              </ul>
+            </div>
+            <div class="welcome-section">
+              <span class="welcome-section-title warning">📋 Para começar:</span>
+              <span>Anexe o mapa de concorrência e as propostas comerciais.</span>
+            </div>
+            <div class="welcome-section">
+              <span class="welcome-section-title example">💡 Exemplo do resultado esperado:</span>
+              <table class="welcome-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Empresa A</th>
+                    <th>Empresa B</th>
+                    <th>Melhor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Ar Condicionado</td>
+                    <td class="pior-preco">R$ 50.000</td>
+                    <td class="melhor-preco">R$ 45.000</td>
+                    <td>Empresa B</td>
+                  </tr>
+                  <tr>
+                    <td>Instalação</td>
+                    <td class="melhor-preco">R$ 10.000</td>
+                    <td class="pior-preco">R$ 12.000</td>
+                    <td>Empresa A</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          `;
 
           addMessage("assistant", welcomeMessage);
         }, 1000);
