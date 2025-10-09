@@ -1,23 +1,4 @@
-.tabela-comparativa {
-  border-collapse: collapse;
-  width: 100%;
-  font-size: 14px;
-  border: 1px solid #e5e7eb;
-}
-.tabela-cabecalho {
-  background: #0e938f;
-  color: white;
-}
-.tabela-total {
-  background: #f3f4f6;
-  font-weight: bold;
-}
-.melhor-preco {
-  background: #dcfce7;
-}
-.pior-preco {
-  background: #fecaca;
-}
+/* ...existing code... */
 .centered-btn {
   text-align: center;
   margin: 20px 0;
