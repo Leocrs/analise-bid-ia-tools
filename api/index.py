@@ -44,7 +44,7 @@ def chat():
         if not OPENAI_API_KEY:
             return jsonify({'error': 'Serviço temporariamente indisponível. API Key não configurada no servidor.'}), 503
         
-        # Criar cliente OpenAI com a chave do servidor (seguro)
+        # Criar cliente OpenAI com a chave do servidor (seguro) - sem proxies
         client = OpenAI(api_key=OPENAI_API_KEY)
         
         response = client.chat.completions.create(
