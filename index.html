@@ -20,15 +20,30 @@
 
       <div class="input-container">
         <div class="input-wrapper">
-          <label for="fileInput" class="file-input-label" title="Anexar arquivo">📎</label>
-          <input type="file" id="fileInput" class="file-input" accept=".pdf,.xlsx,.xls" multiple />
-          <textarea id="messageInput" class="message-input" placeholder="Digite sua mensagem..." rows="1"></textarea>
+          <label for="fileInput" class="file-input-label" title="Anexar arquivo"
+            >📎</label
+          >
+          <input
+            type="file"
+            id="fileInput"
+            class="file-input"
+            accept=".pdf,.xlsx,.xls"
+            multiple
+          />
+          <textarea
+            id="messageInput"
+            class="message-input"
+            placeholder="Digite sua mensagem..."
+            rows="1"
+          ></textarea>
           <button id="sendButton" class="send-button">
             <span id="sendIcon" class="send-icon">➤</span>
           </button>
           <button id="exportExcel" class="export-button">Exportar Excel</button>
           <button id="exportPDF" class="export-button">Exportar PDF</button>
-          <button id="consultarHistorico" class="export-button">📚 Base Histórica</button>
+          <button id="consultarHistorico" class="export-button">
+            📚 Base Histórica
+          </button>
         </div>
         <div id="filePreview" class="file-preview">
           <div class="file-info">
@@ -53,7 +68,14 @@
       </div>
       <div class="config-group">
         <label for="temperature">Temperatura:</label>
-        <input type="number" id="temperature" value="0.7" min="0" max="1" step="0.1" />
+        <input
+          type="number"
+          id="temperature"
+          value="0.7"
+          min="0"
+          max="1"
+          step="0.1"
+        />
       </div>
       <div class="config-group">
         <label for="maxTokens">Max Tokens:</label>
@@ -64,15 +86,19 @@
         <input type="number" id="chunkSize" value="3000" placeholder="3000" />
       </div>
       <div class="config-group">
-        <span class="protected-key">🔒 API Key protegida no servidor - Pronto para uso!</span>
+        <span class="protected-key"
+          >🔒 API Key protegida no servidor - Pronto para uso!</span
+        >
       </div>
-      <button onclick="saveSettings()" class="save-config-btn">Salvar Configurações</button>
+      <button onclick="saveSettings()" class="save-config-btn">
+        Salvar Configurações
+      </button>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    
+
     <script>
       // Base histórica e configurações globais
       let baseHistorica = [];
@@ -82,23 +108,40 @@
       let conversationHistory = [];
 
       // Configuração do PDF.js
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
 
       // Event Listeners
-      document.addEventListener("DOMContentLoaded", function() {
+      document.addEventListener("DOMContentLoaded", function () {
         carregarBaseHistorica();
         loadSettings();
-        
+
         // Event listeners dos elementos
-        document.getElementById("fileInput").addEventListener("change", handleFileSelect);
-        document.getElementById("removeFile").addEventListener("click", removeFile);
-        document.getElementById("sendButton").addEventListener("click", sendMessage);
-        document.getElementById("messageInput").addEventListener("keydown", handleKeyDown);
-        document.getElementById("messageInput").addEventListener("input", adjustTextareaHeight);
-        document.getElementById("exportExcel").addEventListener("click", exportExcel);
-        document.getElementById("exportPDF").addEventListener("click", exportPDF);
-        document.getElementById("consultarHistorico").addEventListener("click", consultarBaseHistorica);
-        
+        document
+          .getElementById("fileInput")
+          .addEventListener("change", handleFileSelect);
+        document
+          .getElementById("removeFile")
+          .addEventListener("click", removeFile);
+        document
+          .getElementById("sendButton")
+          .addEventListener("click", sendMessage);
+        document
+          .getElementById("messageInput")
+          .addEventListener("keydown", handleKeyDown);
+        document
+          .getElementById("messageInput")
+          .addEventListener("input", adjustTextareaHeight);
+        document
+          .getElementById("exportExcel")
+          .addEventListener("click", exportExcel);
+        document
+          .getElementById("exportPDF")
+          .addEventListener("click", exportPDF);
+        document
+          .getElementById("consultarHistorico")
+          .addEventListener("click", consultarBaseHistorica);
+
         // Exibir mensagem de boas-vindas
         setTimeout(() => {
           const welcomeMessage = `
@@ -170,8 +213,11 @@
         localStorage.setItem("max_tokens", maxTokens);
         localStorage.setItem("chunk_size", chunkSize);
 
-        addMessage("assistant", "✅ Configurações técnicas salvas com sucesso!");
-        
+        addMessage(
+          "assistant",
+          "✅ Configurações técnicas salvas com sucesso!"
+        );
+
         const panel = document.getElementById("configPanel");
         panel.classList.remove("open");
       }
@@ -200,17 +246,18 @@
         messageDiv.className = `message ${sender}`;
         const messageId = "msg_" + Date.now();
         messageDiv.id = messageId;
-        
+
         messageDiv.innerHTML = `
           <div class="avatar ${sender}">
-            ${sender === "user" 
-              ? '<img src="Tools Avatar sem fundo.png" alt="Logo Tools" class="logo-tools-avatar"/>' 
-              : '<span class="robot-emoji">🤖</span>'
+            ${
+              sender === "user"
+                ? '<img src="Tools Avatar sem fundo.png" alt="Logo Tools" class="logo-tools-avatar"/>'
+                : '<span class="robot-emoji">🤖</span>'
             }
           </div>
           <div class="message-content">${content}</div>
         `;
-        
+
         chatContainer.appendChild(messageDiv);
         chatContainer.scrollTop = chatContainer.scrollHeight;
         return messageId;
@@ -240,7 +287,7 @@
         errorDiv.textContent = message;
         chatContainer.appendChild(errorDiv);
         chatContainer.scrollTop = chatContainer.scrollHeight;
-        
+
         setTimeout(() => {
           errorDiv.remove();
         }, 5000);
@@ -251,8 +298,8 @@
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        files.forEach(file => {
-          if (!currentFiles.find(f => f.name === file.name)) {
+        files.forEach((file) => {
+          if (!currentFiles.find((f) => f.name === file.name)) {
             currentFiles.push(file);
           }
         });
@@ -265,16 +312,19 @@
         for (const file of files) {
           try {
             let content = "";
-            
+
             if (file.name.toLowerCase().endsWith(".pdf")) {
               content = await extractPDFText(file);
-            } else if (file.name.toLowerCase().endsWith(".xlsx") || file.name.toLowerCase().endsWith(".xls")) {
+            } else if (
+              file.name.toLowerCase().endsWith(".xlsx") ||
+              file.name.toLowerCase().endsWith(".xls")
+            ) {
               content = await extractExcelData(file);
             } else {
               content = await readTextFile(file);
             }
 
-            if (!fileContents.find(f => f.name === file.name)) {
+            if (!fileContents.find((f) => f.name === file.name)) {
               fileContents.push({ name: file.name, content: content });
             }
           } catch (error) {
@@ -292,19 +342,21 @@
       async function extractPDFText(file) {
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
-          reader.onload = async function(e) {
+          reader.onload = async function (e) {
             try {
               const typedArray = new Uint8Array(e.target.result);
               const pdf = await pdfjsLib.getDocument(typedArray).promise;
               let fullText = "";
-              
+
               for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
                 const textContent = await page.getTextContent();
-                const pageText = textContent.items.map(item => item.str).join(" ");
+                const pageText = textContent.items
+                  .map((item) => item.str)
+                  .join(" ");
                 fullText += `\n\n--- Página ${i} ---\n${pageText}`;
               }
-              
+
               resolve(fullText.trim());
             } catch (error) {
               reject(error);
@@ -318,24 +370,26 @@
       async function extractExcelData(file) {
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
-          reader.onload = function(e) {
+          reader.onload = function (e) {
             try {
               const data = new Uint8Array(e.target.result);
               const workbook = XLSX.read(data, { type: "array" });
               let allData = "";
-              
-              workbook.SheetNames.forEach(sheetName => {
+
+              workbook.SheetNames.forEach((sheetName) => {
                 const worksheet = workbook.Sheets[sheetName];
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+                  header: 1,
+                });
                 allData += `\n\n--- Planilha: ${sheetName} ---\n`;
-                
+
                 jsonData.forEach((row, index) => {
                   if (row.length > 0) {
                     allData += `Linha ${index + 1}: ${row.join(" | ")}\n`;
                   }
                 });
               });
-              
+
               resolve(allData.trim());
             } catch (error) {
               reject(error);
@@ -349,7 +403,7 @@
       async function readTextFile(file) {
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
-          reader.onload = e => resolve(e.target.result);
+          reader.onload = (e) => resolve(e.target.result);
           reader.onerror = () => reject(new Error("Erro ao ler arquivo"));
           reader.readAsText(file);
         });
@@ -361,7 +415,9 @@
         const processingStatus = document.getElementById("processingStatus");
 
         if (fileContents.length > 0) {
-          fileName.textContent = fileContents.map(file => file.name).join(", ");
+          fileName.textContent = fileContents
+            .map((file) => file.name)
+            .join(", ");
           processingStatus.textContent = `${fileContents.length} arquivo(s) processado(s)`;
           preview.classList.add("show");
           preview.style.display = "block";
@@ -375,7 +431,7 @@
         currentFiles = [];
         fileContents = [];
         processedChunks.clear();
-        
+
         document.getElementById("fileInput").value = "";
         updateFilePreview();
       }
@@ -384,11 +440,13 @@
       async function structuredAnalysis() {
         const loadingId = addMessage("assistant", "");
         showLoading(loadingId);
-        
+
         try {
           let allContent = "";
           fileContents.forEach((file, index) => {
-            allContent += `\n\n=== DOCUMENTO ${index + 1}: ${file.name.toUpperCase()} ===\n${file.content}`;
+            allContent += `\n\n=== DOCUMENTO ${
+              index + 1
+            }: ${file.name.toUpperCase()} ===\n${file.content}`;
           });
 
           const prompt = `Analise os documentos anexados e crie uma tabela comparativa de preços.
@@ -418,10 +476,9 @@ Formato da tabela:
 
           const result = await callBackend(prompt, allContent);
           updateMessage(loadingId, result);
-          
+
           // Salvar na base histórica
           await salvarNaBaseHistorica(result);
-          
         } catch (error) {
           updateMessage(loadingId, `❌ Erro na análise: ${error.message}`);
         }
@@ -430,9 +487,9 @@ Formato da tabela:
       async function sendMessage() {
         const input = document.getElementById("messageInput");
         const message = input.value.trim();
-        
+
         if (!message && fileContents.length === 0) return;
-        
+
         if (message) {
           addMessage("user", message);
           input.value = "";
@@ -443,7 +500,8 @@ Formato da tabela:
         showLoading(loadingId);
 
         try {
-          const prompt = "Você é um assistente especializado em análise de documentos. Responda em português.";
+          const prompt =
+            "Você é um assistente especializado em análise de documentos. Responda em português.";
           const response = await callBackend(prompt, message);
           updateMessage(loadingId, response);
         } catch (error) {
@@ -453,24 +511,29 @@ Formato da tabela:
 
       async function callBackend(systemPrompt, userMessage) {
         const model = document.getElementById("model").value || "gpt-4";
-        const maxTokens = parseInt(document.getElementById("maxTokens").value) || 2000;
-        const temperature = parseFloat(document.getElementById("temperature").value) || 0.7;
+        const maxTokens =
+          parseInt(document.getElementById("maxTokens").value) || 2000;
+        const temperature =
+          parseFloat(document.getElementById("temperature").value) || 0.7;
 
         const messages = [
           { role: "system", content: systemPrompt },
-          { role: "user", content: userMessage }
+          { role: "user", content: userMessage },
         ];
 
-        const response = await fetch("https://analise-bid-ia-backend.onrender.com/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: model,
-            messages: messages,
-            max_tokens: maxTokens,
-            temperature: temperature
-          })
-        });
+        const response = await fetch(
+          "https://analise-bid-ia-backend.onrender.com/api/chat",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: model,
+              messages: messages,
+              max_tokens: maxTokens,
+              temperature: temperature,
+            }),
+          }
+        );
 
         if (!response.ok) {
           const error = await response.json();
@@ -485,7 +548,7 @@ Formato da tabela:
       function exportExcel() {
         const chatContainer = document.getElementById("chatContainer");
         const wb = XLSX.utils.book_new();
-        
+
         const tables = chatContainer.querySelectorAll("table");
         if (tables.length > 0) {
           tables.forEach((table, index) => {
@@ -498,12 +561,14 @@ Formato da tabela:
             ["Análise de Propostas"],
             ["Data:", new Date().toLocaleDateString()],
             [""],
-            [chatContent]
+            [chatContent],
           ]);
           XLSX.utils.book_append_sheet(wb, ws, "Análise");
         }
-        
-        const filename = `analise_propostas_${new Date().toISOString().slice(0, 10)}.xlsx`;
+
+        const filename = `analise_propostas_${new Date()
+          .toISOString()
+          .slice(0, 10)}.xlsx`;
         XLSX.writeFile(wb, filename);
       }
 
@@ -511,18 +576,18 @@ Formato da tabela:
         const chatContainer = document.getElementById("chatContainer");
         const jsPDF = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
         const doc = new jsPDF();
-        
+
         doc.setFontSize(16);
         doc.text("TOOLS ENGENHARIA - Análise de Propostas", 10, 20);
         doc.setFontSize(10);
         doc.text(`Data: ${new Date().toLocaleDateString("pt-BR")}`, 10, 30);
-        
+
         const chatContent = chatContainer.innerText;
         doc.setFontSize(12);
         const lines = doc.splitTextToSize(chatContent, 180);
-        
+
         let yPosition = 40;
-        lines.forEach(line => {
+        lines.forEach((line) => {
           if (yPosition > 280) {
             doc.addPage();
             yPosition = 20;
@@ -530,8 +595,10 @@ Formato da tabela:
           doc.text(line, 10, yPosition);
           yPosition += 7;
         });
-        
-        const filename = `analise_propostas_${new Date().toISOString().slice(0, 10)}.pdf`;
+
+        const filename = `analise_propostas_${new Date()
+          .toISOString()
+          .slice(0, 10)}.pdf`;
         doc.save(filename);
       }
 
@@ -551,19 +618,19 @@ Formato da tabela:
           const novaAnalise = {
             data: new Date().toLocaleDateString("pt-BR"),
             hora: new Date().toLocaleTimeString("pt-BR"),
-            arquivos: fileContents.map(f => f.name),
+            arquivos: fileContents.map((f) => f.name),
             analise: analise,
             fornecedores: extrairFornecedores(analise),
             itens: contarItens(analise),
-            valorTotal: extrairValores(analise)
+            valorTotal: extrairValores(analise),
           };
-          
+
           baseHistorica.unshift(novaAnalise);
-          
+
           if (baseHistorica.length > 50) {
             baseHistorica = baseHistorica.slice(0, 50);
           }
-          
+
           localStorage.setItem("baseHistorica", JSON.stringify(baseHistorica));
         } catch (error) {
           console.error("Erro ao salvar na base histórica:", error);
@@ -574,48 +641,53 @@ Formato da tabela:
         const empresas = [];
         const regex = /(CNPJ|Empresa|Fornecedor)[:\s]*([A-Z][A-Za-z\s&.-]+)/gi;
         let match;
-        
+
         while ((match = regex.exec(texto)) !== null) {
           const empresa = match[2].trim();
           if (empresa.length > 3 && !empresas.includes(empresa)) {
             empresas.push(empresa);
           }
         }
-        
+
         return empresas.slice(0, 10);
       }
 
       function contarItens(texto) {
-        const linhas = texto.split('\n');
-        return linhas.filter(linha => linha.includes('R$')).length;
+        const linhas = texto.split("\n");
+        return linhas.filter((linha) => linha.includes("R$")).length;
       }
 
       function extrairValores(texto) {
         const valores = [];
         const regex = /R\$\s*[\d.,]+/g;
         let match;
-        
+
         while ((match = regex.exec(texto)) !== null) {
           valores.push(match[0]);
         }
-        
+
         return valores.slice(0, 20);
       }
 
       function consultarBaseHistorica() {
         if (baseHistorica.length === 0) {
-          addMessage("assistant", "📚 Base histórica vazia. Faça algumas análises primeiro!");
+          addMessage(
+            "assistant",
+            "📚 Base histórica vazia. Faça algumas análises primeiro!"
+          );
           return;
         }
 
         let relatorio = `📚 <strong>BASE HISTÓRICA - ${baseHistorica.length} ANÁLISES</strong><br><br>`;
-        
+
         baseHistorica.slice(0, 10).forEach((reg, index) => {
           relatorio += `<div class="relatorio-box">
             <strong>📄 Análise #${baseHistorica.length - index}</strong><br>
             <strong>Data:</strong> ${reg.data} às ${reg.hora}<br>
             <strong>Arquivos:</strong> ${reg.arquivos.join(", ")}<br>
-            <strong>Fornecedores:</strong> ${reg.fornecedores.length} empresas<br>
+            <strong>Fornecedores:</strong> ${
+              reg.fornecedores.length
+            } empresas<br>
             <strong>Itens:</strong> ${reg.itens} produtos/serviços<br>
           </div>`;
         });
