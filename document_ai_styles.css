@@ -1,3 +1,39 @@
+/* Painel de Debug Visual */
+.debug-panel {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 10px 20px;
+  font-size: 15px;
+  border-bottom: 2px solid #ef4444;
+  z-index: 9999;
+  position: relative;
+}
+.debug-btn {
+  margin-left: 10px;
+  padding: 2px 8px;
+  background: #fff0f0;
+  color: #991b1b;
+  border: 1px solid #ef4444;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.debug-btn:hover {
+  background: #ffe4e6;
+}
+.debug-content {
+  white-space: pre-wrap;
+  max-height: 200px;
+  overflow: auto;
+  margin-top: 8px;
+  background: #fff0f0;
+  color: #222;
+  font-size: 13px;
+  border: 1px solid #ef4444;
+  padding: 6px;
+  border-radius: 4px;
+}
 /* ...existing code... */
 .centered-btn {
   text-align: center;

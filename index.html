@@ -8,6 +8,15 @@
   </head>
   <body>
 
+  <!-- Painel de Debug Visual -->
+  <div id="debug-panel" class="debug-panel">
+    <strong>DEBUG VISUAL ATIVO:</strong>
+    <button onclick="document.getElementById('debug-content').innerText = document.body.innerHTML" class="debug-btn debug-btn-html">Mostrar HTML</button>
+    <button onclick="document.getElementById('debug-content').innerText = document.getElementById('chatContainer') ? document.getElementById('chatContainer').innerHTML : 'chatContainer não encontrado'" class="debug-btn debug-btn-chat">Mostrar Chat</button>
+    <button onclick="document.getElementById('debug-content').innerText = ''" class="debug-btn debug-btn-clear">Limpar</button>
+    <div id="debug-content" class="debug-content"></div>
+  </div>
+
     <div class="container">
       <div class="header">
         <img src="Logo Verde.png" alt="Logo Tools" class="logo-header-tools" />
@@ -42,7 +51,6 @@
 
       <!-- As análises recentes e comandos disponíveis serão renderizados dinamicamente pelo JavaScript. -->
 
-        addMessage("assistant", resumo);
       }
 
       async function consultarHistoricoEspecifico(consulta) {
