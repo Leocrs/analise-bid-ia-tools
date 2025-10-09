@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tools Engenharia - Análise de Propostas</title>
+    <link rel="stylesheet" href="document_ai_styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <img src="Logo Verde.png" alt="Logo Tools" class="logo-header-tools" />
+        <h1>Análise de Propostas e Mapa de Concorrência</h1>
+      </div>
+
+      <div class="chat-container" id="chatContainer">
+        <!-- Mensagens serão adicionadas aqui -->
+      </div>
+
+      <div class="input-container">
+        <div class="input-wrapper">
+          <label for="fileInput" class="file-input-label" title="Anexar arquivo"
+            >📎</label
+          >
+          <input
+            type="file"
+            id="fileInput"
+            class="file-input"
+            accept=".pdf,.xlsx,.xls"
+            multiple
+          />
+          <textarea
+            id="messageInput"
+            class="message-input"
+            placeholder="Digite sua mensagem..."
+            rows="1"
+          ></textarea>
+          <button id="sendButton" class="send-button">
+            <span class="send-icon">➤</span>
+          </button>
+          <button id="exportExcel" class="export-button">Exportar Excel</button>
+          <button id="exportPDF" class="export-button">Exportar PDF</button>
+          <button id="consultarHistorico" class="export-button">
+            📚 Base Histórica
+          </button>
+        </div>
+        <div id="filePreview" class="file-preview">
+          <div class="file-info">
+            <span id="fileName"></span>
+            <button id="removeFile" class="remove-file">✕</button>
+          </div>
+          <div id="processingStatus" class="processing-status"></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="config-toggle" onclick="toggleConfig()">⚙️</button>
+
+    <div id="configPanel" class="config-panel">
+      <h3>Configurações Técnicas</h3>
+      <div class="config-group">
+        <label for="model">Modelo:</label>
+        <select id="model">
+          <option value="gpt-4">GPT-4</option>
+          <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+        </select>
+      </div>
+      <div class="config-group">
+        <label for="maxTokens">Max Tokens:</label>
+        <input type="number" id="maxTokens" value="2000" />
+      </div>
+      <div class="config-group">
+        <span class="protected-key">🔒 API Key protegida no servidor</span>
+      </div>
+    </div>
+
+    <!-- Bibliotecas externas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <script>
+      // Variáveis globais
+      let baseHistorica = [];
+      let currentFiles = [];
+      let fileContents = [];
+      let conversationHistory = [];
+
+      // Configuração PDF.js
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
+
+      // Inicialização
+      document.addEventListener("DOMContentLoaded", function () {
+        console.log("Sistema carregado com sucesso!");
+        carregarBaseHistorica();
+
+        // Event listeners
+        document
+          .getElementById("fileInput")
+          .addEventListener("change", handleFileSelect);
+        document
+          .getElementById("removeFile")
+          .addEventListener("click", removeFile);
+        document
+          .getElementById("sendButton")
+          .addEventListener("click", sendMessage);
+        document
+          .getElementById("messageInput")
+          .addEventListener("keydown", handleKeyDown);
+        document
+          .getElementById("exportExcel")
+          .addEventListener("click", exportExcel);
+        document
+          .getElementById("exportPDF")
+          .addEventListener("click", exportPDF);
+        document
+          .getElementById("consultarHistorico")
+          .addEventListener("click", consultarBaseHistorica);
+
+        // Mensagem de boas-vindas
+        setTimeout(() => {
+          addMessage(
+            "assistant",
+            `
+                    <div class="welcome-panel">
+                        <h3>🚀 SISTEMA FUNCIONANDO PERFEITAMENTE!</h3>
+                        <p><strong>✅ Status:</strong> Todos os sistemas operacionais</p>
+                        <p><strong>📊 Base histórica:</strong> ${baseHistorica.length} análises</p>
+                        <p><strong>🎯 Para começar:</strong> Anexe seus arquivos (PDF/Excel)</p>
+                        <div style="margin-top: 15px; padding: 10px; background: #e8f5e8; border-radius: 5px;">
+                            <strong>📋 Exemplo de uso:</strong><br>
+                            1. Clique em 📎 para anexar arquivos<br>
+                            2. O sistema analisa automaticamente<br>
+                            3. Receba tabela comparativa com preços
+                        </div>
+                    </div>
+                `
+          );
+        }, 500);
+      });
+
+      // Funções principais
+      function addMessage(sender, content) {
+        const chatContainer = document.getElementById("chatContainer");
+        const messageDiv = document.createElement("div");
+        messageDiv.className = `message ${sender}`;
+        messageDiv.innerHTML = `
+                <div class="avatar ${sender}">
+                    ${sender === "user" ? "👤" : "🤖"}
+                </div>
+                <div class="message-content">${content}</div>
+            `;
+        chatContainer.appendChild(messageDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        return (messageDiv.id = "msg_" + Date.now());
+      }
+
+      function handleFileSelect(e) {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        addMessage("assistant", "📄 Processando arquivos...");
+
+        files.forEach((file) => {
+          currentFiles.push(file);
+          processFile(file);
+        });
+
+        updateFilePreview();
+      }
+
+      async function processFile(file) {
+        try {
+          let content = "";
+
+          if (file.name.toLowerCase().endsWith(".pdf")) {
+            content = await extractPDFText(file);
+          } else if (
+            file.name.toLowerCase().endsWith(".xlsx") ||
+            file.name.toLowerCase().endsWith(".xls")
+          ) {
+            content = await extractExcelData(file);
+          } else {
+            content = await readTextFile(file);
+          }
+
+          fileContents.push({ name: file.name, content: content });
+
+          if (fileContents.length >= 2) {
+            setTimeout(() => analyzeFiles(), 1000);
+          } else {
+            addMessage(
+              "assistant",
+              `✅ ${file.name} processado. Anexe mais arquivos para comparação automática.`
+            );
+          }
+        } catch (error) {
+          addMessage(
+            "assistant",
+            `❌ Erro ao processar ${file.name}: ${error.message}`
+          );
+        }
+      }
+
+      async function extractPDFText(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = async function (e) {
+            try {
+              const typedArray = new Uint8Array(e.target.result);
+              const pdf = await pdfjsLib.getDocument(typedArray).promise;
+              let text = "";
+
+              for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                text +=
+                  textContent.items.map((item) => item.str).join(" ") + "\n";
+              }
+
+              resolve(text);
+            } catch (error) {
+              reject(error);
+            }
+          };
+          reader.readAsArrayBuffer(file);
+        });
+      }
+
+      async function extractExcelData(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            try {
+              const data = new Uint8Array(e.target.result);
+              const workbook = XLSX.read(data, { type: "array" });
+              let text = "";
+
+              workbook.SheetNames.forEach((sheetName) => {
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+                  header: 1,
+                });
+                text += `Planilha: ${sheetName}\n`;
+                jsonData.forEach((row) => {
+                  if (row.length > 0) {
+                    text += row.join(" | ") + "\n";
+                  }
+                });
+              });
+
+              resolve(text);
+            } catch (error) {
+              reject(error);
+            }
+          };
+          reader.readAsArrayBuffer(file);
+        });
+      }
+
+      async function readTextFile(file) {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.readAsText(file);
+        });
+      }
+
+      async function analyzeFiles() {
+        const messageId = addMessage("assistant", "🚀 Analisando arquivos...");
+
+        try {
+          let allContent = fileContents
+            .map((f) => `${f.name}:\n${f.content}`)
+            .join("\n\n");
+
+          const prompt = `Analise os documentos e crie uma tabela comparativa de preços.
+
+FORMATO OBRIGATÓRIO:
+<table class="tabela-comparativa">
+<tr class="tabela-cabecalho">
+<th>ITEM/SERVIÇO</th>
+<th>FORNECEDOR A</th>
+<th>FORNECEDOR B</th>
+<th>MELHOR PREÇO</th>
+</tr>
+<tr>
+<td>Nome do Item</td>
+<td class="melhor-preco">R$ Menor Valor</td>
+<td class="pior-preco">R$ Maior Valor</td>
+<td>Vencedor</td>
+</tr>
+</table>
+
+Extrair TODOS os preços em R$ encontrados e criar comparação.`;
+
+          const result = await callBackend(prompt, allContent);
+
+          // Atualizar mensagem
+          const messageDiv = document.getElementById(messageId);
+          messageDiv.querySelector(".message-content").innerHTML = result;
+
+          // Salvar no histórico
+          salvarNaBaseHistorica(result);
+        } catch (error) {
+          const messageDiv = document.getElementById(messageId);
+          messageDiv.querySelector(
+            ".message-content"
+          ).innerHTML = `❌ Erro na análise: ${error.message}`;
+        }
+      }
+
+      async function sendMessage() {
+        const input = document.getElementById("messageInput");
+        const message = input.value.trim();
+        if (!message) return;
+
+        addMessage("user", message);
+        input.value = "";
+
+        const messageId = addMessage("assistant", "Processando...");
+
+        try {
+          const result = await callBackend(
+            "Você é um assistente de análise de documentos. Responda em português.",
+            message
+          );
+          const messageDiv = document.getElementById(messageId);
+          messageDiv.querySelector(".message-content").innerHTML = result;
+        } catch (error) {
+          const messageDiv = document.getElementById(messageId);
+          messageDiv.querySelector(
+            ".message-content"
+          ).innerHTML = `❌ Erro: ${error.message}`;
+        }
+      }
+
+      async function callBackend(systemPrompt, userMessage) {
+        const model = document.getElementById("model").value || "gpt-4";
+        const maxTokens =
+          parseInt(document.getElementById("maxTokens").value) || 2000;
+
+        const response = await fetch(
+          "https://analise-bid-ia-backend.onrender.com/api/chat",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: model,
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: userMessage },
+              ],
+              max_tokens: maxTokens,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Erro na API");
+        }
+
+        const data = await response.json();
+        return data.choices[0].message.content;
+      }
+
+      function updateFilePreview() {
+        const preview = document.getElementById("filePreview");
+        const fileName = document.getElementById("fileName");
+        const status = document.getElementById("processingStatus");
+
+        if (currentFiles.length > 0) {
+          fileName.textContent = currentFiles.map((f) => f.name).join(", ");
+          status.textContent = `${currentFiles.length} arquivo(s) anexado(s)`;
+          preview.style.display = "block";
+          preview.classList.add("show");
+        }
+      }
+
+      function removeFile() {
+        currentFiles = [];
+        fileContents = [];
+        document.getElementById("fileInput").value = "";
+        document.getElementById("filePreview").style.display = "none";
+        addMessage("assistant", "📄 Arquivos removidos.");
+      }
+
+      function handleKeyDown(e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      }
+
+      function exportExcel() {
+        const tables = document.querySelectorAll("table");
+        if (tables.length === 0) {
+          alert("Nenhuma tabela encontrada para exportar.");
+          return;
+        }
+
+        const wb = XLSX.utils.book_new();
+        tables.forEach((table, index) => {
+          const ws = XLSX.utils.table_to_sheet(table);
+          XLSX.utils.book_append_sheet(wb, ws, `Análise_${index + 1}`);
+        });
+
+        XLSX.writeFile(
+          wb,
+          `analise_${new Date().toISOString().slice(0, 10)}.xlsx`
+        );
+      }
+
+      function exportPDF() {
+        const jsPDF = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
+        const doc = new jsPDF();
+
+        doc.text("TOOLS ENGENHARIA - Análise de Propostas", 10, 10);
+        doc.text(new Date().toLocaleDateString(), 10, 20);
+
+        const content = document.getElementById("chatContainer").innerText;
+        const lines = doc.splitTextToSize(content, 180);
+
+        let y = 30;
+        lines.forEach((line) => {
+          if (y > 280) {
+            doc.addPage();
+            y = 20;
+          }
+          doc.text(line, 10, y);
+          y += 7;
+        });
+
+        doc.save(`analise_${new Date().toISOString().slice(0, 10)}.pdf`);
+      }
+
+      function carregarBaseHistorica() {
+        try {
+          const historico = localStorage.getItem("baseHistorica");
+          baseHistorica = historico ? JSON.parse(historico) : [];
+        } catch (error) {
+          baseHistorica = [];
+        }
+      }
+
+      function salvarNaBaseHistorica(analise) {
+        const nova = {
+          data: new Date().toLocaleDateString(),
+          hora: new Date().toLocaleTimeString(),
+          arquivos: currentFiles.map((f) => f.name),
+          analise: analise,
+        };
+
+        baseHistorica.unshift(nova);
+        if (baseHistorica.length > 20)
+          baseHistorica = baseHistorica.slice(0, 20);
+
+        localStorage.setItem("baseHistorica", JSON.stringify(baseHistorica));
+      }
+
+      function consultarBaseHistorica() {
+        if (baseHistorica.length === 0) {
+          addMessage("assistant", "📚 Base histórica vazia.");
+          return;
+        }
+
+        let html = "<h3>📚 BASE HISTÓRICA</h3>";
+        baseHistorica.slice(0, 5).forEach((item, i) => {
+          html += `<div class="relatorio-box">
+                    <strong>Análise #${i + 1}</strong><br>
+                    <strong>Data:</strong> ${item.data} ${item.hora}<br>
+                    <strong>Arquivos:</strong> ${item.arquivos.join(", ")}<br>
+                </div>`;
+        });
+
+        addMessage("assistant", html);
+      }
+
+      function toggleConfig() {
+        const panel = document.getElementById("configPanel");
+        panel.classList.toggle("open");
+      }
+    </script>
+  </body>
+</html>
