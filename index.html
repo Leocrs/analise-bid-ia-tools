@@ -926,19 +926,16 @@ Formato da tabela:
           { role: "user", content: userMessage },
         ];
 
-        const response = await fetch(
-          "/api/chat",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              model: model,
-              messages: messages,
-              max_tokens: maxTokens,
-              temperature: temperature,
-            }),
-          }
-        );
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: model,
+            messages: messages,
+            max_tokens: maxTokens,
+            temperature: temperature,
+          }),
+        });
 
         if (!response.ok) {
           const error = await response.json();
