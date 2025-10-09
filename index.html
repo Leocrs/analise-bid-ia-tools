@@ -14,55 +14,33 @@
         <h1>Análise de Propostas e Mapa de Concorrência</h1>
       </div>
 
+
       <div class="chat-container" id="chatContainer">
         <!-- Mensagem inicial será adicionada dinamicamente -->
       </div>
 
       <div class="input-container">
         <div class="input-wrapper">
-          <label
-            for="fileInput"
-            class="file-input-label"
-            title="Anexar arquivo"
-          >
-            📎
-          </label>
-          <input
-            type="file"
-            id="fileInput"
-            class="file-input"
-            accept=".pdf,.xlsx,.xls"
-            multiple
-          />
-          <textarea
-            id="messageInput"
-            class="message-input"
-            placeholder="Digite sua mensagem..."
-            rows="1"
-          <div class="container">
-            <div class="header">
-              <img src="Logo Verde.png" alt="Logo Tools" class="logo-header-tools" />
-              <h1>Análise de Propostas e Mapa de Concorrência</h1>
-            </div>
-        }<br><br>
+          <label for="fileInput" class="file-input-label" title="Anexar arquivo">📎</label>
+          <input type="file" id="fileInput" class="file-input" accept=".pdf,.xlsx,.xls" multiple />
+          <textarea id="messageInput" class="message-input" placeholder="Digite sua mensagem..." rows="1"></textarea>
+          <button id="sendButton" class="send-button">
+            <span id="sendIcon" class="send-icon">➤</span>
+          </button>
+          <button id="exportExcel" class="export-button">Exportar Excel</button>
+          <button id="exportPDF" class="export-button">Exportar PDF</button>
+          <button id="consultarHistorico" class="export-button">📚 Base Histórica</button>
+        </div>
+        <div id="filePreview" class="file-preview">
+          <div class="file-info">
+            <span id="fileName"></span>
+            <button id="removeFile" class="remove-file">✕</button>
+          </div>
+          <div id="processingStatus" class="processing-status"></div>
+        </div>
+      </div>
 
-      <strong>🏢 Análises Recentes:</strong><br>
-      ${baseHistorica
-        .slice(-5)
-        .reverse()
-        .map(
-          (reg) =>
-            `• <strong>${reg.data}</strong> - ${reg.arquivos.join(", ")} (${
-              reg.fornecedores.length
-            } fornecedores, ${reg.itens} itens)`
-        )
-        .join("<br>")}<br><br>
-
-      <strong>💡 Comandos Disponíveis:</strong><br>
-      • Digite <strong>"histórico completo"</strong> - Ver todas as análises<br>
-      • Digite <strong>"histórico [palavra-chave]"</strong> - Buscar por item específico<br>
-      • Digite <strong>"comparar preços [item]"</strong> - Comparar preços históricos<br>
-      • Digite <strong>"fornecedores histórico"</strong> - Ver fornecedores já analisados`;
+      <!-- As análises recentes e comandos disponíveis serão renderizados dinamicamente pelo JavaScript. -->
 
         addMessage("assistant", resumo);
       }
@@ -98,7 +76,7 @@
         let relatorio = `📚 <strong>RELATÓRIO COMPLETO DA BASE HISTÓRICA</strong><br><br>`;
 
         baseHistorica.forEach((reg, index) => {
-          relatorio += `<div style="border:1px solid #e5e7eb; padding:15px; margin:10px 0; border-radius:8px;">
+    relatorio += `<div class="relatorio-box">
                   <strong>📄 Análise #${
                     baseHistorica.length - index
                   }</strong><br>
@@ -493,22 +471,8 @@
 
       ⚠️ <strong>CRÍTICO:</strong> NÃO fazer análise descritiva! APENAS tabela comparativa com preços lado a lado, destacando em VERDE o menor preço e VERMELHO o maior preço de cada item. OBRIGATÓRIO extrair todos os valores R$ encontrados.<br><br>
       
-      <div style="text-align: center; margin: 20px 0;">
-        <button onclick="setupAnalysisButton()" style="
-          background: linear-gradient(135deg, #0e938f, #1fb5b1);
-          color: white;
-          border: none;
-          padding: 15px 30px;
-          font-size: 16px;
-          font-weight: bold;
-          border-radius: 25px;
-          cursor: pointer;
-          box-shadow: 0 4px 15px rgba(14, 147, 143, 0.3);
-          transition: all 0.3s ease;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(14, 147, 143, 0.4)'" 
-           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(14, 147, 143, 0.3)'">
+      <div class="centered-btn">
+        <button onclick="setupAnalysisButton()" class="btn-analise-completa">
           🚀 EXECUTAR ANÁLISE COMPLETA
         </button>
       </div>`;
@@ -590,7 +554,8 @@
         );
 
         // Prompt flexível para análise consolidada
-        const promptConsolidado = `🚨 ANÁLISE CONSOLIDADA OBRIGATÓRIA - TOOLS ENGENHARIA 🚨
+
+  const promptConsolidado = `🚨 ANÁLISE CONSOLIDADA OBRIGATÓRIA - TOOLS ENGENHARIA 🚨
 
 MISSÃO CRÍTICA: Criar TABELA COMPARATIVA ÚNICA com TODOS os documentos anexados
 
@@ -604,26 +569,26 @@ PASSO 2: EXTRAIR ITENS E PREÇOS
 - Equipamentos, materiais, serviços, instalações
 - Preços unitários, subtotais, e totais gerais
 - ${
-          hasMapa
-            ? "Usar mapa de concorrência como referência base"
-            : "Comparar diretamente entre propostas anexadas"
-        }
+    hasMapa
+      ? "Usar mapa de concorrência como referência base"
+      : "Comparar diretamente entre propostas anexadas"
+  }
 
 PASSO 3: TABELA COMPARATIVA CONSOLIDADA (OBRIGATÓRIA)
-<table border='1' style='border-collapse:collapse;width:100%;font-size:14px'>
-<tr style='background:#0e938f;color:white'>
+<table class='tabela-comparativa'>
+<tr class='tabela-cabecalho'>
 <th>ITEM/SERVIÇO</th><th>FORNECEDOR 1</th><th>FORNECEDOR 2</th><th>FORNECEDOR 3</th><th>MELHOR PREÇO</th><th>ECONOMIA</th>
 </tr>
 <tr>
-<td>[ITEM 1]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td style='background:#fecaca'>R$ [VALOR]</td><td>R$ [VALOR]</td><td>[MELHOR]</td><td>R$ [DIFERENÇA]</td>
+<td>[ITEM 1]</td><td class='melhor-preco'>R$ [VALOR]</td><td class='pior-preco'>R$ [VALOR]</td><td>R$ [VALOR]</td><td>[MELHOR]</td><td>R$ [DIFERENÇA]</td>
 </tr>
 <tr>
-<td>[ITEM 2]</td><td style='background:#fecaca'>R$ [VALOR]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td>R$ [VALOR]</td><td>[MELHOR]</td><td>R$ [DIFERENÇA]</td>
+<td>[ITEM 2]</td><td class='pior-preco'>R$ [VALOR]</td><td class='melhor-preco'>R$ [VALOR]</td><td>R$ [VALOR]</td><td>[MELHOR]</td><td>R$ [DIFERENÇA]</td>
 </tr>
 <tr>
-<td>[ITEM 3]</td><td>R$ [VALOR]</td><td>R$ [VALOR]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td>[MELHOR]</td><td>R$ [DIFERENÇA]</td>
+<td>[ITEM 3]</td><td>R$ [VALOR]</td><td>R$ [VALOR]</td><td class='melhor-preco'>R$ [VALOR]</td><td>[MELHOR]</td><td>R$ [DIFERENÇA]</td>
 </tr>
-<tr style='background:#f3f4f6;font-weight:bold'>
+<tr class='tabela-total'>
 <td>TOTAL GERAL</td><td>R$ [TOTAL]</td><td>R$ [TOTAL]</td><td>[VENCEDOR]</td><td>R$ [ECONOMIA]</td>
 </tr>
 </table>
@@ -676,7 +641,7 @@ ${
           console.error("❌ ERRO em structuredAnalysis():", error);
           updateMessage(
             loadingId,
-            `❌ <span style='color:red;'>Erro na análise consolidada: ${error.message}</span>`
+            `❌ <span class="error-message">Erro na análise consolidada: ${error.message}</span>`
           );
         }
       }
@@ -819,12 +784,12 @@ PASSO 1: EXTRAIR VALORES
 - Listar itens/serviços cotados
 
 PASSO 2: CRIAR TABELA HTML (OBRIGATÓRIO)
-<table border='1' style='border-collapse:collapse;width:100%;font-size:14px'>
-<tr style='background:#0e938f;color:white'>
+<table class="tabela-comparativa">
+<tr class="tabela-cabecalho">
 <th>ITEM/SERVIÇO</th><th>FORNECEDOR</th><th>PREÇO</th><th>OBSERVAÇÕES</th>
 </tr>
 <tr>
-<td>[ITEM]</td><td>[EMPRESA]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td>[OBS]</td>
+<td>[ITEM]</td><td>[EMPRESA]</td><td class="melhor-preco">R$ [VALOR]</td><td>[OBS]</td>
 </tr>
 </table>
 
@@ -855,12 +820,12 @@ PASSO 1: EXTRAIR VALORES
 - Listar itens/serviços cotados
 
 PASSO 2: CRIAR TABELA HTML (OBRIGATÓRIO)
-<table border='1' style='border-collapse:collapse;width:100%;font-size:14px'>
-<tr style='background:#0e938f;color:white'>
+<table class="tabela-comparativa">
+<tr class="tabela-cabecalho">
 <th>ITEM/SERVIÇO</th><th>FORNECEDOR</th><th>PREÇO</th><th>OBSERVAÇÕES</th>
 </tr>
 <tr>
-<td>[ITEM]</td><td>[EMPRESA]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td>[OBS]</td>
+<td>[ITEM]</td><td>[EMPRESA]</td><td class="melhor-preco">R$ [VALOR]</td><td>[OBS]</td>
 </tr>
 </table>
 
