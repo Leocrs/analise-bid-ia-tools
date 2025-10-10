@@ -74,6 +74,12 @@ def chat():
         # Sempre retorna JSON, mesmo em erro
         return jsonify({'error': str(e), 'trace': traceback.format_exc()}), 500
 
+
+# Health check para Render
+@app.route('/healthz', methods=['GET'])
+def healthz():
+    return jsonify({"status": "ok", "service": "Render Deployment"})
+
 @app.route('/api/health', methods=['GET'])
 def health():
     return jsonify({"status": "ok", "service": "Vercel Deployment"})
