@@ -27,11 +27,13 @@ def static_files(path):
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
+    print("[LOG] Início do endpoint /api/chat")
     try:
-        data = request.json
+        data = request.get_json()
+        print(f"[LOG] Dados recebidos: {data}")
         messages = data.get('messages', [])
-        model = data.get('model', 'gpt-4')
-        max_tokens = data.get('max_tokens', 2000)
+        model = data.get('model', 'gpt-3.5-turbo')
+        max_tokens = data.get('max_tokens', 100)
         temperature = data.get('temperature', 0.7)
         
         print("🚀 === NOVA REQUISIÇÃO DE ANÁLISE ===")
@@ -53,6 +55,8 @@ def chat():
             max_tokens=max_tokens,
             temperature=temperature
         )
+        print("[LOG] Resposta gerada com sucesso")
+        print("[LOG] Fim do endpoint /api/chat")
         
         print("✅ Resposta da OpenAI recebida com sucesso!")
         print(f"📄 Tamanho da resposta: {len(response.choices[0].message.content)} caracteres")
