@@ -78,7 +78,7 @@ def chat():
 # Health check para Render
 @app.route('/healthz', methods=['GET'])
 def healthz():
-    return jsonify({"status": "ok", "service": "Render Deployment"})
+    return jsonify({"status": "ok", "service": "Render Deployment", "timestamp": "2025-10-10-19:15"})
 
 @app.route('/api/health', methods=['GET'])
 def health():
