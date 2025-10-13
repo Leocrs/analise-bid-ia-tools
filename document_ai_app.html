@@ -37,7 +37,7 @@
             id="messageInput"
             class="message-input"
             placeholder="Digite sua mensagem..."
-            rows="1"
+            <!DOCTYPE html>
           ></textarea>
           <button id="sendButton" class="send-button">
             <span id="sendIcon" class="send-icon">➤</span>
@@ -710,15 +710,8 @@ PASSO 4: RANKING FINAL
 💡 Economia Potencial: R$ [DIFERENÇA] ([PERCENTUAL]%)
 
 PASSO 5: RECOMENDAÇÃO EXECUTIVA
-• ✅ CONTRATAR: [EMPRESA] (melhor custo-benefício)
-• 💰 ECONOMIA: R$ [VALOR] vs concorrente
-• 🎯 NEGOCIAR: [ITENS ESPECÍFICOS] com [EMPRESA]
 
-📋 INSTRUÇÕES ESPECIAIS:
-${
-  hasMapa
-    ? "• Com MAPA: Usar como referência base para validar propostas"
-    : "• Sem MAPA: Comparar diretamente todas as propostas anexadas"
+ INSTRUÇÕES ESPECIAIS:
 }
 • ADAPTAR tabela ao número real de fornecedores encontrados
 • Se 2 fornecedores: usar 2 colunas; se 3+: usar quantas necessárias
@@ -929,9 +922,6 @@ PASSO 1: EXTRAIR VALORES
 - Encontrar TODOS os preços em R$
 - Identificar empresas/fornecedores
 - Listar itens/serviços cotados
-
-PASSO 2: CRIAR TABELA HTML (OBRIGATÓRIO)
-<table border='1' style='border-collapse:collapse;width:100%;font-size:14px'>
 <tr style='background:#0e938f;color:white'>
 <th>ITEM/SERVIÇO</th><th>FORNECEDOR</th><th>PREÇO</th><th>OBSERVAÇÕES</th>
 </tr>
