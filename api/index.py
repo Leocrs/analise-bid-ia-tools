@@ -1,63 +1,39 @@
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, send_file
 from flask_cors import CORS
 import os
 from openai import OpenAI
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
+from dotenv import load_dotenv
 
+load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-# Configurar API Key do ambiente (seguro)
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-if not OPENAI_API_KEY:
-    print("⚠️ AVISO: OPENAI_API_KEY não configurada nas variáveis de ambiente")
-
-@app.route('/')
-def home():
-    return send_from_directory('.', 'index.html')
-
-@app.route('/<path:path>')
-def static_files(path):
-    return send_from_directory('.', path)
+# Inicializar o cliente OpenAI com a API key
+client = OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY")
+)
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    print("[LOG] Início do endpoint /api/chat")
+    data = request.json
+    messages = data.get('messages', [])
+    model = data.get('model', 'gpt-4')
+    max_tokens = data.get('max_tokens', 2000)
+    
+    print("🚀 === NOVA REQUISIÇÃO DE ANÁLISE ===")
+    print(f"📧 Modelo: {model}")
+    print(f"🔢 Max Tokens: {max_tokens}")
+    print(f"📝 Total de mensagens: {len(messages)}")
+    print("=" * 50)
+
     try:
-        data = request.get_json()
-        print(f"[LOG] Dados recebidos: {data}")
-        messages = data.get('messages', [])
-        model = data.get('model', 'gpt-3.5-turbo')
-        max_tokens = data.get('max_tokens', 100)
-        temperature = data.get('temperature', 0.7)
-        
-        print("🚀 === NOVA REQUISIÇÃO DE ANÁLISE ===")
-        print(f"📧 Modelo: {model}")
-        print(f"🔢 Max Tokens: {max_tokens}")
-        print(f"🌡️ Temperatura: {temperature}")
-        print(f"📝 Total de mensagens: {len(messages)}")
-        print("=" * 50)
-        
-        if not OPENAI_API_KEY:
-            return jsonify({'error': 'Serviço temporariamente indisponível. API Key não configurada no servidor.'}), 503
-        
-        # Criar cliente OpenAI com a chave do servidor (seguro) - sem proxies
-        client = OpenAI(api_key=OPENAI_API_KEY)
-        
         response = client.chat.completions.create(
             model=model,
             messages=messages,
             max_tokens=max_tokens,
-            temperature=temperature
+            temperature=0.7
         )
-        print("[LOG] Resposta gerada com sucesso")
-        print("[LOG] Fim do endpoint /api/chat")
-        
         print("✅ Resposta da OpenAI recebida com sucesso!")
         print(f"📄 Tamanho da resposta: {len(response.choices[0].message.content)} caracteres")
         print("=" * 50)
@@ -69,14 +45,43 @@ def chat():
                 }
             }]
         })
-        
     except Exception as e:
-        import traceback
         print(f"❌ ERRO na API OpenAI: {str(e)}")
-        traceback.print_exc()
         print("=" * 50)
-        # Sempre retorna JSON, mesmo em erro
-        return jsonify({'error': str(e), 'trace': traceback.format_exc()}), 500
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/health', methods=['GET'])
+def health():
+    return jsonify({"status": "ok", "openai_configured": bool(os.getenv("OPENAI_API_KEY"))})
+
+# Rota para servir arquivos da pasta App-IA
+@app.route('/App-IA/<path:filename>')
+def serve_app_ia_files(filename):
+    # Pasta pai do backend (App-IA)
+    app_ia_path = os.path.join(os.path.dirname(os.path.dirname(__file__)))
+    return send_from_directory(app_ia_path, filename)
+
+# Rota para a página principal
+@app.route('/')
+def index():
+    app_ia_path = os.path.dirname(os.path.dirname(__file__))
+    return send_file(os.path.join(app_ia_path, 'document_ai_app.html'))
+
+if __name__ == '__main__':
+    print("=" * 70)
+    print("🚀 TOOLS ENGENHARIA - DOCUMENT AI ANALYZER BACKEND")
+    print("=" * 70)
+    print("🌐 Servidor Flask iniciado em: http://localhost:5000")
+    print("🤖 OpenAI API: Configurada e pronta")
+    print("📊 Endpoints disponíveis:")
+    print("   • POST /api/chat - Análise de documentos")
+    print("   • GET  /api/health - Status do sistema")
+    print("   • GET  / - Interface principal")
+    print("=" * 70)
+    print("💡 Logs da aplicação aparecerão abaixo:")
+    print("=" * 70)
+    
+    app.run(debug=True, port=5000)
 
 
 # Health check para Render

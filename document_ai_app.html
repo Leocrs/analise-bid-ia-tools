@@ -1060,7 +1060,7 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
 
         console.log(
           "🌐 Fazendo requisição para:",
-          "http://localhost:5000/api/chat"
+          "https://analise-bid-ia-backend.onrender.com/api/chat"
         );
         console.log("📦 Payload:", {
           model,
@@ -1068,17 +1068,20 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
           max_tokens: maxTokens,
         });
 
-        const response = await fetch("http://localhost:5000/api/chat", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: model,
-            messages: messages,
-            max_tokens: maxTokens,
-          }),
-        });
+        const response = await fetch(
+          "https://analise-bid-ia-backend.onrender.com/api/chat",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: model,
+              messages: messages,
+              max_tokens: maxTokens,
+            }),
+          }
+        );
 
         console.log("📡 Status da resposta:", response.status);
 
