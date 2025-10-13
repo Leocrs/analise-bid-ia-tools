@@ -1000,6 +1000,7 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
       }
 
       async function callBackend(systemPrompt, userMessage) {
+        // === CLONE FIEL DO APP-IA ===
         console.log("🔗 INICIANDO callBackend()");
         console.log(
           "🎯 Model:",
@@ -1012,32 +1013,21 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
 
         const model = document.getElementById("model").value || "gpt-4";
         const maxTokens =
-          parseInt(document.getElementById("maxTokens").value) || 2000;
+          parseInt(document.getElementById("maxTokens").value) || 2000; // Reduzido para evitar overflow
 
-        // Junta o texto de todos os arquivos anexados
-        let anexosTexto = "";
-        if (fileContents && fileContents.length > 0) {
-          anexosTexto = fileContents
-            .map((f) => `\n\n=== ${f.name} ===\n${f.content}`)
-            .join("\n\n");
-        }
-
-        // Monta a mensagem do usuário igual ao App-IA
-        let mensagemFinal = userMessage;
-        if (anexosTexto) {
-          mensagemFinal = `${userMessage}\n\nCONTEÚDO DOS ARQUIVOS ANEXADOS:\n${anexosTexto}`;
-        }
-
-        // Calcular tokens e contexto normalmente
+        // Calcular tamanho aproximado dos tokens
         const systemTokens = Math.ceil(systemPrompt.length / 4);
-        const userTokens = Math.ceil(mensagemFinal.length / 4);
+        const userTokens = Math.ceil(userMessage.length / 4);
         const historyTokens = conversationHistory
           .slice(-2)
           .reduce((acc, msg) => acc + Math.ceil(msg.content.length / 4), 0);
+
         const totalInputTokens = systemTokens + userTokens + historyTokens;
 
+        // Se ultrapassar limite, reduzir contexto
         let contextMessages = [];
         if (totalInputTokens + maxTokens > 5500) {
+          // Usar apenas contexto mínimo
           contextMessages = [];
         } else if (totalInputTokens + maxTokens > 6000) {
           contextMessages = conversationHistory.slice(-1);
@@ -1048,7 +1038,7 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
         const messages = [
           { role: "system", content: systemPrompt },
           ...contextMessages,
-          { role: "user", content: mensagemFinal },
+          { role: "user", content: userMessage },
         ];
 
         // Verificação final de tokens antes da chamada
@@ -1056,20 +1046,21 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
           (acc, msg) => acc + Math.ceil(msg.content.length / 4),
           0
         );
+
         if (finalTokenCount + maxTokens > 6000) {
           // Truncar mensagem do usuário se necessário
           const truncatedUserMessage =
-            mensagemFinal.length > 2000
-              ? mensagemFinal.substring(0, 1000) +
+            userMessage.length > 2000
+              ? userMessage.substring(0, 1000) +
                 "\n\n[CONTEÚDO TRUNCADO]" +
-                mensagemFinal.substring(mensagemFinal.length - 1000)
-              : mensagemFinal;
+                userMessage.substring(userMessage.length - 1000)
+              : userMessage;
           messages[messages.length - 1].content = truncatedUserMessage;
         }
 
         console.log(
           "🌐 Fazendo requisição para:",
-          "https://analise-bid-ia-backend.onrender.com/api/chat"
+          "http://localhost:5000/api/chat"
         );
         console.log("📦 Payload:", {
           model,
@@ -1077,20 +1068,17 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
           max_tokens: maxTokens,
         });
 
-        const response = await fetch(
-          "https://analise-bid-ia-tools-backend.onrender.com/api/chat",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model: model,
-              messages: messages,
-              max_tokens: maxTokens,
-            }),
-          }
-        );
+        const response = await fetch("http://localhost:5000/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: model,
+            messages: messages,
+            max_tokens: maxTokens,
+          }),
+        });
 
         console.log("📡 Status da resposta:", response.status);
 
