@@ -1012,21 +1012,32 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
 
         const model = document.getElementById("model").value || "gpt-4";
         const maxTokens =
-          parseInt(document.getElementById("maxTokens").value) || 2000; // Reduzido para evitar overflow
+          parseInt(document.getElementById("maxTokens").value) || 2000;
 
-        // Calcular tamanho aproximado dos tokens
+        // Junta o texto de todos os arquivos anexados
+        let anexosTexto = "";
+        if (fileContents && fileContents.length > 0) {
+          anexosTexto = fileContents
+            .map((f) => `\n\n=== ${f.name} ===\n${f.content}`)
+            .join("\n\n");
+        }
+
+        // Monta a mensagem do usuário igual ao App-IA
+        let mensagemFinal = userMessage;
+        if (anexosTexto) {
+          mensagemFinal = `${userMessage}\n\nCONTEÚDO DOS ARQUIVOS ANEXADOS:\n${anexosTexto}`;
+        }
+
+        // Calcular tokens e contexto normalmente
         const systemTokens = Math.ceil(systemPrompt.length / 4);
-        const userTokens = Math.ceil(userMessage.length / 4);
+        const userTokens = Math.ceil(mensagemFinal.length / 4);
         const historyTokens = conversationHistory
           .slice(-2)
           .reduce((acc, msg) => acc + Math.ceil(msg.content.length / 4), 0);
-
         const totalInputTokens = systemTokens + userTokens + historyTokens;
 
-        // Se ultrapassar limite, reduzir contexto
         let contextMessages = [];
         if (totalInputTokens + maxTokens > 5500) {
-          // Usar apenas contexto mínimo
           contextMessages = [];
         } else if (totalInputTokens + maxTokens > 6000) {
           contextMessages = conversationHistory.slice(-1);
@@ -1037,7 +1048,7 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
         const messages = [
           { role: "system", content: systemPrompt },
           ...contextMessages,
-          { role: "user", content: userMessage },
+          { role: "user", content: mensagemFinal },
         ];
 
         // Verificação final de tokens antes da chamada
@@ -1045,16 +1056,14 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
           (acc, msg) => acc + Math.ceil(msg.content.length / 4),
           0
         );
-
         if (finalTokenCount + maxTokens > 6000) {
           // Truncar mensagem do usuário se necessário
           const truncatedUserMessage =
-            userMessage.length > 2000
-              ? userMessage.substring(0, 1000) +
+            mensagemFinal.length > 2000
+              ? mensagemFinal.substring(0, 1000) +
                 "\n\n[CONTEÚDO TRUNCADO]" +
-                userMessage.substring(userMessage.length - 1000)
-              : userMessage;
-
+                mensagemFinal.substring(mensagemFinal.length - 1000)
+              : mensagemFinal;
           messages[messages.length - 1].content = truncatedUserMessage;
         }
 
@@ -1069,7 +1078,7 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
         });
 
         const response = await fetch(
-          "https://analise-bid-ia-backend.onrender.com/api/chat",
+          "https://analise-bid-ia-tools-backend.onrender.com/api/chat",
           {
             method: "POST",
             headers: {
