@@ -50,6 +50,8 @@ def chat():
         print("=" * 50)
         return jsonify({'error': str(e)}), 500
 
+
+@app.route('/api/health', methods=['GET'])
 def health():
     return jsonify({"status": "ok", "openai_configured": bool(os.getenv("OPENAI_API_KEY"))})
 
