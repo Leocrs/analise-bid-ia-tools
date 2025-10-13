@@ -50,7 +50,6 @@ def chat():
         print("=" * 50)
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/health', methods=['GET'])
 def health():
     return jsonify({"status": "ok", "openai_configured": bool(os.getenv("OPENAI_API_KEY"))})
 
@@ -84,14 +83,7 @@ if __name__ == '__main__':
     app.run(debug=True, port=5000)
 
 
-# Health check para Render
-@app.route('/healthz', methods=['GET'])
-def healthz():
-    return jsonify({"status": "ok", "service": "Render Deployment", "timestamp": "2025-10-10-19:15"})
 
-@app.route('/api/health', methods=['GET'])
-def health():
-    return jsonify({"status": "ok", "service": "Vercel Deployment"})
 
 # For Vercel
 app = app
