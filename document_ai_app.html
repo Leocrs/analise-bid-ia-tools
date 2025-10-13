@@ -72,7 +72,7 @@
       </div>
       <div class="config-group">
         <label for="maxTokens">Max Tokens:</label>
-        <input type="number" id="maxTokens" value="2000" placeholder="2000" />
+        <input type="number" id="maxTokens" value="1200" placeholder="1200" />
       </div>
       <div class="config-group">
         <label for="chunkSize">Tamanho do Chunk (caracteres):</label>
@@ -491,7 +491,7 @@
       // Função para dividir texto em chunks (otimizada)
       function createChunks(text, chunkSize) {
         // Truncar se muito grande para evitar overflow
-        const maxContentSize = 6000;
+        const maxContentSize = 5000;
         let processedText = text;
 
         if (text.length > maxContentSize) {
@@ -1005,8 +1005,10 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
         );
 
         const model = document.getElementById("model").value || "gpt-4";
-        const maxTokens =
-          parseInt(document.getElementById("maxTokens").value) || 2000; // Reduzido para evitar overflow
+        // Limite máximo do modelo OpenAI gpt-4: 8192 tokens
+        let maxTokens =
+          parseInt(document.getElementById("maxTokens").value) || 1200;
+        if (maxTokens > 2000) maxTokens = 2000; // Limite de segurança para evitar overflow
 
         // Calcular tamanho aproximado dos tokens
         const systemTokens = Math.ceil(systemPrompt.length / 4);
@@ -1016,13 +1018,12 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
           .reduce((acc, msg) => acc + Math.ceil(msg.content.length / 4), 0);
 
         const totalInputTokens = systemTokens + userTokens + historyTokens;
-
-        // Se ultrapassar limite, reduzir contexto
+        // Limite real do modelo: 8192 tokens
         let contextMessages = [];
-        if (totalInputTokens + maxTokens > 5500) {
+        if (totalInputTokens + maxTokens > 7000) {
           // Usar apenas contexto mínimo
           contextMessages = [];
-        } else if (totalInputTokens + maxTokens > 6000) {
+        } else if (totalInputTokens + maxTokens > 7500) {
           contextMessages = conversationHistory.slice(-1);
         } else {
           contextMessages = conversationHistory.slice(-2);
@@ -1040,13 +1041,19 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
           0
         );
 
-        if (finalTokenCount + maxTokens > 6000) {
-          // Truncar mensagem do usuário se necessário
+        // Truncar mensagem do usuário se necessário para nunca ultrapassar 8192 tokens
+        if (finalTokenCount + maxTokens > 8000) {
+          const allowedUserLength = Math.max(
+            500,
+            (8192 - maxTokens - systemTokens - historyTokens) * 4
+          );
           const truncatedUserMessage =
-            userMessage.length > 2000
-              ? userMessage.substring(0, 1000) +
+            userMessage.length > allowedUserLength
+              ? userMessage.substring(0, Math.floor(allowedUserLength / 2)) +
                 "\n\n[CONTEÚDO TRUNCADO]" +
-                userMessage.substring(userMessage.length - 1000)
+                userMessage.substring(
+                  userMessage.length - Math.floor(allowedUserLength / 2)
+                )
               : userMessage;
           messages[messages.length - 1].content = truncatedUserMessage;
         }
