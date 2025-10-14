@@ -1,4 +1,6 @@
+
 import sqlite3
+import os
 
 # Função para inicializar o banco e criar tabela se não existir
 def init_db():
