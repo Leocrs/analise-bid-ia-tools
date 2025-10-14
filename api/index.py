@@ -1,3 +1,23 @@
+import sqlite3
+
+# Função para inicializar o banco e criar tabela se não existir
+def init_db():
+    conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), 'historico_base.db'))
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS historico (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            usuario TEXT,
+            prompt TEXT,
+            resposta TEXT,
+            data DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+# Inicializar banco ao iniciar app
+init_db()
 
 from flask import Flask, request, jsonify, send_from_directory, send_file
 from flask_cors import CORS
