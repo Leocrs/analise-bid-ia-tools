@@ -1,3 +1,67 @@
+import sqlite3
+import os
+
+# Função para inicializar o banco e criar tabela se não existir
+def init_db():
+    conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), 'historico_base.db'))
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS historico (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            usuario TEXT,
+            prompt TEXT,
+            resposta TEXT,
+            data DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+# Inicializar banco ao iniciar app
+init_db()
+
+from flask import Flask, request, jsonify, send_from_directory, send_file
+from flask_cors import CORS
+import os
+from openai import OpenAI
+from dotenv import load_dotenv
+
+load_dotenv()
+app = Flask(__name__)
+CORS(app)
+
+# Rota para servir arquivos estáticos (css, imagens, js)
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    static_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'analise-bid-ia-tools')
+    return send_from_directory(static_path, filename)
+
+# Inicializar o cliente OpenAI com a API key
+client = OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY")
+)
+
+@app.route('/api/historico', methods=['GET'])
+def get_historico():
+    try:
+        conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), 'historico_base.db'))
+        cursor = conn.cursor()
+        cursor.execute('SELECT id, usuario, prompt, resposta, data FROM historico ORDER BY data DESC')
+        rows = cursor.fetchall()
+        conn.close()
+        historico = []
+        for row in rows:
+            historico.append({
+                'id': row[0],
+                'usuario': row[1],
+                'prompt': row[2],
+                'resposta': row[3],
+                'data': row[4]
+            })
+        return jsonify(historico)
+    except Exception as e:
+        print(f"[ERRO] Falha ao consultar histórico no SQLite: {e}")
+        return jsonify([]), 500
 
 import sqlite3
 import os
@@ -65,7 +129,24 @@ def chat():
         print("✅ Resposta da OpenAI recebida com sucesso!")
         print(f"📄 Tamanho da resposta: {len(response.choices[0].message.content)} caracteres")
         print("=" * 50)
-        
+
+        # Salvar histórico no SQLite
+        try:
+            conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), 'historico_base.db'))
+            cursor = conn.cursor()
+            cursor.execute(
+                'INSERT INTO historico (usuario, prompt, resposta) VALUES (?, ?, ?)',
+                (
+                    data.get('usuario', 'anonimo'),
+                    str(messages),
+                    response.choices[0].message.content
+                )
+            )
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print(f"[ERRO] Falha ao salvar histórico no SQLite: {e}")
+
         return jsonify({
             'choices': [{
                 'message': {
