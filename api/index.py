@@ -98,6 +98,28 @@ def chat():
 def health():
     return jsonify({"status": "ok", "openai_configured": bool(os.getenv("OPENAI_API_KEY"))})
 
+@app.route('/api/historico', methods=['GET'])
+def get_historico():
+    try:
+        conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), 'historico_base.db'))
+        cursor = conn.cursor()
+        cursor.execute('SELECT id, usuario, prompt, resposta, data FROM historico ORDER BY data DESC')
+        rows = cursor.fetchall()
+        conn.close()
+        historico = [
+            {
+                'id': row[0],
+                'usuario': row[1],
+                'prompt': row[2],
+                'resposta': row[3],
+                'data': row[4]
+            }
+            for row in rows
+        ]
+        return jsonify({'historico': historico})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # Rota para servir arquivos da pasta App-IA
 @app.route('/App-IA/<path:filename>')
 def serve_app_ia_files(filename):
