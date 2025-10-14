@@ -986,7 +986,6 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
       }
 
       async function callBackend(systemPrompt, userMessage) {
-        // === CLONE FIEL DO APP-IA ===
         console.log("🔗 INICIANDO callBackend()");
         console.log(
           "🎯 Model:",
@@ -1061,36 +1060,62 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
           max_tokens: maxTokens,
         });
 
-        const response = await fetch(
-          "https://analise-bid-ia-backend.onrender.com/api/chat",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model: model,
-              messages: messages,
-              max_tokens: maxTokens,
-            }),
+        try {
+          const response = await fetch(
+            "https://analise-bid-ia-backend.onrender.com/api/chat",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model: model,
+                messages: messages,
+                max_tokens: maxTokens,
+              }),
+            }
+          );
+
+          console.log("📡 Status da resposta:", response.status);
+
+          if (!response.ok) {
+            const error = await response.json();
+            console.error("❌ Erro da API:", error);
+            // Mostra erro no chat
+            addMessage(
+              "assistant",
+              `<span style='color:red;'>Erro da API: ${
+                error.error || "Erro na API do backend"
+              }</span>`
+            );
+            throw new Error(error.error || "Erro na API do backend");
           }
-        );
 
-        console.log("📡 Status da resposta:", response.status);
-
-        if (!response.ok) {
-          const error = await response.json();
-          console.error("❌ Erro da API:", error);
-          throw new Error(error.error || "Erro na API do backend");
+          const data = await response.json();
+          console.log("✅ Dados recebidos do backend");
+          console.log(
+            "📄 Tamanho da resposta:",
+            data.choices[0].message.content.length
+          );
+          // Debug visual: mostra resposta bruta e tamanho no chat
+          addMessage(
+            "assistant",
+            `<div style='color:#888;font-size:12px'>[DEBUG] Resposta bruta (${
+              data.choices[0].message.content.length
+            } chars):<br><pre style='white-space:pre-wrap'>${data.choices[0].message.content.replace(
+              /</g,
+              "&lt;"
+            )}</pre></div>`
+          );
+          return data.choices[0].message.content;
+        } catch (err) {
+          // Mostra erro inesperado no chat
+          addMessage(
+            "assistant",
+            `<span style='color:red;'>Erro inesperado: ${err.message}</span>`
+          );
+          throw err;
         }
-
-        const data = await response.json();
-        console.log("✅ Dados recebidos do backend");
-        console.log(
-          "📄 Tamanho da resposta:",
-          data.choices[0].message.content.length
-        );
-        return data.choices[0].message.content;
       }
 
       function addMessage(sender, content) {
