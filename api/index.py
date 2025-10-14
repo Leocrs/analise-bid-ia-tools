@@ -1,4 +1,3 @@
-
 from flask import Flask, request, jsonify, send_from_directory, send_file
 from flask_cors import CORS
 import os
@@ -49,7 +48,6 @@ def chat():
         print(f"❌ ERRO na API OpenAI: {str(e)}")
         print("=" * 50)
         return jsonify({'error': str(e)}), 500
-
 
 @app.route('/api/health', methods=['GET'])
 def health():
