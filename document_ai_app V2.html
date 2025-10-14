@@ -68,7 +68,7 @@
       </div>
       <div class="config-group">
         <label for="maxTokens">Max Tokens:</label>
-        <input type="number" id="maxTokens" value="1200" placeholder="1200" />
+        <input type="number" id="maxTokens" value="4000" placeholder="4000" />
       </div>
       <div class="config-group">
         <label for="chunkSize">Tamanho do Chunk (caracteres):</label>
@@ -484,10 +484,10 @@
         }
       }
 
-      // Função para dividir texto em chunks (otimizada)
+      // Função para dividir texto em chunks (igual local)
       function createChunks(text, chunkSize) {
         // Truncar se muito grande para evitar overflow
-        const maxContentSize = 5000;
+        const maxContentSize = 12000;
         let processedText = text;
 
         if (text.length > maxContentSize) {
@@ -497,22 +497,19 @@
         }
 
         const chunks = [];
-        const sentences = processedText.split(/[.!?]\s+/);
         let currentChunk = "";
-
-        for (const sentence of sentences) {
-          if ((currentChunk + sentence).length > chunkSize && currentChunk) {
+        const lines = processedText.split(/\n|\r|\r\n/);
+        for (const line of lines) {
+          if ((currentChunk + line).length > chunkSize && currentChunk) {
             chunks.push(currentChunk.trim());
-            currentChunk = sentence;
+            currentChunk = line;
           } else {
-            currentChunk += (currentChunk ? ". " : "") + sentence;
+            currentChunk += (currentChunk ? "\n" : "") + line;
           }
         }
-
         if (currentChunk) {
           chunks.push(currentChunk.trim());
         }
-
         return chunks.filter(
           (chunk) => chunk.length > 0 && chunk.length < chunkSize * 1.2
         );
@@ -1003,8 +1000,8 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
         const model = document.getElementById("model").value || "gpt-4";
         // Limite máximo do modelo OpenAI gpt-4: 8192 tokens
         let maxTokens =
-          parseInt(document.getElementById("maxTokens").value) || 1200;
-        if (maxTokens > 2000) maxTokens = 2000; // Limite de segurança para evitar overflow
+          parseInt(document.getElementById("maxTokens").value) || 4000;
+        if (maxTokens > 4000) maxTokens = 4000; // Limite de segurança para evitar overflow
 
         // Calcular tamanho aproximado dos tokens
         const systemTokens = Math.ceil(systemPrompt.length / 4);
