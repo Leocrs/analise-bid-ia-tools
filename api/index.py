@@ -1,3 +1,4 @@
+
 from flask import Flask, request, jsonify, send_from_directory, send_file
 from flask_cors import CORS
 import os
@@ -7,6 +8,12 @@ from dotenv import load_dotenv
 load_dotenv()
 app = Flask(__name__)
 CORS(app)
+
+# Rota para servir arquivos estáticos (css, imagens, js)
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    static_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'analise-bid-ia-tools')
+    return send_from_directory(static_path, filename)
 
 # Inicializar o cliente OpenAI com a API key
 client = OpenAI(
