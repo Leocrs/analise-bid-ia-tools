@@ -37,6 +37,7 @@
             id="messageInput"
             class="message-input"
             placeholder="Digite sua mensagem..."
+            rows="1"
           ></textarea>
           <button id="sendButton" class="send-button">
             <span id="sendIcon" class="send-icon">➤</span>
@@ -484,7 +485,7 @@
         }
       }
 
-      // Função para dividir texto em chunks (igual local)
+      // Função para dividir texto em chunks (otimizada)
       function createChunks(text, chunkSize) {
         // Truncar se muito grande para evitar overflow
         const maxContentSize = 12000;
@@ -497,19 +498,22 @@
         }
 
         const chunks = [];
+        const sentences = processedText.split(/[.!?]\s+/);
         let currentChunk = "";
-        const lines = processedText.split(/\n|\r|\r\n/);
-        for (const line of lines) {
-          if ((currentChunk + line).length > chunkSize && currentChunk) {
+
+        for (const sentence of sentences) {
+          if ((currentChunk + sentence).length > chunkSize && currentChunk) {
             chunks.push(currentChunk.trim());
-            currentChunk = line;
+            currentChunk = sentence;
           } else {
-            currentChunk += (currentChunk ? "\n" : "") + line;
+            currentChunk += (currentChunk ? ". " : "") + sentence;
           }
         }
+
         if (currentChunk) {
           chunks.push(currentChunk.trim());
         }
+
         return chunks.filter(
           (chunk) => chunk.length > 0 && chunk.length < chunkSize * 1.2
         );
@@ -706,8 +710,15 @@ PASSO 4: RANKING FINAL
 💡 Economia Potencial: R$ [DIFERENÇA] ([PERCENTUAL]%)
 
 PASSO 5: RECOMENDAÇÃO EXECUTIVA
+• ✅ CONTRATAR: [EMPRESA] (melhor custo-benefício)
+• 💰 ECONOMIA: R$ [VALOR] vs concorrente
+• 🎯 NEGOCIAR: [ITENS ESPECÍFICOS] com [EMPRESA]
 
- INSTRUÇÕES ESPECIAIS:
+📋 INSTRUÇÕES ESPECIAIS:
+${
+  hasMapa
+    ? "• Com MAPA: Usar como referência base para validar propostas"
+    : "• Sem MAPA: Comparar diretamente todas as propostas anexadas"
 }
 • ADAPTAR tabela ao número real de fornecedores encontrados
 • Se 2 fornecedores: usar 2 colunas; se 3+: usar quantas necessárias
@@ -918,6 +929,9 @@ PASSO 1: EXTRAIR VALORES
 - Encontrar TODOS os preços em R$
 - Identificar empresas/fornecedores
 - Listar itens/serviços cotados
+
+PASSO 2: CRIAR TABELA HTML (OBRIGATÓRIO)
+<table border='1' style='border-collapse:collapse;width:100%;font-size:14px'>
 <tr style='background:#0e938f;color:white'>
 <th>ITEM/SERVIÇO</th><th>FORNECEDOR</th><th>PREÇO</th><th>OBSERVAÇÕES</th>
 </tr>
@@ -997,10 +1011,8 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
         );
 
         const model = document.getElementById("model").value || "gpt-4";
-        // Limite máximo do modelo OpenAI gpt-4: 8192 tokens
-        let maxTokens =
-          parseInt(document.getElementById("maxTokens").value) || 4000;
-        if (maxTokens > 4000) maxTokens = 4000; // Limite de segurança para evitar overflow
+        const maxTokens =
+          parseInt(document.getElementById("maxTokens").value) || 2000; // Reduzido para evitar overflow
 
         // Calcular tamanho aproximado dos tokens
         const systemTokens = Math.ceil(systemPrompt.length / 4);
@@ -1010,12 +1022,13 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
           .reduce((acc, msg) => acc + Math.ceil(msg.content.length / 4), 0);
 
         const totalInputTokens = systemTokens + userTokens + historyTokens;
-        // Limite real do modelo: 8192 tokens
+
+        // Se ultrapassar limite, reduzir contexto
         let contextMessages = [];
-        if (totalInputTokens + maxTokens > 7000) {
+        if (totalInputTokens + maxTokens > 5500) {
           // Usar apenas contexto mínimo
           contextMessages = [];
-        } else if (totalInputTokens + maxTokens > 7500) {
+        } else if (totalInputTokens + maxTokens > 6000) {
           contextMessages = conversationHistory.slice(-1);
         } else {
           contextMessages = conversationHistory.slice(-2);
@@ -1033,26 +1046,21 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
           0
         );
 
-        // Truncar mensagem do usuário se necessário para nunca ultrapassar 8192 tokens
-        if (finalTokenCount + maxTokens > 8000) {
-          const allowedUserLength = Math.max(
-            500,
-            (8192 - maxTokens - systemTokens - historyTokens) * 4
-          );
+        if (finalTokenCount + maxTokens > 6000) {
+          // Truncar mensagem do usuário se necessário
           const truncatedUserMessage =
-            userMessage.length > allowedUserLength
-              ? userMessage.substring(0, Math.floor(allowedUserLength / 2)) +
+            userMessage.length > 2000
+              ? userMessage.substring(0, 1000) +
                 "\n\n[CONTEÚDO TRUNCADO]" +
-                userMessage.substring(
-                  userMessage.length - Math.floor(allowedUserLength / 2)
-                )
+                userMessage.substring(userMessage.length - 1000)
               : userMessage;
+
           messages[messages.length - 1].content = truncatedUserMessage;
         }
 
         console.log(
           "🌐 Fazendo requisição para:",
-          "https://analise-bid-ia-backend.onrender.com/api/chat"
+          "http://localhost:5000/api/chat"
         );
         console.log("📦 Payload:", {
           model,
@@ -1060,62 +1068,33 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
           max_tokens: maxTokens,
         });
 
-        try {
-          const response = await fetch(
-            "https://analise-bid-ia-backend.onrender.com/api/chat",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                model: model,
-                messages: messages,
-                max_tokens: maxTokens,
-              }),
-            }
-          );
+        const response = await fetch("http://localhost:5000/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: model,
+            messages: messages,
+            max_tokens: maxTokens,
+          }),
+        });
 
-          console.log("📡 Status da resposta:", response.status);
+        console.log("📡 Status da resposta:", response.status);
 
-          if (!response.ok) {
-            const error = await response.json();
-            console.error("❌ Erro da API:", error);
-            // Mostra erro no chat
-            addMessage(
-              "assistant",
-              `<span style='color:red;'>Erro da API: ${
-                error.error || "Erro na API do backend"
-              }</span>`
-            );
-            throw new Error(error.error || "Erro na API do backend");
-          }
-
-          const data = await response.json();
-          console.log("✅ Dados recebidos do backend");
-          console.log(
-            "📄 Tamanho da resposta:",
-            data.choices[0].message.content.length
-          );
-          // Debug visual: mostra resposta bruta e tamanho no chat
-          addMessage(
-            "assistant",
-            `<div style='color:#888;font-size:12px'>[DEBUG] Resposta bruta (${
-              data.choices[0].message.content.length
-            } chars):<br><pre style='white-space:pre-wrap'>${data.choices[0].message.content.replace(
-              /</g,
-              "&lt;"
-            )}</pre></div>`
-          );
-          return data.choices[0].message.content;
-        } catch (err) {
-          // Mostra erro inesperado no chat
-          addMessage(
-            "assistant",
-            `<span style='color:red;'>Erro inesperado: ${err.message}</span>`
-          );
-          throw err;
+        if (!response.ok) {
+          const error = await response.json();
+          console.error("❌ Erro da API:", error);
+          throw new Error(error.error || "Erro na API do backend");
         }
+
+        const data = await response.json();
+        console.log("✅ Dados recebidos do backend");
+        console.log(
+          "📄 Tamanho da resposta:",
+          data.choices[0].message.content.length
+        );
+        return data.choices[0].message.content;
       }
 
       function addMessage(sender, content) {
