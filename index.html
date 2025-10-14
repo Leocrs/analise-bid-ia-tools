@@ -1058,17 +1058,16 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
           messages[messages.length - 1].content = truncatedUserMessage;
         }
 
-        console.log(
-          "🌐 Fazendo requisição para:",
-          "http://localhost:5000/api/chat"
-        );
+        const backendUrl =
+          "https://analise-bid-ia-backend.onrender.com/api/chat";
+        console.log("🌐 Fazendo requisição para:", backendUrl);
         console.log("📦 Payload:", {
           model,
           messages: messages.length + " mensagens",
           max_tokens: maxTokens,
         });
 
-        const response = await fetch("http://localhost:5000/api/chat", {
+        const response = await fetch(backendUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
