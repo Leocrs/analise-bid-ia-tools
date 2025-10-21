@@ -39,7 +39,15 @@
   font-size: 14px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
-  overflow: hidden;
+  /* Permitir rolagem horizontal quando a tabela for maior que o contêiner */
+  display: block;
+  overflow-x: auto;
+}
+
+/* Garantir quebra de palavras em células para evitar estouro do layout */
+.message-content table th,
+.message-content table td {
+  word-break: break-word;
 }
 
 .message-content table th {
@@ -140,8 +148,8 @@ body {
 }
 
 .chat-container {
-  /* Reduzido para evitar grande espaço vazio quando não há mensagens */
-  min-height: 220px;
+  /* Altura responsiva para evitar muito espaço vazio e adaptar ao conteúdo */
+  min-height: 35vh; /* usa 35% da altura da viewport para telas maiores */
   margin-bottom: 16px;
   /* Mantemos overflow para rolagem quando houver muito conteúdo */
   max-height: 1200px;
@@ -173,8 +181,17 @@ body {
   background: #f1f5f9;
   padding: 10px 14px;
   border-radius: 6px;
-  max-width: 80%;
   line-height: 1.4;
+}
+
+/* Mensagens do usuário devem ser mais estreitas */
+.message.user .message-content {
+  max-width: 60%;
+}
+
+/* Mensagens do assistente (incluindo tabelas) podem usar largura maior */
+.message.assistant .message-content {
+  max-width: calc(100% - 60px); /* 60px estimados para o avatar */
 }
 
 .input-container {
