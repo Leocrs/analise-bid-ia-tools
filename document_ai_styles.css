@@ -140,8 +140,10 @@ body {
 }
 
 .chat-container {
-  min-height: 600px;
+  /* Reduzido para evitar grande espaço vazio quando não há mensagens */
+  min-height: 220px;
   margin-bottom: 16px;
+  /* Mantemos overflow para rolagem quando houver muito conteúdo */
   max-height: 1200px;
   overflow-y: auto;
 }
