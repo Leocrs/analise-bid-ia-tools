@@ -665,69 +665,65 @@
             file.name.toLowerCase().includes("concorrencia")
         );
 
-        // Prompt flexível para análise consolidada
-        const promptConsolidado = `🚨 ANÁLISE CONSOLIDADA OBRIGATÓRIA - TOOLS ENGENHARIA 🚨
+        // Prompt aprimorado para análise consolidada com melhor tratamento
+        const promptConsolidado = `Você é um analista especializado em orçamentos e propostas comerciais da TOOLS ENGENHARIA.
 
-MISSÃO CRÍTICA: Criar TABELA COMPARATIVA ÚNICA com TODOS os documentos anexados
+OBJETIVO PRINCIPAL:
+Analisar TODOS os documentos fornecidos e criar uma comparação clara dos fornecedores.
 
-IDENTIFICAR FORNECEDORES
-- Identificar TODOS os fornecedores/empresas mencionados nos documentos
-- Extrair nomes das empresas, CNPJs, e identificações
-- Listar fornecedores encontrados
+PASSO 1 - IDENTIFICAR FORNECEDORES:
+Localize e liste TODOS os fornecedores/empresas mencionados. Para cada um, extraia:
+- Nome da empresa
+- CNPJ (se disponível)
+- Valor total da proposta
 
-EXTRAIR ITENS E PREÇOS
-- Localizar TODOS os itens, produtos, serviços e valores em R$
-- Equipamentos, materiais, serviços, instalações
-- Preços unitários, subtotais, e totais gerais
-- ${
-          hasMapa
-            ? "Usar mapa de concorrência como referência base"
-            : "Comparar diretamente entre propostas anexadas"
-        }
+PASSO 2 - EXTRAIR DADOS:
+Para cada fornecedor, identifique:
+- Itens/serviços listados
+- Quantidades
+- Preços unitários
+- Subtotais
+- Impostos e descontos
+- VALOR TOTAL
 
-TABELA COMPARATIVA CONSOLIDADA (OBRIGATÓRIA)
-<table border='1' style='border-collapse:collapse;width:100%;font-size:14px'>
-<tr style='background:#0e938f;color:white'>
-<th>ITEM/SERVIÇO</th><th>FORNECEDOR 1</th><th>FORNECEDOR 2</th><th>FORNECEDOR 3</th><th>MELHOR PREÇO</th><th>ECONOMIA</th>
-</tr>
-<tr>
-<td>[ITEM 1]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td style='background:#fecaca'>R$ [VALOR]</td><td>R$ [VALOR]</td><td>[MELHOR]</td><td>R$ [DIFERENÇA]</td>
-</tr>
-<tr>
-<td>[ITEM 2]</td><td style='background:#fecaca'>R$ [VALOR]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td>R$ [VALOR]</td><td>[MELHOR]</td><td>R$ [DIFERENÇA]</td>
-</tr>
-<tr>
-<td>[ITEM 3]</td><td>R$ [VALOR]</td><td>R$ [VALOR]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td>[MELHOR]</td><td>R$ [DIFERENÇA]</td>
-</tr>
-<tr style='background:#f3f4f6;font-weight:bold'>
-<td>TOTAL GERAL</td><td>R$ [TOTAL]</td><td>R$ [TOTAL]</td><td>[VENCEDOR]</td><td>R$ [ECONOMIA]</td>
-</tr>
-</table>
+PASSO 3 - CRIAR TABELA COMPARATIVA:
+Gere uma tabela HTML com a seguinte estrutura:
+- Coluna 1: ITEM/SERVIÇO
+- Colunas seguintes: Um fornecedor por coluna com seus respectivos preços
+- Coluna final: MELHOR PREÇO (destacar em VERDE)
+- Use RED para o mais caro
 
-RANKING FINAL
-🥇 1º Lugar: [EMPRESA] - R$ [VALOR] (melhor preço geral)
-🥈 2º Lugar: [EMPRESA] - R$ [VALOR] 
-💡 Economia Potencial: R$ [DIFERENÇA] ([PERCENTUAL]%)
+PASSO 4 - ANÁLISE EXECUTIVA:
+1. Ranking de fornecedores por preço total
+2. Economia potencial (diferença entre melhor e pior proposta)
+3. Recomendação de qual fornecedor contratar
+4. Itens onde negociar especificamente
 
-RECOMENDAÇÃO EXECUTIVA
-• ✅ CONTRATAR: [EMPRESA] (melhor custo-benefício)
-• 💰 ECONOMIA: R$ [VALOR] vs concorrente
-• 🎯 NEGOCIAR: [ITENS ESPECÍFICOS] com [EMPRESA]
+FORMATO OBRIGATÓRIO:
+- Usar HTML table com border
+- Cores: GREEN (#dcfce7) para melhor preço, RED (#fecaca) para pior
+- Números formatados em R$ com 2 casas decimais
+- Totalizações em negrito
 
-📋 INSTRUÇÕES ESPECIAIS:
-${
-  hasMapa
-    ? "• Com MAPA: Usar como referência base para validar propostas"
-    : "• Sem MAPA: Comparar diretamente todas as propostas anexadas"
-}
-• ADAPTAR tabela ao número real de fornecedores encontrados
-• Se 2 fornecedores: usar 2 colunas; se 3+: usar quantas necessárias
-• Sempre destacar MELHOR preço em VERDE e PIOR em VERMELHO
+Se encontrar dados incompletos, mencione as lacunas observadas.
+Foque em NÚMEROS e COMPARAÇÕES, minimizando texto descritivo.`;
 
-⚠️ PROIBIDO: Texto descritivo, análises longas, explicações
-✅ OBRIGATÓRIO: APENAS tabela + números + ranking + recomendação`;
+        const userMessage = `Analise os seguintes documentos e crie uma comparação completa:
+
+${todosOsDocumentos}
+
+${hasMapa ? "\nNota: Este inclui um mapa de concorrência que deve ser usado como referência." : ""}`;
 
         try {
+          // Validar se há conteúdo para analisar
+          if (!todosOsDocumentos || todosOsDocumentos.trim().length === 0) {
+            updateMessage(
+              loadingId,
+              `⚠️ <span style='color:orange;'>Nenhum conteúdo foi extraído dos documentos. Verifique se os arquivos PDF/Excel estão corretos e tente novamente.</span>`
+            );
+            return;
+          }
+
           updateLoadingMessage(
             loadingId,
             "🚀 Executando análise comparativa consolidada..."
@@ -738,7 +734,7 @@ ${
 
           const resultado = await callBackend(
             promptConsolidado,
-            `ANÁLISE TODOS OS DOCUMENTOS SIMULTANEAMENTE:\n\n${todosOsDocumentos}`
+            userMessage
           );
           console.log("✅ Resultado recebido do backend");
 
@@ -750,9 +746,20 @@ ${
           console.log("✅ structuredAnalysis() CONCLUÍDA COM SUCESSO");
         } catch (error) {
           console.error("❌ ERRO em structuredAnalysis():", error);
+          
+          // Mensagem de erro mais detalhada
+          let errorMsg = "Erro na análise consolidada";
+          if (error.message.includes("PDF")) {
+            errorMsg = "Erro ao processar PDF. Tente novamente ou use um arquivo em bom estado.";
+          } else if (error.message.includes("Excel")) {
+            errorMsg = "Erro ao processar Excel. Verifique o formato do arquivo.";
+          } else if (error.message.includes("timeout")) {
+            errorMsg = "Tempo de espera excedido. Tente com documentos menores.";
+          }
+          
           updateMessage(
             loadingId,
-            `❌ <span style='color:red;'>Erro na análise consolidada: ${error.message}</span>`
+            `❌ <span style='color:red;'>${errorMsg}: ${error.message}</span>`
           );
         }
       }

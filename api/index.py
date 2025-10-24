@@ -164,6 +164,84 @@ def chat():
         if len(str(messages)) > 50000:  # Limitar tamanho do prompt
             return jsonify({'error': 'Prompt muito longo. Reduza o tamanho do texto.'}), 400
 
+        # Validar se há conteúdo de usuário
+        user_messages = [m for m in messages if m.get('role') == 'user']
+        if user_messages and not user_messages[-1].get('content', '').strip():
+            return jsonify({'error': 'Mensagem do usuário vazia. Verifique se os arquivos foram processados corretamente.'}), 400
+
+        # Processar requisição OpenAI
+        response, error = process_openai_request(messages, model, max_tokens)
+        
+        if error:
+            print(f"❌ ERRO na API OpenAI: {error}")
+            
+            # Tratamento específico de erros da OpenAI
+            if "API rate limit" in error or "rate_limit" in error:
+                return jsonify({'error': 'Limite de requisições atingido. Aguarde alguns momentos e tente novamente.'}), 429
+            elif "invalid_request_error" in error:
+                return jsonify({'error': 'Erro na requisição. Verifique o formato dos documentos.'}), 400
+            elif "model not found" in error or "not available" in error:
+                return jsonify({'error': f'Modelo {model} não disponível. Tente com gpt-3.5-turbo.'}), 400
+            elif "timeout" in error.lower() or "connection" in error.lower():
+                return jsonify({'error': 'Erro de conexão com OpenAI. Tente novamente.'}), 503
+            else:
+                return jsonify({'error': f'Erro na API OpenAI: {error}'}), 500
+        
+        if not response or not response.choices:
+            return jsonify({'error': 'Resposta vazia da OpenAI. Tente novamente.'}), 500
+
+        content = response.choices[0].message.content
+        
+        # Validar se recebeu uma resposta válida
+        if not content or len(content.strip()) == 0:
+            return jsonify({'error': 'OpenAI retornou resposta vazia. Tente novamente.'}), 500
+            
+        processing_time = time.time() - start_time
+        
+        print("✅ Resposta da OpenAI recebida com sucesso!")
+        print(f"📄 Tamanho da resposta: {len(content)} caracteres")
+        print(f"⏱️ Tempo de processamento: {processing_time:.2f}s")
+        print("=" * 50)
+
+        # Salvar histórico de forma assíncrona
+        save_to_history_async(
+            data.get('usuario', 'anonimo'),
+            messages,
+            content
+        )
+
+        return jsonify({
+            'choices': [{
+                'message': {
+                    'content': content
+                }
+            }],
+            'processing_time': round(processing_time, 2)
+        })
+        
+    except Exception as e:
+        processing_time = time.time() - start_time
+        error_msg = f"Erro interno do servidor: {str(e)}"
+        print(f"❌ ERRO GERAL: {error_msg}")
+        print(f"⏱️ Tempo até erro: {processing_time:.2f}s")
+        print("=" * 50)
+        return jsonify({'error': error_msg}), 500
+        model = data.get('model', 'gpt-4')
+        max_tokens = min(data.get('max_tokens', 2000), 4000)  # Limitar tokens
+        
+        print("🚀 === NOVA REQUISIÇÃO DE ANÁLISE ===")
+        print(f"📧 Modelo: {model}")
+        print(f"🔢 Max Tokens: {max_tokens}")
+        print(f"📝 Total de mensagens: {len(messages)}")
+        print("=" * 50)
+
+        # Validação básica
+        if not messages:
+            return jsonify({'error': 'Nenhuma mensagem fornecida'}), 400
+        
+        if len(str(messages)) > 50000:  # Limitar tamanho do prompt
+            return jsonify({'error': 'Prompt muito longo. Reduza o tamanho do texto.'}), 400
+
         # Processar requisição OpenAI
         response, error = process_openai_request(messages, model, max_tokens)
         
