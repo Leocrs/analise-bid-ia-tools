@@ -712,7 +712,11 @@ Foque em NÚMEROS e COMPARAÇÕES, minimizando texto descritivo.`;
 
 ${todosOsDocumentos}
 
-${hasMapa ? "\nNota: Este inclui um mapa de concorrência que deve ser usado como referência." : ""}`;
+${
+  hasMapa
+    ? "\nNota: Este inclui um mapa de concorrência que deve ser usado como referência."
+    : ""
+}`;
 
         try {
           // Validar se há conteúdo para analisar
@@ -732,10 +736,7 @@ ${hasMapa ? "\nNota: Este inclui um mapa de concorrência que deve ser usado com
           console.log("📏 Tamanho do prompt:", promptConsolidado.length);
           console.log("📄 Tamanho dos documentos:", todosOsDocumentos.length);
 
-          const resultado = await callBackend(
-            promptConsolidado,
-            userMessage
-          );
+          const resultado = await callBackend(promptConsolidado, userMessage);
           console.log("✅ Resultado recebido do backend");
 
           updateMessage(loadingId, resultado);
@@ -746,17 +747,20 @@ ${hasMapa ? "\nNota: Este inclui um mapa de concorrência que deve ser usado com
           console.log("✅ structuredAnalysis() CONCLUÍDA COM SUCESSO");
         } catch (error) {
           console.error("❌ ERRO em structuredAnalysis():", error);
-          
+
           // Mensagem de erro mais detalhada
           let errorMsg = "Erro na análise consolidada";
           if (error.message.includes("PDF")) {
-            errorMsg = "Erro ao processar PDF. Tente novamente ou use um arquivo em bom estado.";
+            errorMsg =
+              "Erro ao processar PDF. Tente novamente ou use um arquivo em bom estado.";
           } else if (error.message.includes("Excel")) {
-            errorMsg = "Erro ao processar Excel. Verifique o formato do arquivo.";
+            errorMsg =
+              "Erro ao processar Excel. Verifique o formato do arquivo.";
           } else if (error.message.includes("timeout")) {
-            errorMsg = "Tempo de espera excedido. Tente com documentos menores.";
+            errorMsg =
+              "Tempo de espera excedido. Tente com documentos menores.";
           }
-          
+
           updateMessage(
             loadingId,
             `❌ <span style='color:red;'>${errorMsg}: ${error.message}</span>`
