@@ -86,6 +86,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="prompt-config.js"></script>
 
     <script>
       // Sistema de Base Histórica
@@ -636,107 +637,32 @@
         const loadingId = addMessage("assistant", "");
         showLoading(loadingId);
 
-        updateLoadingMessage(
-          loadingId,
-          "🔍 Consolidando todos os documentos..."
-        );
-        console.log("📄 Total de arquivos:", fileContents.length);
-
-        // Consolidar conteúdo de todos os arquivos
-        let todosOsDocumentos = "";
-        fileContents.forEach((file, index) => {
-          todosOsDocumentos += `\n\n=== DOCUMENTO ${
-            index + 1
-          }: ${file.name.toUpperCase()} ===\n`;
-          // Limitar tamanho para evitar overflow
-          const conteudoLimitado =
-            file.content.length > 3000
-              ? file.content.substring(0, 1500) +
-                "\n[...CONTEÚDO TRUNCADO...]\n" +
-                file.content.substring(file.content.length - 1500)
-              : file.content;
-          todosOsDocumentos += conteudoLimitado;
-        });
-
-        // Detecta se há mapa de concorrência para adaptar o prompt
-        const hasMapa = fileContents.some(
-          (file) =>
-            file.name.toLowerCase().includes("mapa") ||
-            file.name.toLowerCase().includes("concorrencia")
-        );
-
-        // Prompt aprimorado para análise consolidada com melhor tratamento
-        const promptConsolidado = `Você é um analista especializado em orçamentos e propostas comerciais da TOOLS ENGENHARIA.
-
-OBJETIVO PRINCIPAL:
-Analisar TODOS os documentos fornecidos e criar uma comparação clara dos fornecedores.
-
-PASSO 1 - IDENTIFICAR FORNECEDORES:
-Localize e liste TODOS os fornecedores/empresas mencionados. Para cada um, extraia:
-- Nome da empresa
-- CNPJ (se disponível)
-- Valor total da proposta
-
-PASSO 2 - EXTRAIR DADOS:
-Para cada fornecedor, identifique:
-- Itens/serviços listados
-- Quantidades
-- Preços unitários
-- Subtotais
-- Impostos e descontos
-- VALOR TOTAL
-
-PASSO 3 - CRIAR TABELA COMPARATIVA:
-Gere uma tabela HTML com a seguinte estrutura:
-- Coluna 1: ITEM/SERVIÇO
-- Colunas seguintes: Um fornecedor por coluna com seus respectivos preços
-- Coluna final: MELHOR PREÇO (destacar em VERDE)
-- Use RED para o mais caro
-
-PASSO 4 - ANÁLISE EXECUTIVA:
-1. Ranking de fornecedores por preço total
-2. Economia potencial (diferença entre melhor e pior proposta)
-3. Recomendação de qual fornecedor contratar
-4. Itens onde negociar especificamente
-
-FORMATO OBRIGATÓRIO:
-- Usar HTML table com border
-- Cores: GREEN (#dcfce7) para melhor preço, RED (#fecaca) para pior
-- Números formatados em R$ com 2 casas decimais
-- Totalizações em negrito
-
-Se encontrar dados incompletos, mencione as lacunas observadas.
-Foque em NÚMEROS e COMPARAÇÕES, minimizando texto descritivo.`;
-
-        const userMessage = `Analise os seguintes documentos e crie uma comparação completa:
-
-${todosOsDocumentos}
-
-${
-  hasMapa
-    ? "\nNota: Este inclui um mapa de concorrência que deve ser usado como referência."
-    : ""
-}`;
-
         try {
           // Validar se há conteúdo para analisar
-          if (!todosOsDocumentos || todosOsDocumentos.trim().length === 0) {
+          if (!fileContents || fileContents.length === 0) {
             updateMessage(
               loadingId,
-              `⚠️ <span style='color:orange;'>Nenhum conteúdo foi extraído dos documentos. Verifique se os arquivos PDF/Excel estão corretos e tente novamente.</span>`
+              `⚠️ <span style='color:orange;'>Nenhum arquivo foi processado. Verifique se os arquivos estão corretos.</span>`
             );
             return;
           }
 
           updateLoadingMessage(
             loadingId,
-            "🚀 Executando análise comparativa consolidada..."
+            "🔍 Analisando documentos com IA especializada..."
           );
-          console.log("📊 Preparando prompt consolidado...");
-          console.log("📏 Tamanho do prompt:", promptConsolidado.length);
-          console.log("📄 Tamanho dos documentos:", todosOsDocumentos.length);
 
-          const resultado = await callBackend(promptConsolidado, userMessage);
+          console.log("📄 Total de documentos:", fileContents.length);
+          console.log("📊 Preparando análise...");
+
+          // Usar o novo prompt centralizado
+          const analysisPrompt = getAnalysisPrompt(fileContents.length);
+          const userMessage = buildUserMessage(fileContents);
+
+          console.log("📏 Tamanho do prompt:", analysisPrompt.length);
+          console.log("📄 Tamanho total dos documentos:", userMessage.length);
+
+          const resultado = await callBackend(analysisPrompt, userMessage);
           console.log("✅ Resultado recebido do backend");
 
           updateMessage(loadingId, resultado);
