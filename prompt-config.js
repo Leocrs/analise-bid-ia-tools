@@ -162,7 +162,7 @@ function getAnalysisPrompt(documentCount = 1) {
 function buildUserMessage(allDocuments) {
   // ✅ NÃO TRUNCAR - Deixar documentos COMPLETOS para análise integral
   // GPT-4 consegue processar até 128K tokens. Deixamos tudo inteiro.
-  
+
   let message = `DOCUMENTOS PARA ANÁLISE COMPLETA E INTEGRAL:\n\n`;
 
   allDocuments.forEach((doc, index) => {
