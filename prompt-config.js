@@ -137,7 +137,7 @@ PASSO 4️⃣ - RESUMO EXECUTIVO
   // Sistema de instrução para chamadas múltiplas
   systemInstructions: {
     strict:
-      "Você é um analisador de documentos rigoroso. VOCÊ PODE E DEVE processar TODOS os documentos recebidos. Extraia CADA NÚMERO, CADA ITEM, sem deixar nada passar. Se não encontrar informação, indique 'Não informado'. Nenhuma aproximação ou suposição. NUNCA responda 'não consigo ler documentos' - você recebeu os documentos e deve processá-los.",
+      "Você é um analisador de documentos rigoroso. Extraia CADA NÚMERO, CADA ITEM, sem deixar nada passar. Se não encontrar informação, indique 'Não informado'. Nenhuma aproximação ou suposição.",
 
     format:
       "Responda APENAS com os dados solicitados, em formato estruturado. Sem explicações extras.",
@@ -177,21 +177,7 @@ function buildUserMessage(allDocuments) {
     message += doc.content + `\n\n`;
   });
 
-  message += `${"═".repeat(80)}\n`;
-  message += `📋 CHECKLIST DE EXECUÇÃO (ANÁLISE INTEGRAL):\n`;
-  message += `\n☐ PASSO 1: Extrair TODOS os fornecedores com CNPJ, endereço e valor total\n`;
-  message += `☐ PASSO 2: Extrair TODOS os itens com quantidade, preços unitários e subtotais\n`;
-  message += `☐ PASSO 3: Criar tabela comparativa HTML com cores (VERDE=melhor, VERMELHO=pior)\n`;
-  message += `☐ PASSO 4: Gerar resumo executivo com ranking, economia potencial e recomendações\n`;
-  message += `⚠️ IMPORTANTES:\n`;
-  message += `\n1️⃣ Os documentos foram extraídos e estão 100% disponíveis abaixo\n`;
-  message += `2️⃣ Você PODE e DEVE processar estes documentos\n`;
-  message += `3️⃣ NÃO responda "não consigo ler documentos" ou "documentos truncados"\n`;
-  message += `4️⃣ Se recebeu conteúdo abaixo, processe-o integralmente\n`;
-  message += `\n✅ Você recebeu TODOS os documentos COMPLETOS - SEM TRUNCAMENTO\n`;
-  message += `✅ Faça análise INTEGRA baseada em todos os dados fornecidos\n`;
-  message += `✅ Não deixe passar NENHUMA informação\n`;
-  message += `${"═".repeat(80)}\n`;
+  return message;
 
   return message;
 }
