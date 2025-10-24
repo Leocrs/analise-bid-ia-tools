@@ -86,7 +86,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-    <script src="prompt-config.js"></script>
 
     <script>
       // Sistema de Base Histórica
@@ -637,32 +636,110 @@
         const loadingId = addMessage("assistant", "");
         showLoading(loadingId);
 
-        try {
-          // Validar se há conteúdo para analisar
-          if (!fileContents || fileContents.length === 0) {
-            updateMessage(
-              loadingId,
-              `⚠️ <span style='color:orange;'>Nenhum arquivo foi processado. Verifique se os arquivos estão corretos.</span>`
-            );
-            return;
-          }
+        updateLoadingMessage(
+          loadingId,
+          "🔍 Consolidando todos os documentos..."
+        );
+        console.log("📄 Total de arquivos:", fileContents.length);
 
+        // Consolidar conteúdo de todos os arquivos
+        let todosOsDocumentos = "";
+        fileContents.forEach((file, index) => {
+          todosOsDocumentos += `\n\n=== DOCUMENTO ${
+            index + 1
+          }: ${file.name.toUpperCase()} ===\n`;
+          // Limitar tamanho para evitar overflow
+          const conteudoLimitado =
+            file.content.length > 3000
+              ? file.content.substring(0, 1500) +
+                "\n[...CONTEÚDO TRUNCADO...]\n" +
+                file.content.substring(file.content.length - 1500)
+              : file.content;
+          todosOsDocumentos += conteudoLimitado;
+        });
+
+        // Detecta se há mapa de concorrência para adaptar o prompt
+        const hasMapa = fileContents.some(
+          (file) =>
+            file.name.toLowerCase().includes("mapa") ||
+            file.name.toLowerCase().includes("concorrencia")
+        );
+
+        // Prompt flexível para análise consolidada
+        const promptConsolidado = `🚨 ANÁLISE CONSOLIDADA OBRIGATÓRIA - TOOLS ENGENHARIA 🚨
+
+MISSÃO CRÍTICA: Criar TABELA COMPARATIVA ÚNICA com TODOS os documentos anexados
+
+IDENTIFICAR FORNECEDORES
+- Identificar TODOS os fornecedores/empresas mencionados nos documentos
+- Extrair nomes das empresas, CNPJs, e identificações
+- Listar fornecedores encontrados
+
+EXTRAIR ITENS E PREÇOS
+- Localizar TODOS os itens, produtos, serviços e valores em R$
+- Equipamentos, materiais, serviços, instalações
+- Preços unitários, subtotais, e totais gerais
+- ${
+          hasMapa
+            ? "Usar mapa de concorrência como referência base"
+            : "Comparar diretamente entre propostas anexadas"
+        }
+
+TABELA COMPARATIVA CONSOLIDADA (OBRIGATÓRIA)
+<table border='1' style='border-collapse:collapse;width:100%;font-size:14px'>
+<tr style='background:#0e938f;color:white'>
+<th>ITEM/SERVIÇO</th><th>FORNECEDOR 1</th><th>FORNECEDOR 2</th><th>FORNECEDOR 3</th><th>MELHOR PREÇO</th><th>ECONOMIA</th>
+</tr>
+<tr>
+<td>[ITEM 1]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td style='background:#fecaca'>R$ [VALOR]</td><td>R$ [VALOR]</td><td>[MELHOR]</td><td>R$ [DIFERENÇA]</td>
+</tr>
+<tr>
+<td>[ITEM 2]</td><td style='background:#fecaca'>R$ [VALOR]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td>R$ [VALOR]</td><td>[MELHOR]</td><td>R$ [DIFERENÇA]</td>
+</tr>
+<tr>
+<td>[ITEM 3]</td><td>R$ [VALOR]</td><td>R$ [VALOR]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td>[MELHOR]</td><td>R$ [DIFERENÇA]</td>
+</tr>
+<tr style='background:#f3f4f6;font-weight:bold'>
+<td>TOTAL GERAL</td><td>R$ [TOTAL]</td><td>R$ [TOTAL]</td><td>[VENCEDOR]</td><td>R$ [ECONOMIA]</td>
+</tr>
+</table>
+
+RANKING FINAL
+🥇 1º Lugar: [EMPRESA] - R$ [VALOR] (melhor preço geral)
+🥈 2º Lugar: [EMPRESA] - R$ [VALOR] 
+💡 Economia Potencial: R$ [DIFERENÇA] ([PERCENTUAL]%)
+
+RECOMENDAÇÃO EXECUTIVA
+• ✅ CONTRATAR: [EMPRESA] (melhor custo-benefício)
+• 💰 ECONOMIA: R$ [VALOR] vs concorrente
+• 🎯 NEGOCIAR: [ITENS ESPECÍFICOS] com [EMPRESA]
+
+📋 INSTRUÇÕES ESPECIAIS:
+${
+  hasMapa
+    ? "• Com MAPA: Usar como referência base para validar propostas"
+    : "• Sem MAPA: Comparar diretamente todas as propostas anexadas"
+}
+• ADAPTAR tabela ao número real de fornecedores encontrados
+• Se 2 fornecedores: usar 2 colunas; se 3+: usar quantas necessárias
+• Sempre destacar MELHOR preço em VERDE e PIOR em VERMELHO
+
+⚠️ PROIBIDO: Texto descritivo, análises longas, explicações
+✅ OBRIGATÓRIO: APENAS tabela + números + ranking + recomendação`;
+
+        try {
           updateLoadingMessage(
             loadingId,
-            "🔍 Analisando documentos com IA especializada..."
+            "🚀 Executando análise comparativa consolidada..."
           );
+          console.log("📊 Preparando prompt consolidado...");
+          console.log("📏 Tamanho do prompt:", promptConsolidado.length);
+          console.log("📄 Tamanho dos documentos:", todosOsDocumentos.length);
 
-          console.log("📄 Total de documentos:", fileContents.length);
-          console.log("📊 Preparando análise...");
-
-          // Usar o novo prompt centralizado
-          const analysisPrompt = getAnalysisPrompt(fileContents.length);
-          const userMessage = buildUserMessage(fileContents);
-
-          console.log("📏 Tamanho do prompt:", analysisPrompt.length);
-          console.log("📄 Tamanho total dos documentos:", userMessage.length);
-
-          const resultado = await callBackend(analysisPrompt, userMessage);
+          const resultado = await callBackend(
+            promptConsolidado,
+            `ANÁLISE TODOS OS DOCUMENTOS SIMULTANEAMENTE:\n\n${todosOsDocumentos}`
+          );
           console.log("✅ Resultado recebido do backend");
 
           updateMessage(loadingId, resultado);
@@ -673,23 +750,9 @@
           console.log("✅ structuredAnalysis() CONCLUÍDA COM SUCESSO");
         } catch (error) {
           console.error("❌ ERRO em structuredAnalysis():", error);
-
-          // Mensagem de erro mais detalhada
-          let errorMsg = "Erro na análise consolidada";
-          if (error.message.includes("PDF")) {
-            errorMsg =
-              "Erro ao processar PDF. Tente novamente ou use um arquivo em bom estado.";
-          } else if (error.message.includes("Excel")) {
-            errorMsg =
-              "Erro ao processar Excel. Verifique o formato do arquivo.";
-          } else if (error.message.includes("timeout")) {
-            errorMsg =
-              "Tempo de espera excedido. Tente com documentos menores.";
-          }
-
           updateMessage(
             loadingId,
-            `❌ <span style='color:red;'>${errorMsg}: ${error.message}</span>`
+            `❌ <span style='color:red;'>Erro na análise consolidada: ${error.message}</span>`
           );
         }
       }
@@ -830,7 +893,6 @@ PASSO 1: EXTRAIR VALORES
 - Encontrar TODOS os preços em R$
 - Identificar empresas/fornecedores
 - Listar itens/serviços cotados
-- Produtos, materiais, serviços, instalações, características
 
 PASSO 2: CRIAR TABELA HTML (OBRIGATÓRIO)
 <table border='1' style='border-collapse:collapse;width:100%;font-size:14px'>
@@ -867,12 +929,6 @@ PASSO 1: EXTRAIR VALORES
 - Encontrar TODOS os preços em R$
 - Identificar empresas/fornecedores
 - Listar itens/serviços cotados
-- Identificar características relevantes
-- Identificar possíveis alternativas
-- Avaliar riscos e benefícios
-- Sugerir melhorias
-- Identificar lacunas
-
 
 PASSO 2: CRIAR TABELA HTML (OBRIGATÓRIO)
 <table border='1' style='border-collapse:collapse;width:100%;font-size:14px'>
@@ -1003,7 +1059,7 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
         }
 
         const backendUrl =
-          "https://analise-bid-ia-backend-v3.onrender.com/api/chat";
+          "https://analise-bid-ia-backend.onrender.com/api/chat";
         console.log("🌐 Fazendo requisição para:", backendUrl);
         console.log("📦 Payload:", {
           model,
