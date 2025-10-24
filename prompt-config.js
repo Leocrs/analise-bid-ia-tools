@@ -40,7 +40,7 @@ PARA CADA FORNECEDOR, EXTRAIA EXATAMENTE:
 
 ═══════════════════════════════════════════════════════════════
 
-PASSO 2️⃣ - EXTRAIR ITENS E PREÇOS (MESMO COM TRUNCAMENTO)
+PASSO 2️⃣ - EXTRAIR ITENS E PREÇOS (DOCUMENTO COMPLETO)
 ┌─────────────────────────────────────────────────────────────┐
 └─────────────────────────────────────────────────────────────┘
 
@@ -48,6 +48,7 @@ Procure especificamente por:
 ✓ Tabelas com colunas: Item | Qtd | Preço Unit | Subtotal
 ✓ Linhas numeradas: "1.", "2.", "3." com descrição e R$
 ✓ Produtos/serviços seguidos de valores
+✓ CONTINUE PROCURANDO ATÉ O FINAL DO DOCUMENTO - não há truncamento
 
 PARA CADA ITEM QUE ENCONTRAR, EXTRAIA:
 ┌─────────────────────────────────────────────────────────────┐
@@ -66,7 +67,10 @@ BUSQUE TAMBÉM VALORES CRÍTICOS:
 
 ═══════════════════════════════════════════════════════════════
 
-PASSO 3️⃣ - CRIAR TABELA COMPARATIVA (SE 2+ FORNECEDORES)
+PASSO 3️⃣ - CRIAR TABELA COMPARATIVA 
+
+⚠️ SE APENAS 1 DOCUMENTO: Crie tabela com itens e preços deste fornecedor
+⚠️ SE 2+ DOCUMENTOS: Compare LADO A LADO todos os fornecedores
 
 <table border='1' style='border-collapse:collapse;width:100%;font-size:12px;margin:20px 0'>
   <tr style='background:#0e938f;color:white;font-weight:bold'>
@@ -133,7 +137,7 @@ PASSO 4️⃣ - RESUMO EXECUTIVO
   // Sistema de instrução para chamadas múltiplas
   systemInstructions: {
     strict:
-      "Você é um analisador de documentos rigoroso. Extraia CADA NÚMERO, CADA ITEM, sem deixar nada passar. Se não encontrar informação, indique 'Não informado'. Nenhuma aproximação ou suposição.",
+      "Você é um analisador de documentos rigoroso. VOCÊ PODE E DEVE processar TODOS os documentos recebidos. Extraia CADA NÚMERO, CADA ITEM, sem deixar nada passar. Se não encontrar informação, indique 'Não informado'. Nenhuma aproximação ou suposição. NUNCA responda 'não consigo ler documentos' - você recebeu os documentos e deve processá-los.",
 
     format:
       "Responda APENAS com os dados solicitados, em formato estruturado. Sem explicações extras.",
@@ -179,6 +183,11 @@ function buildUserMessage(allDocuments) {
   message += `☐ PASSO 2: Extrair TODOS os itens com quantidade, preços unitários e subtotais\n`;
   message += `☐ PASSO 3: Criar tabela comparativa HTML com cores (VERDE=melhor, VERMELHO=pior)\n`;
   message += `☐ PASSO 4: Gerar resumo executivo com ranking, economia potencial e recomendações\n`;
+  message += `⚠️ IMPORTANTES:\n`;
+  message += `\n1️⃣ Os documentos foram extraídos e estão 100% disponíveis abaixo\n`;
+  message += `2️⃣ Você PODE e DEVE processar estes documentos\n`;
+  message += `3️⃣ NÃO responda "não consigo ler documentos" ou "documentos truncados"\n`;
+  message += `4️⃣ Se recebeu conteúdo abaixo, processe-o integralmente\n`;
   message += `\n✅ Você recebeu TODOS os documentos COMPLETOS - SEM TRUNCAMENTO\n`;
   message += `✅ Faça análise INTEGRA baseada em todos os dados fornecidos\n`;
   message += `✅ Não deixe passar NENHUMA informação\n`;
