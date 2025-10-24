@@ -175,47 +175,56 @@ OBSERVAÇÕES FINAIS:
 
   // Sistema de instrução para chamadas múltiplas
   systemInstructions: {
-    strict: "Você é um analisador de documentos rigoroso. Extraia CADA NÚMERO, CADA ITEM, sem deixar nada passar. Se não encontrar informação, indique 'Não informado'. Nenhuma aproximação ou suposição.",
-    
-    format: "Responda APENAS com os dados solicitados, em formato estruturado. Sem explicações extras.",
-    
-    accuracy: "Precisão é crítica. Revise cada extração 2x. Use exatamente os números que aparecem no documento, sem arredondamentos."
-  }
+    strict:
+      "Você é um analisador de documentos rigoroso. Extraia CADA NÚMERO, CADA ITEM, sem deixar nada passar. Se não encontrar informação, indique 'Não informado'. Nenhuma aproximação ou suposição.",
+
+    format:
+      "Responda APENAS com os dados solicitados, em formato estruturado. Sem explicações extras.",
+
+    accuracy:
+      "Precisão é crítica. Revise cada extração 2x. Use exatamente os números que aparecem no documento, sem arredondamentos.",
+  },
 };
 
 // Função para preparar o prompt
 function getAnalysisPrompt(documentCount = 1) {
   if (documentCount === 1) {
-    return ANALYSIS_PROMPTS.mainAnalysis + `\n\n⚠️ ATENÇÃO: Você tem ${documentCount} documento. Faça análise detalhada deste documento.`;
+    return (
+      ANALYSIS_PROMPTS.mainAnalysis +
+      `\n\n⚠️ ATENÇÃO: Você tem ${documentCount} documento. Faça análise detalhada deste documento.`
+    );
   } else {
-    return ANALYSIS_PROMPTS.mainAnalysis + `\n\n⚠️ ATENÇÃO: Você tem ${documentCount} documentos de diferentes fornecedores. Compare TODOS lado a lado na tabela.`;
+    return (
+      ANALYSIS_PROMPTS.mainAnalysis +
+      `\n\n⚠️ ATENÇÃO: Você tem ${documentCount} documentos de diferentes fornecedores. Compare TODOS lado a lado na tabela.`
+    );
   }
 }
 
 // Função para construir a mensagem do usuário
 function buildUserMessage(allDocuments) {
   let message = `DOCUMENTOS PARA ANÁLISE:\n\n`;
-  
+
   allDocuments.forEach((doc, index) => {
-    message += `${'='.repeat(80)}\n`;
+    message += `${"=".repeat(80)}\n`;
     message += `DOCUMENTO ${index + 1}: ${doc.name.toUpperCase()}\n`;
-    message += `${'='.repeat(80)}\n\n`;
+    message += `${"=".repeat(80)}\n\n`;
     message += doc.content + `\n\n`;
   });
-  
-  message += `${'='.repeat(80)}\n`;
+
+  message += `${"=".repeat(80)}\n`;
   message += `INSTRUÇÕES FINAIS:\n`;
   message += `1. Extraia TODOS os fornecedores\n`;
   message += `2. Para cada fornecedor, extraia TODOS os itens com preços\n`;
   message += `3. Crie a tabela comparativa HTML (se mais de 1 fornecedor)\n`;
   message += `4. Apresente o resumo executivo com ranking e recomendações\n`;
   message += `5. Use cores: GREEN (#dcfce7) para melhor preço, RED (#fecaca) para pior\n`;
-  message += `${'='.repeat(80)}\n`;
-  
+  message += `${"=".repeat(80)}\n`;
+
   return message;
 }
 
 // Exportar para uso no index.html
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== "undefined" && module.exports) {
   module.exports = { ANALYSIS_PROMPTS, getAnalysisPrompt, buildUserMessage };
 }
