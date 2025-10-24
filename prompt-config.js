@@ -7,12 +7,10 @@ const ANALYSIS_PROMPTS = {
   // Prompt principal para análise completa
   mainAnalysis: `Você é um ANALISTA DE BID SÊNIOR com 15 anos de experiência em orçamentos e licitações.
 
-TAREFA CRÍTICA - ANÁLISE COMPLETA E DETALHADA
+TAREFA CRÍTICA - ANÁLISE COMPLETA E DETALHADA DOS DOCUMENTOS
 
-⚠️ AVISO IMPORTANTE: Documentos podem estar truncados por limites de tokens. Mesmo assim, PROCURE as informações críticas:
-   - CNPJs geralmente estão no início (timbre) ou final (assinatura)
-   - Valores totais estão geralmente no FINAL do documento
-   - Itens estão no MEIO mas início/fim também têm resumos
+✅ Os documentos recebidos estão COMPLETOS - sem truncamento ou limitações.
+✅ Processe TUDO integralmente e traga análise 100% precisa baseada em TODOS os dados.
 
 VOCÊ DEVE seguir EXATAMENTE os passos abaixo, sem exceções:
 
@@ -38,10 +36,7 @@ PARA CADA FORNECEDOR, EXTRAIA EXATAMENTE:
 │ - Responsável: [NOME] ou "Não inf."     │
 └─────────────────────────────────────────┘
 
-CRÍTICO: Se o documento está truncado:
-- PROCURE o CNPJ no INÍCIO (logo após nome da empresa)
-- PROCURE o valor total NO FINAL (antes de assinatura ou em "TOTAL:", "TOTAL GERAL:")
-- Se não encontrar, escreva "Não informado" MAS CONTINUE PROCURANDO
+✅ Os documentos estão completos. Procure todas as informações nos documentos fornecidos.
 
 ═══════════════════════════════════════════════════════════════
 
@@ -68,8 +63,6 @@ BUSQUE TAMBÉM VALORES CRÍTICOS:
 - Impostos: ICMS, IPI
 - Validade da proposta
 - Condições de pagamento
-
-NOTA: Se conteúdo foi truncado, você terá inicio e fim do documento. Use ambos!
 
 ═══════════════════════════════════════════════════════════════
 
@@ -165,52 +158,31 @@ function getAnalysisPrompt(documentCount = 1) {
   }
 }
 
-// Função para construir a mensagem do usuário COM CONTROLE DE TOKENS
+// Função para construir a mensagem do usuário - DOCUMENTO COMPLETO SEM TRUNCAMENTO
 function buildUserMessage(allDocuments) {
-  // Configuração de limites de tokens
-  const MAX_TOKENS_CONTENT = 6000; // ~24.000 caracteres para conteúdo
-  const MAX_TOKENS_PER_DOC = 3000; // ~12.000 caracteres por documento
-
-  let message = `DOCUMENTOS PARA ANÁLISE:\n\n`;
-  let totalChars = 0;
+  // ✅ NÃO TRUNCAR - Deixar documentos COMPLETOS para análise integral
+  // GPT-4 consegue processar até 128K tokens. Deixamos tudo inteiro.
+  
+  let message = `DOCUMENTOS PARA ANÁLISE COMPLETA E INTEGRAL:\n\n`;
 
   allDocuments.forEach((doc, index) => {
-    const docHeader = `${"=".repeat(80)}\nDOCUMENTO ${
-      index + 1
-    }: ${doc.name.toUpperCase()}\n${"=".repeat(80)}\n\n`;
-
-    // Controlar tamanho por documento
-    let docContent = doc.content;
-    if (docContent.length > MAX_TOKENS_PER_DOC) {
-      // Se muito grande, pegar início e fim (onde geralmente estão informações críticas)
-      const startSize = MAX_TOKENS_PER_DOC / 2;
-      const endSize = MAX_TOKENS_PER_DOC / 2;
-      docContent =
-        docContent.substring(0, startSize) +
-        `\n\n[... ${Math.round(
-          (docContent.length - MAX_TOKENS_PER_DOC) / 100
-        )} KB DE CONTEÚDO TRUNCADO ...]\n\n` +
-        docContent.substring(docContent.length - endSize);
-    }
-
-    const fullDocBlock = docHeader + docContent + `\n\n`;
-
-    // Verificar se não vai exceder o limite total
-    if (totalChars + fullDocBlock.length <= MAX_TOKENS_CONTENT) {
-      message += fullDocBlock;
-      totalChars += fullDocBlock.length;
-    }
+    message += `${"═".repeat(80)}\n`;
+    message += `DOCUMENTO ${index + 1}: ${doc.name.toUpperCase()}\n`;
+    message += `${"═".repeat(80)}\n\n`;
+    // ✅ IMPORTANTE: Enviar documento COMPLETO, sem truncamento
+    message += doc.content + `\n\n`;
   });
 
-  message += `${"=".repeat(80)}\n`;
-  message += `INSTRUÇÕES FINAIS:\n`;
-  message += `1. Extraia TODOS os fornecedores (mesmo que truncado, procure no início/fim)\n`;
-  message += `2. Para cada fornecedor, extraia TODOS os itens com preços\n`;
-  message += `3. Crie a tabela comparativa HTML (se mais de 1 fornecedor)\n`;
-  message += `4. Apresente o resumo executivo com ranking e recomendações\n`;
-  message += `5. Use cores: GREEN (#dcfce7) para melhor preço, RED (#fecaca) para pior\n`;
-  message += `⚠️ IMPORTANTE: Se encontrar conteúdo truncado, PROCURE os dados críticos (totais, CNPJs) no início ou fim do documento!\n`;
-  message += `${"=".repeat(80)}\n`;
+  message += `${"═".repeat(80)}\n`;
+  message += `📋 CHECKLIST DE EXECUÇÃO (ANÁLISE INTEGRAL):\n`;
+  message += `\n☐ PASSO 1: Extrair TODOS os fornecedores com CNPJ, endereço e valor total\n`;
+  message += `☐ PASSO 2: Extrair TODOS os itens com quantidade, preços unitários e subtotais\n`;
+  message += `☐ PASSO 3: Criar tabela comparativa HTML com cores (VERDE=melhor, VERMELHO=pior)\n`;
+  message += `☐ PASSO 4: Gerar resumo executivo com ranking, economia potencial e recomendações\n`;
+  message += `\n✅ Você recebeu TODOS os documentos COMPLETOS - SEM TRUNCAMENTO\n`;
+  message += `✅ Faça análise INTEGRA baseada em todos os dados fornecidos\n`;
+  message += `✅ Não deixe passar NENHUMA informação\n`;
+  message += `${"═".repeat(80)}\n`;
 
   return message;
 }
