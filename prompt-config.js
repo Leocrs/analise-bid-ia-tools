@@ -9,7 +9,12 @@ const ANALYSIS_PROMPTS = {
 
 TAREFA CRÍTICA - ANÁLISE COMPLETA E DETALHADA
 
-Você DEVE seguir EXATAMENTE os passos abaixo, sem exceções:
+⚠️ AVISO IMPORTANTE: Documentos podem estar truncados por limites de tokens. Mesmo assim, PROCURE as informações críticas:
+   - CNPJs geralmente estão no início (timbre) ou final (assinatura)
+   - Valores totais estão geralmente no FINAL do documento
+   - Itens estão no MEIO mas início/fim também têm resumos
+
+VOCÊ DEVE seguir EXATAMENTE os passos abaixo, sem exceções:
 
 ═══════════════════════════════════════════════════════════════
 
@@ -18,67 +23,57 @@ PASSO 1️⃣ - IDENTIFICAR TODOS OS FORNECEDORES
 └─────────────────────────────────────────────────────────────┘
 
 Localize ABSOLUTAMENTE TODOS os fornecedores/empresas mencionados:
-✓ Procure por: "Empresa", "Fornecedor", "Cotação de", "Proposta de"
-✓ Procure por nomes seguidos de CNPJ, telefone, email
-✓ Nomes em timbre de papel timbrado
-✓ Assinantes ou responsáveis
+✓ Procure no INÍCIO do documento: timbre, "Empresa:", "Fornecedor:"
+✓ Procure no FINAL do documento: assinatura, "Proposta de:", "Cotação de:"
+✓ Procure por nomes seguidos de CNPJ (formato: 00.000.000/0000-00)
+✓ Procure por nomes + email ou telefone
 
-Para CADA fornecedor encontrado, OBRIGATORIAMENTE extraia:
-  • Nome completo da empresa (EXATO como aparece no documento)
-  • CNPJ (se disponível - procure em "CNPJ:", "CNPJ -", formato 00.000.000/0000-00)
-  • Endereço (se disponível)
-  • Valor TOTAL da proposta (buscar em "VALOR TOTAL", "TOTAL GERAL", "TOTAL DA PROPOSTA")
-  • Data da proposta
-  • Responsável/Contato (se disponível)
+PARA CADA FORNECEDOR, EXTRAIA EXATAMENTE:
+┌─────────────────────────────────────────┐
+│ FORNECEDOR: [NOME COMPLETO]             │
+│ - CNPJ: [NÚMERO] ou "Não informado"     │
+│ - Endereço: [COMPLETO] ou "Não inf."    │
+│ - Valor Total: R$ [NÚMERO] ou "Não inf."│
+│ - Data: [DD/MM/YYYY] ou "Não inf."      │
+│ - Responsável: [NOME] ou "Não inf."     │
+└─────────────────────────────────────────┘
 
-SAÍDA ESPERADA - Listar assim:
-FORNECEDOR 1: [NOME COMPLETO]
-  - CNPJ: [NÚMERO OU "Não informado"]
-  - Valor Total: R$ [VALOR]
-  
-FORNECEDOR 2: [NOME COMPLETO]
-  - CNPJ: [NÚMERO OU "Não informado"]
-  - Valor Total: R$ [VALOR]
+CRÍTICO: Se o documento está truncado:
+- PROCURE o CNPJ no INÍCIO (logo após nome da empresa)
+- PROCURE o valor total NO FINAL (antes de assinatura ou em "TOTAL:", "TOTAL GERAL:")
+- Se não encontrar, escreva "Não informado" MAS CONTINUE PROCURANDO
 
 ═══════════════════════════════════════════════════════════════
 
-PASSO 2️⃣ - EXTRAIR TODOS OS DADOS DE CADA PROPOSTA
+PASSO 2️⃣ - EXTRAIR ITENS E PREÇOS (MESMO COM TRUNCAMENTO)
 ┌─────────────────────────────────────────────────────────────┐
 └─────────────────────────────────────────────────────────────┘
 
-Para CADA fornecedor, identifique RIGOROSAMENTE:
+Procure especificamente por:
+✓ Tabelas com colunas: Item | Qtd | Preço Unit | Subtotal
+✓ Linhas numeradas: "1.", "2.", "3." com descrição e R$
+✓ Produtos/serviços seguidos de valores
 
-ITENS/SERVIÇOS:
-  ✓ Item 1: [DESCRIÇÃO COMPLETA]
-  ✓ Item 2: [DESCRIÇÃO COMPLETA]
-  ✓ Continue para todos os itens...
+PARA CADA ITEM QUE ENCONTRAR, EXTRAIA:
+┌─────────────────────────────────────────────────────────────┐
+│ ITEM 1: [DESCRIÇÃO COMPLETA]                                │
+│   - Quantidade: [NÚMERO] [UNIDADE: UN/M/M²/M³/HR/DIA]      │
+│   - Preço Unitário: R$ [VALOR] ou "Não inf."               │
+│   - Subtotal: R$ [VALOR] ou "Não inf."                     │
+└─────────────────────────────────────────────────────────────┘
 
-PARA CADA ITEM, EXTRAIA:
-  • Descrição exata do item/serviço
-  • Quantidade (procurar em "Qtd", "Unidade", "UN", "PC", "M", "M²", "m³", "Hrs", "Dias")
-  • Preço unitário (procurar em "Valor Unit.", "Preço Unit.", "V.Unit", "Unitário")
-  • Subtotal/Total do item (quantidade × unitário)
-  • Observações específicas do item
+BUSQUE TAMBÉM VALORES CRÍTICOS:
+- Frete: R$ [VALOR] ou "Incluído" ou "Não informado"
+- Desconto: R$ [VALOR] ou [PERCENTUAL]%
+- Impostos: ICMS, IPI
+- Validade da proposta
+- Condições de pagamento
 
-ADIÇÕES/DEDUÇÕES:
-  ✓ Busque por: "Desconto", "DESCONTO", "Acréscimo", "ACRÉSCIMO", "Frete", "FRETE", "Imposto", "ICMS", "IPI"
-  ✓ Valores de frete (se incluído ou separado)
-  ✓ Impostos mencionados
-  ✓ Descontos percentuais ou em reais
-
-VALOR FINAL:
-  • Total antes de frete/impostos
-  • Frete (incluído ou não)
-  • Impostos
-  • VALOR FINAL TOTAL
+NOTA: Se conteúdo foi truncado, você terá inicio e fim do documento. Use ambos!
 
 ═══════════════════════════════════════════════════════════════
 
-PASSO 3️⃣ - CRIAR TABELA COMPARATIVA VISUAL
-┌─────────────────────────────────────────────────────────────┐
-└─────────────────────────────────────────────────────────────┘
-
-Crie UMA tabela HTML com esta estrutura EXATA:
+PASSO 3️⃣ - CRIAR TABELA COMPARATIVA (SE 2+ FORNECEDORES)
 
 <table border='1' style='border-collapse:collapse;width:100%;font-size:12px;margin:20px 0'>
   <tr style='background:#0e938f;color:white;font-weight:bold'>
@@ -90,8 +85,6 @@ Crie UMA tabela HTML com esta estrutura EXATA:
     <th>MELHOR PREÇO</th>
     <th>DIFERENÇA %</th>
   </tr>
-  
-  <!-- Para CADA item de serviço/produto -->
   <tr>
     <td>[DESCRIÇÃO ITEM]</td>
     <td>[QTD] [UN]</td>
@@ -101,75 +94,46 @@ Crie UMA tabela HTML com esta estrutura EXATA:
     <td><strong>[EMPRESA MELHOR PREÇO]</strong></td>
     <td>[PERCENTUAL]%</td>
   </tr>
-  
-  <!-- Linha de subtotal por item -->
   <tr style='background:#f3f4f6;font-weight:bold'>
-    <td colspan='2'>SUBTOTAL: [ITEM]</td>
+    <td colspan='2'>TOTAL GERAL</td>
     <td>R$ [SUBTOTAL]</td>
     <td>R$ [SUBTOTAL]</td>
     <td>R$ [SUBTOTAL]</td>
-    <td colspan='2'></td>
+    <td><strong>[VENCEDOR]</strong></td>
+    <td><strong>R$ [ECONOMIA]</strong></td>
   </tr>
 </table>
 
-REGRAS DE COR:
-  🟢 GREEN (#dcfce7): Melhor preço para o item
-  🔴 RED (#fecaca): Pior preço para o item
-  ⚪ BRANCO: Preços intermediários
+CORES: 🟢 GREEN (#dcfce7) = Melhor | 🔴 RED (#fecaca) = Pior
 
 ═══════════════════════════════════════════════════════════════
 
-PASSO 4️⃣ - RESUMO EXECUTIVO DETALHADO
-┌─────────────────────────────────────────────────────────────┐
-└─────────────────────────────────────────────────────────────┘
-
-Crie um resumo com TODAS essas informações:
+PASSO 4️⃣ - RESUMO EXECUTIVO
 
 📊 TOTAL GERAL POR FORNECEDOR:
-  🥇 1º Lugar: [EMPRESA] - R$ [VALOR TOTAL]
-  🥈 2º Lugar: [EMPRESA] - R$ [VALOR TOTAL]
-  🥉 3º Lugar: [EMPRESA] - R$ [VALOR TOTAL] (se houver)
+  🥇 1º Lugar: [EMPRESA] - R$ [TOTAL]
+  🥈 2º Lugar: [EMPRESA] - R$ [TOTAL]
 
 💰 ECONOMIA POTENCIAL:
-  • Escolhendo o mais barato: Economia de R$ [VALOR] ([PERCENTUAL]%) vs mais caro
-  • Diferença entre 1º e 2º: R$ [VALOR] ([PERCENTUAL]%)
+  • Economia com melhor preço: R$ [VALOR] ([PERCENTUAL]%)
 
-📋 ITENS COM MAIOR VARIAÇÃO:
-  • Item com maior diferença: [ITEM] - Variação de R$ [VALOR] ([PERCENTUAL]%)
-  • Item com menor diferença: [ITEM] - Variação de R$ [VALOR] ([PERCENTUAL]%)
+📋 ANÁLISE DE CONFORMIDADE:
+  ✓ Todos cotaram os mesmos itens? [SIM/NÃO]
+  ✓ Quais itens faltam? [LISTA]
+  ✓ Frete incluído? [SIM/NÃO]
+  ✓ Há descontos? [SIM/NÃO]
 
-✅ ANÁLISE DETALHADA DE CONFORMIDADE:
-  Para cada fornecedor, verificar:
-  ✓ Todos os 3 fornecedores cotaram os mesmos itens?
-  ✓ Quais itens NÃO foram cotados por cada fornecedor?
-  ✓ Há diferenças em quantidade/especificação entre fornecedores?
-  ✓ Frete foi incluído em todas as propostas?
-  ✓ Quem oferece desconto e qual o valor?
-  ✓ Há impostos mencionados?
-
-🎯 RECOMENDAÇÃO EXECUTIVA:
+🎯 RECOMENDAÇÃO FINAL:
   • Fornecedor recomendado: [EMPRESA]
-  • Motivo: [MELHOR PREÇO GERAL / MELHOR CUSTO-BENEFÍCIO]
-  • Economia vs concorrente: R$ [VALOR] ([PERCENTUAL]%)
-  
-  • Itens onde negociar: [ITEM 1], [ITEM 2]
-  • Potencial de economia adicional: R$ [ESTIMATIVA]
-  
-  • Alertas importantes:
-    ⚠️ Se algum preço for MUITO baixo (suspeito)
-    ⚠️ Se há itens não cotados
-    ⚠️ Se frete não foi incluído
-    ⚠️ Se há diferenças de especificação
+  • Motivo: [MELHOR PREÇO]
+  • Economia: R$ [VALOR] ([PERCENTUAL]%)
+  • Itens para negociar: [ITEM 1], [ITEM 2]
 
-═══════════════════════════════════════════════════════════════
-
-OBSERVAÇÕES FINAIS:
-✓ VERIFICAR TUDO 2X ANTES DE RESPONDER
-✓ NÃO deixar passar nenhum item
-✓ NÃO fazer aproximações - usar números EXATOS
-✓ SE não encontrar valor, escrever "Não informado"
-✓ SEMPRE indicar unidades de medida (UN, M, M², Hrs, etc)
-✓ SEMPRE indicar se frete está ou não incluído
+⚠️ ALERTAS:
+  ⚠️ Se preço muito baixo (suspeito?)
+  ⚠️ Se itens não cotados
+  ⚠️ Se há diferenças de especificação
+  ⚠️ Se há dados truncados/faltando
 
 ═══════════════════════════════════════════════════════════════`,
 
@@ -201,24 +165,51 @@ function getAnalysisPrompt(documentCount = 1) {
   }
 }
 
-// Função para construir a mensagem do usuário
+// Função para construir a mensagem do usuário COM CONTROLE DE TOKENS
 function buildUserMessage(allDocuments) {
+  // Configuração de limites de tokens
+  const MAX_TOKENS_CONTENT = 6000; // ~24.000 caracteres para conteúdo
+  const MAX_TOKENS_PER_DOC = 3000; // ~12.000 caracteres por documento
+
   let message = `DOCUMENTOS PARA ANÁLISE:\n\n`;
+  let totalChars = 0;
 
   allDocuments.forEach((doc, index) => {
-    message += `${"=".repeat(80)}\n`;
-    message += `DOCUMENTO ${index + 1}: ${doc.name.toUpperCase()}\n`;
-    message += `${"=".repeat(80)}\n\n`;
-    message += doc.content + `\n\n`;
+    const docHeader = `${"=".repeat(80)}\nDOCUMENTO ${
+      index + 1
+    }: ${doc.name.toUpperCase()}\n${"=".repeat(80)}\n\n`;
+
+    // Controlar tamanho por documento
+    let docContent = doc.content;
+    if (docContent.length > MAX_TOKENS_PER_DOC) {
+      // Se muito grande, pegar início e fim (onde geralmente estão informações críticas)
+      const startSize = MAX_TOKENS_PER_DOC / 2;
+      const endSize = MAX_TOKENS_PER_DOC / 2;
+      docContent =
+        docContent.substring(0, startSize) +
+        `\n\n[... ${Math.round(
+          (docContent.length - MAX_TOKENS_PER_DOC) / 100
+        )} KB DE CONTEÚDO TRUNCADO ...]\n\n` +
+        docContent.substring(docContent.length - endSize);
+    }
+
+    const fullDocBlock = docHeader + docContent + `\n\n`;
+
+    // Verificar se não vai exceder o limite total
+    if (totalChars + fullDocBlock.length <= MAX_TOKENS_CONTENT) {
+      message += fullDocBlock;
+      totalChars += fullDocBlock.length;
+    }
   });
 
   message += `${"=".repeat(80)}\n`;
   message += `INSTRUÇÕES FINAIS:\n`;
-  message += `1. Extraia TODOS os fornecedores\n`;
+  message += `1. Extraia TODOS os fornecedores (mesmo que truncado, procure no início/fim)\n`;
   message += `2. Para cada fornecedor, extraia TODOS os itens com preços\n`;
   message += `3. Crie a tabela comparativa HTML (se mais de 1 fornecedor)\n`;
   message += `4. Apresente o resumo executivo com ranking e recomendações\n`;
   message += `5. Use cores: GREEN (#dcfce7) para melhor preço, RED (#fecaca) para pior\n`;
+  message += `⚠️ IMPORTANTE: Se encontrar conteúdo truncado, PROCURE os dados críticos (totais, CNPJs) no início ou fim do documento!\n`;
   message += `${"=".repeat(80)}\n`;
 
   return message;
