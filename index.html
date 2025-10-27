@@ -65,7 +65,12 @@
       <h3>Configurações</h3>
       <div class="config-group">
         <label for="model">Modelo:</label>
-        <input type="text" id="model" value="gpt-5-2025-08-07" placeholder="gpt-5-2025-08-07" />
+        <input
+          type="text"
+          id="model"
+          value="gpt-5-2025-08-07"
+          placeholder="gpt-5-2025-08-07"
+        />
       </div>
       <div class="config-group">
         <label for="maxTokens">Max Tokens:</label>
@@ -1010,7 +1015,8 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
           parseInt(document.getElementById("maxTokens").value) || 2000
         );
 
-        const model = document.getElementById("model").value || "gpt-5-2025-08-07";
+        const model =
+          document.getElementById("model").value || "gpt-5-2025-08-07";
         const maxTokens =
           parseInt(document.getElementById("maxTokens").value) || 8000; // Aumentado para análises mais completas
 
