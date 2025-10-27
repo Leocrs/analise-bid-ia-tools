@@ -148,7 +148,7 @@ def chat():
     try:
         data = request.json
         messages = data.get('messages', [])
-        model = data.get('model', 'gpt-4')
+        model = data.get('model', 'gpt-5-2025-08-07')
         max_tokens = min(data.get('max_tokens', 2000), 8000)  # Limitar tokens - aumentado para análises mais completas
         
         print("🚀 === NOVA REQUISIÇÃO DE ANÁLISE ===")
