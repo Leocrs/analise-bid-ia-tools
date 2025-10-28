@@ -642,21 +642,25 @@
         );
         console.log("📄 Total de arquivos:", fileContents.length);
 
-        // Consolidar conteúdo de todos os arquivos
+        // Consolidar conteúdo de todos os arquivos - SEM TRUNCAR para garantir análise completa
         let todosOsDocumentos = "";
         fileContents.forEach((file, index) => {
           todosOsDocumentos += `\n\n=== DOCUMENTO ${
             index + 1
           }: ${file.name.toUpperCase()} ===\n`;
-          // Limitar tamanho para evitar overflow
-          const conteudoLimitado =
-            file.content.length > 3000
-              ? file.content.substring(0, 1500) +
-                "\n[...CONTEÚDO TRUNCADO...]\n" +
-                file.content.substring(file.content.length - 1500)
-              : file.content;
-          todosOsDocumentos += conteudoLimitado;
+          // Incluir conteúdo COMPLETO para análise precisa de TODOS os fornecedores
+          todosOsDocumentos += file.content;
         });
+
+        console.log(
+          "📊 TOTAL DE DOCUMENTOS PARA ANÁLISE:",
+          fileContents.length
+        );
+        console.log(
+          "📏 Tamanho total consolidado:",
+          todosOsDocumentos.length,
+          "caracteres"
+        );
 
         // Detecta se há mapa de concorrência para adaptar o prompt
         const hasMapa = fileContents.some(
@@ -668,30 +672,40 @@
         // Prompt flexível para análise consolidada
         const promptConsolidado = `🚨 ANÁLISE CONSOLIDADA OBRIGATÓRIA - TOOLS ENGENHARIA 🚨
 
-MISSÃO CRÍTICA: Criar ANÁLISE COMPLETA com TODOS os documentos anexados
+⚠️ CRÍTICO: VOCÊ RECEBEU ${fileContents.length} DOCUMENTO(S) PARA ANALISAR!
+OBRIGAÇÃO: Extrair dados de TODOS os ${
+          fileContents.length
+        } documento(s) e criar comparação COMPLETA!
+
+MISSÃO CRÍTICA: Análise SIMULTÂNEA de TODOS os documentos anexados - Nenhum pode ser ignorado!
 
 IDENTIFICAR FORNECEDORES
-- Identificar TODOS os fornecedores/empresas mencionados nos documentos
+- Você receberá ${fileContents.length} propostas/documentos
+- OBRIGATÓRIO: Extrair dados de CADA UMA delas
+- Identificar TODOS os fornecedores/empresas mencionados
 - Extrair nomes das empresas, CNPJs, e identificações
-- Listar fornecedores encontrados
+- Listar CADA fornecedor encontrado em cada documento
 
 EXTRAIR ITENS E PREÇOS
-- Localizar TODOS os itens, produtos, serviços e valores em R$
+- Localizar TODOS os itens, produtos, serviços e valores em R$ de CADA documento
 - Equipamentos, materiais, serviços, instalações
 - Preços unitários, subtotais, e totais gerais
+- IMPORTANTE: Mesmo que itens sejam diferentes entre propostas, INCLUIR TODOS
 - ${
           hasMapa
-            ? "Usar mapa de concorrência como referência base"
-            : "Comparar diretamente entre propostas anexadas"
+            ? "Usar mapa de concorrência como referência base para comparação"
+            : "Comparar DIRETAMENTE entre TODOS as ${fileContents.length} propostas anexadas"
         }
 
 EXTRAIR INFORMAÇÕES ADICIONAIS (CRÍTICO)
-- 🎯 DESCONTOS: Identificar descontos, abatimentos, promoções (ex: 5% desconto acima de X, progressivo, etc)
-- 💳 FORMAS DE PAGAMENTO: Condições comerciais (à vista, parcelado, cartão, boleto, etc)
-- 🛡️ GARANTIAS: Período de garantia, cobertura, assistência técnica
-- 📝 OBSERVAÇÕES: Detalhes importantes, prazos, frete, montagem, condições especiais
+- 🎯 DESCONTOS: Identificar descontos, abatimentos, promoções de CADA fornecedor
+- 💳 FORMAS DE PAGAMENTO: Condições comerciais de CADA fornecedor
+- 🛡️ GARANTIAS: Período de garantia, cobertura, assistência técnica de CADA fornecedor
+- 📝 OBSERVAÇÕES: Detalhes importantes de CADA fornecedor
 
-TABELA COMPARATIVA CONSOLIDADA (OBRIGATÓRIA)
+TABELA COMPARATIVA CONSOLIDADA (OBRIGATÓRIA COM ${
+          fileContents.length
+        } FORNECEDORES)
 <table border='1' style='border-collapse:collapse;width:100%;font-size:14px'>
 <tr style='background:#0e938f;color:white'>
 <th>ITEM/SERVIÇO</th><th>FORNECEDOR 1</th><th>FORNECEDOR 2</th><th>FORNECEDOR 3</th><th>MELHOR PREÇO</th><th>ECONOMIA</th>
@@ -712,50 +726,67 @@ TABELA COMPARATIVA CONSOLIDADA (OBRIGATÓRIA)
 
 📊 INFORMAÇÕES COMERCIAIS DETALHADAS
 
-🎯 DESCONTOS E PROMOÇÕES:
+🎯 DESCONTOS E PROMOÇÕES (TODOS OS ${fileContents.length} FORNECEDORES):
 • [FORNECEDOR 1]: [Descontos encontrados ou "Sem desconto identificado"]
 • [FORNECEDOR 2]: [Descontos encontrados ou "Sem desconto identificado"]
 • [FORNECEDOR 3]: [Descontos encontrados ou "Sem desconto identificado"]
 
-💳 FORMAS DE PAGAMENTO:
+💳 FORMAS DE PAGAMENTO (TODOS OS ${fileContents.length} FORNECEDORES):
 • [FORNECEDOR 1]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
 • [FORNECEDOR 2]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
 • [FORNECEDOR 3]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
 
-🛡️ GARANTIAS E ASSISTÊNCIA:
+🛡️ GARANTIAS E ASSISTÊNCIA (TODOS OS ${fileContents.length} FORNECEDORES):
 • [FORNECEDOR 1]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
 • [FORNECEDOR 2]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
 • [FORNECEDOR 3]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
 
-📝 OBSERVAÇÕES IMPORTANTES:
+📝 OBSERVAÇÕES IMPORTANTES (TODOS OS ${fileContents.length} FORNECEDORES):
 • [FORNECEDOR 1]: [Prazos de entrega, frete, montagem, condições especiais, etc]
 • [FORNECEDOR 2]: [Prazos de entrega, frete, montagem, condições especiais, etc]
 • [FORNECEDOR 3]: [Prazos de entrega, frete, montagem, condições especiais, etc]
 
-RANKING FINAL
+RANKING FINAL (COMPARAÇÃO DE TODOS OS ${fileContents.length} FORNECEDORES)
 🥇 1º Lugar: [EMPRESA] - R$ [VALOR] (melhor preço geral)
 🥈 2º Lugar: [EMPRESA] - R$ [VALOR] 
+🥉 3º Lugar: [EMPRESA] - R$ [VALOR]
 💡 Economia Potencial: R$ [DIFERENÇA] ([PERCENTUAL]%)
 
 RECOMENDAÇÃO EXECUTIVA
 • ✅ CONTRATAR: [EMPRESA] (melhor custo-benefício considerando preço + condições comerciais)
-• 💰 ECONOMIA: R$ [VALOR] vs concorrente
+• 💰 ECONOMIA: R$ [VALOR] vs concorrentes
 • 🎯 NEGOCIAR: [ITENS ESPECÍFICOS] com [EMPRESA]
 • ⚡ DIFERENCIAIS: [Destacar se há descontos, garantias ou condições de pagamento superiores]
 
 📋 INSTRUÇÕES ESPECIAIS:
 ${
   hasMapa
-    ? "• Com MAPA: Usar como referência base para validar propostas"
-    : "• Sem MAPA: Comparar diretamente todas as propostas anexadas"
+    ? "• Com MAPA: Usar como referência base para validar todas as ${fileContents.length} propostas"
+    : "• Sem MAPA: Comparar DIRETAMENTE todas as ${fileContents.length} propostas anexadas"
 }
-• ADAPTAR tabela ao número real de fornecedores encontrados
-• Se 2 fornecedores: usar 2 colunas; se 3+: usar quantas necessárias
+• ADAPTAR tabela ao número REAL de fornecedores (${
+          fileContents.length
+        } documentos = até ${fileContents.length} fornecedores)
+• Se ${fileContents.length} fornecedores: usar ${
+          fileContents.length
+        } colunas na tabela
 • Sempre destacar MELHOR preço em VERDE e PIOR em VERMELHO
 • SEÇÕES COMERCIAIS são obrigatórias mesmo que informações incompletas
+• NÃO IGNORE NENHUM DOCUMENTO!
 
-⚠️ PROIBIDO: Texto descritivo longo, análises genéricas, explicações desnecessárias
-✅ OBRIGATÓRIO: Tabela + seções comerciais + números + ranking + recomendação executiva`;
+⚠️ PROIBIDO: 
+- Texto descritivo longo
+- Análises genéricas
+- Ignorar qualquer um dos ${fileContents.length} documentos
+- Dizer que "apenas 1 fornecedor foi encontrado" quando ${
+          fileContents.length
+        } foram enviados
+
+✅ OBRIGATÓRIO: 
+- Tabela com ${fileContents.length} colunas de fornecedores
+- Seções comerciais completas para TODOS os ${fileContents.length} fornecedores
+- Ranking com TODOS os ${fileContents.length} fornecedores
+- Números + ranking + recomendação executiva`;
 
         try {
           updateLoadingMessage(
