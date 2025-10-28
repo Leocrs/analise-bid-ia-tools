@@ -677,6 +677,16 @@ OBRIGAÇÃO: Extrair dados de TODOS os ${
           fileContents.length
         } documento(s) e criar comparação COMPLETA!
 
+🔴 REGRA ABSOLUTA 🔴
+- NÃO FAZER ANÁLISE PARCIAL
+- NÃO IGNORAR NENHUM ITEM
+- NÃO RESUMIR OU SIMPLIFICAR
+- EXTRAIR TODOS E CADA UM DOS ITENS PRESENTES NAS PROPOSTAS
+- SE HÁ 50 ITENS, LISTAR OS 50 ITENS
+- SE HÁ 100 ITENS, LISTAR OS 100 ITENS
+- SEM LIMITE DE QUANTIDADE
+- SEM EXCEÇÕES
+
 MISSÃO CRÍTICA: Análise SIMULTÂNEA de TODOS os documentos anexados - Nenhum pode ser ignorado!
 
 IDENTIFICAR FORNECEDORES
@@ -686,11 +696,13 @@ IDENTIFICAR FORNECEDORES
 - Extrair nomes das empresas, CNPJs, e identificações
 - Listar CADA fornecedor encontrado em cada documento
 
-EXTRAIR ITENS E PREÇOS
-- Localizar TODOS os itens, produtos, serviços e valores em R$ de CADA documento
-- Equipamentos, materiais, serviços, instalações
+EXTRAIR ITENS E PREÇOS - REGRA ABSOLUTA: NENHUM ITEM PODE SER OMITIDO
+- Localizar ABSOLUTAMENTE TODOS os itens, produtos, serviços e valores em R$ de CADA documento
+- Não importa se são 5, 50 ou 500 itens - LISTAR TODOS
+- Equipamentos, materiais, serviços, instalações, complementos, acessórios
 - Preços unitários, subtotais, e totais gerais
-- IMPORTANTE: Mesmo que itens sejam diferentes entre propostas, INCLUIR TODOS
+- CRÍTICO: Mesmo que itens sejam diferentes entre propostas, INCLUIR CADA UM DELES
+- Criar linha para CADA item diferente encontrado
 - ${
           hasMapa
             ? "Usar mapa de concorrência como referência base para comparação"
@@ -705,7 +717,7 @@ EXTRAIR INFORMAÇÕES ADICIONAIS (CRÍTICO)
 
 TABELA COMPARATIVA CONSOLIDADA (OBRIGATÓRIA COM ${
           fileContents.length
-        } FORNECEDORES)
+        } FORNECEDORES - INCLUIR TODOS OS ITENS)
 <table border='1' style='border-collapse:collapse;width:100%;font-size:14px'>
 <tr style='background:#0e938f;color:white'>
 <th>ITEM/SERVIÇO</th><th>FORNECEDOR 1</th><th>FORNECEDOR 2</th><th>FORNECEDOR 3</th><th>MELHOR PREÇO</th><th>ECONOMIA</th>
@@ -1068,56 +1080,43 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
         );
         console.log(
           "🔢 MaxTokens:",
-          parseInt(document.getElementById("maxTokens").value) || 2000
+          parseInt(document.getElementById("maxTokens").value) || 4000
         );
 
         const model = document.getElementById("model").value || "gpt-4";
+        // ⚠️ AUMENTADO para 4000 tokens para permitir respostas COMPLETAS com TODOS os itens
         const maxTokens =
-          parseInt(document.getElementById("maxTokens").value) || 2000; // Reduzido para evitar overflow
+          parseInt(document.getElementById("maxTokens").value) || 4000;
 
-        // Calcular tamanho aproximado dos tokens
-        const systemTokens = Math.ceil(systemPrompt.length / 4);
-        const userTokens = Math.ceil(userMessage.length / 4);
-        const historyTokens = conversationHistory
-          .slice(-2)
-          .reduce((acc, msg) => acc + Math.ceil(msg.content.length / 4), 0);
+        console.log(
+          "📝 Tamanho da mensagem do usuário:",
+          userMessage.length,
+          "caracteres"
+        );
+        console.log(
+          "📋 Tamanho do prompt do sistema:",
+          systemPrompt.length,
+          "caracteres"
+        );
 
-        const totalInputTokens = systemTokens + userTokens + historyTokens;
-
-        // Se ultrapassar limite, reduzir contexto
-        let contextMessages = [];
-        if (totalInputTokens + maxTokens > 5500) {
-          // Usar apenas contexto mínimo
-          contextMessages = [];
-        } else if (totalInputTokens + maxTokens > 6000) {
-          contextMessages = conversationHistory.slice(-1);
-        } else {
-          contextMessages = conversationHistory.slice(-2);
-        }
-
+        // ⚠️ NÃO TRUNCAR A MENSAGEM DO USUÁRIO - ISSO QUEBRA A ANÁLISE COMPLETA
+        // A API pode lidar com mensagens maiores e o modelo GPT-4 tem limite de ~8k tokens
         const messages = [
           { role: "system", content: systemPrompt },
-          ...contextMessages,
           { role: "user", content: userMessage },
         ];
 
-        // Verificação final de tokens antes da chamada
-        const finalTokenCount = messages.reduce(
-          (acc, msg) => acc + Math.ceil(msg.content.length / 4),
-          0
+        console.log("📦 Mensagens a enviar:", messages.length, "mensagens");
+        console.log(
+          "📌 Primeira mensagem (system) size:",
+          systemPrompt.length,
+          "chars"
         );
-
-        if (finalTokenCount + maxTokens > 6000) {
-          // Truncar mensagem do usuário se necessário
-          const truncatedUserMessage =
-            userMessage.length > 2000
-              ? userMessage.substring(0, 1000) +
-                "\n\n[CONTEÚDO TRUNCADO]" +
-                userMessage.substring(userMessage.length - 1000)
-              : userMessage;
-
-          messages[messages.length - 1].content = truncatedUserMessage;
-        }
+        console.log(
+          "📌 Segunda mensagem (user) size:",
+          userMessage.length,
+          "chars"
+        );
 
         const backendUrl =
           "https://analise-bid-ia-backend.onrender.com/api/chat";
