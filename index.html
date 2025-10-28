@@ -689,14 +689,14 @@ REGRA ABSOLUTA
 
 MISSÃO CRÍTICA: Análise SIMULTÂNEA de TODOS os documentos anexados - Nenhum pode ser ignorado!
 
-IDENTIFICAR FORNECEDORES
+<strong>IDENTIFICAÇÃO DOS FORNECEDORES:</strong>
 - Você receberá ${fileContents.length} propostas/documentos
 - OBRIGATÓRIO: Extrair dados de CADA UMA delas
 - Identificar TODOS os fornecedores/empresas mencionados
 - Extrair nomes das empresas, CNPJs, e identificações
 - Listar CADA fornecedor encontrado em cada documento
 
-EXTRAIR ITENS E PREÇOS - REGRA ABSOLUTA: NENHUM ITEM PODE SER OMITIDO
+<strong>EXTRAÇÃO DE ITENS E PREÇOS:</strong> (REGRA ABSOLUTA: NENHUM ITEM PODE SER OMITIDO)
 - Localizar ABSOLUTAMENTE TODOS os itens, produtos, serviços e valores em R$ de CADA documento
 - Não importa se são 5, 50 ou 500 itens - LISTAR TODOS
 - Equipamentos, materiais, serviços, instalações, complementos, acessórios
@@ -715,7 +715,7 @@ EXTRAIR INFORMAÇÕES ADICIONAIS (CRÍTICO)
 - GARANTIAS: Período de garantia, cobertura, assistência técnica de CADA fornecedor
 - OBSERVAÇÕES: Detalhes importantes de CADA fornecedor
 
-TABELA COMPARATIVA CONSOLIDADA (OBRIGATÓRIA COM ${
+<strong>TABELA COMPARATIVA CONSOLIDADA:</strong> (OBRIGATÓRIA COM ${
           fileContents.length
         } FORNECEDORES - INCLUIR TODOS OS ITENS)
 <table border='1' style='border-collapse:collapse;width:100%;font-size:14px'>
@@ -736,35 +736,37 @@ TABELA COMPARATIVA CONSOLIDADA (OBRIGATÓRIA COM ${
 </tr>
 </table>
 
-INFORMAÇÕES COMERCIAIS DETALHADAS
+<strong>INFORMAÇÕES ADICIONAIS:</strong>
 
-DESCONTOS E PROMOÇÕES (TODOS OS ${fileContents.length} FORNECEDORES):
+<strong>DESCONTOS:</strong>
 • [FORNECEDOR 1]: [Descontos encontrados ou "Sem desconto identificado"]
 • [FORNECEDOR 2]: [Descontos encontrados ou "Sem desconto identificado"]
 • [FORNECEDOR 3]: [Descontos encontrados ou "Sem desconto identificado"]
 
-FORMAS DE PAGAMENTO (TODOS OS ${fileContents.length} FORNECEDORES):
+<strong>FORMAS DE PAGAMENTO:</strong>
 • [FORNECEDOR 1]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
 • [FORNECEDOR 2]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
 • [FORNECEDOR 3]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
 
-GARANTIAS E ASSISTÊNCIA (TODOS OS ${fileContents.length} FORNECEDORES):
+<strong>GARANTIAS:</strong>
 • [FORNECEDOR 1]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
 • [FORNECEDOR 2]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
 • [FORNECEDOR 3]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
 
-OBSERVAÇÕES IMPORTANTES (TODOS OS ${fileContents.length} FORNECEDORES):
+<strong>OBSERVAÇÕES IMPORTANTES:</strong>
 • [FORNECEDOR 1]: [Prazos de entrega, frete, montagem, condições especiais, etc]
 • [FORNECEDOR 2]: [Prazos de entrega, frete, montagem, condições especiais, etc]
 • [FORNECEDOR 3]: [Prazos de entrega, frete, montagem, condições especiais, etc]
 
-RANKING FINAL (COMPARAÇÃO DE TODOS OS ${fileContents.length} FORNECEDORES)
+<strong>RANKING FINAL:</strong> (COMPARAÇÃO DE TODOS OS ${
+          fileContents.length
+        } FORNECEDORES)
 1º Lugar: [EMPRESA] - R$ [VALOR] (melhor preço geral)
 2º Lugar: [EMPRESA] - R$ [VALOR] 
 3º Lugar: [EMPRESA] - R$ [VALOR]
 Economia Potencial: R$ [DIFERENÇA] ([PERCENTUAL]%)
 
-RECOMENDAÇÃO EXECUTIVA
+<strong>RECOMENDAÇÃO EXECUTIVA:</strong>
 • CONTRATAR: [EMPRESA] (melhor custo-benefício considerando preço + condições comerciais)
 • ECONOMIA: R$ [VALOR] vs concorrentes
 • NEGOCIAR: [ITENS ESPECÍFICOS] com [EMPRESA]
@@ -801,12 +803,14 @@ OBRIGATÓRIO:
 - Números + ranking + recomendação executiva
 
 FORMATAÇÃO VISUAL (CRÍTICO):
-- NÃO ADICIONAR quebras de linha EXTRAS entre cabeçalhos (IDENTIFICAÇÃO, ITENS, DESCONTOS, etc) e tabelas/listas
-- Colocar cabeçalho IMEDIATAMENTE SEGUIDO pela tabela ou lista (máximo 1 quebra de linha)
+- NÃO ADICIONAR quebras de linha EXTRAS entre cabeçalhos (IDENTIFICAÇÃO, ITENS, DESCONTOS, etc) e conteúdo
+- Colocar cabeçalho IMEDIATAMENTE SEGUIDO por conteúdo/tabela (sem quebras de linha)
+- ZERO quebras de linha entre "TABELA COMPARATIVA:" e a tag <table>
+- ZERO quebras de linha entre "DESCONTOS:" e os itens • [FORNECEDOR 1]
 - NÃO USAR EMOJIS OU ÍCONES em nenhuma seção - apenas texto limpo e profissional
-- Usar APENAS letras, números, símbolos: R$, %, -, •, /, :
-- EXEMPLO CORRETO: "ITENS E PREÇOS:\n[lista de itens]"
-- EXEMPLO ERRADO: "📋 ITENS E PREÇOS:\n🎯 [...]" (SEM ícones emojis)
+- Usar APENAS letras, números, símbolos: R$, %, -, •, /, :, <strong></strong> para negrito
+- EXEMPLO CORRETO: "<strong>TABELA COMPARATIVA:</strong>\n<table>..." (SEM linhas em branco)
+- EXEMPLO ERRADO: "<strong>TABELA COMPARATIVA:</strong>\n\n\n<table>..." (COM linhas em branco)
 
 OTIMIZAÇÃO DE TOKENS (importante):
 - Use NOMES CURTOS para colunas da tabela (ex: "Forn. 1" em vez de "Fornecedor 1")
