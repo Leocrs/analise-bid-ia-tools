@@ -1203,7 +1203,12 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
       function updateMessage(messageId, content) {
         const messageDiv = document.getElementById(messageId);
         const contentDiv = messageDiv.querySelector(".message-content");
-        contentDiv.innerHTML = content.replace(/\n/g, "<br>");
+        // Remove quebras de linha excessivas entre o título e a tabela
+        let cleanedContent = content.replace(
+          /(ITENS E PREÇOS:)[\n\s]+(ITEM\/SERVIÇO|<table)/i,
+          "$1\n$2"
+        );
+        contentDiv.innerHTML = cleanedContent.replace(/\n/g, "<br>");
       }
 
       function showError(message) {
