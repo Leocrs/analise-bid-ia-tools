@@ -69,7 +69,7 @@
       </div>
       <div class="config-group">
         <label for="maxTokens">Max Tokens:</label>
-        <input type="number" id="maxTokens" value="4000" placeholder="4000" />
+        <input type="number" id="maxTokens" value="3000" placeholder="3000" />
       </div>
       <div class="config-group">
         <label for="chunkSize">Tamanho do Chunk (caracteres):</label>
@@ -798,7 +798,14 @@ ${
 - Tabela com ${fileContents.length} colunas de fornecedores
 - Seções comerciais completas para TODOS os ${fileContents.length} fornecedores
 - Ranking com TODOS os ${fileContents.length} fornecedores
-- Números + ranking + recomendação executiva`;
+- Números + ranking + recomendação executiva
+
+⚙️ OTIMIZAÇÃO DE TOKENS (importante):
+- Use NOMES CURTOS para colunas da tabela (ex: "Forn. 1" em vez de "Fornecedor 1")
+- Use ABREVIAÇÕES para descrições (ex: "Instação" em vez de "Instalação e montagem")
+- MANTENHA todos os itens e dados, apenas use formatação compacta
+- Use símbolos (✓, ✕, R$) em vez de palavras quando possível
+- Elimine descrições longas, MAS MANTENHA TODOS OS VALORES MONETÁRIOS E ITENS`;
 
         try {
           updateLoadingMessage(
@@ -1084,9 +1091,10 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
         );
 
         const model = document.getElementById("model").value || "gpt-4";
-        // ⚠️ AUMENTADO para 4000 tokens para permitir respostas COMPLETAS com TODOS os itens
+        // ⚠️ AJUSTADO para 3000 tokens (limite: 8192 total - 3000 resposta = 5192 para input)
+        // Isso garante espaço suficiente para PDFs grandes e evita erro de context_length_exceeded
         const maxTokens =
-          parseInt(document.getElementById("maxTokens").value) || 4000;
+          parseInt(document.getElementById("maxTokens").value) || 3000;
 
         console.log(
           "📝 Tamanho da mensagem do usuário:",
