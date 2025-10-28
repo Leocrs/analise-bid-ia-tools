@@ -116,7 +116,7 @@
           JSON.stringify(baseHistorica)
         );
 
-        console.log("✅ Análise salva na base histórica:", registro.id);
+        console.log("Análise salva na base histórica:", registro.id);
       }
 
       function carregarBaseHistorica() {
@@ -375,15 +375,15 @@
 
         // Exibir mensagem de boas-vindas melhorada
         setTimeout(() => {
-          const welcomeMessage = `🎯 <strong>SISTEMA AVANÇADO DE ANÁLISE DE BID</strong><br><br>
+          const welcomeMessage = `<strong>SISTEMA AVANÇADO DE ANÁLISE DE BID</strong><br><br>
 
-      ✅ <strong>Sistema Carregado:</strong><br>
+      <strong>Sistema Carregado:</strong><br>
       • Base histórica: <strong>${baseHistorica.length} análises</strong> registradas<br>
       • Análise comparativa: <strong>Ativada</strong><br>
       • Exportação Excel/PDF: <strong>Disponível</strong><br>
       • Tabelas visuais: <strong>Habilitada</strong><br><br>
 
-      🚀 <strong>Recursos Disponíveis:</strong><br>
+      <strong>Recursos Disponíveis:</strong><br>
       • Upload simultâneo de múltiplos arquivos<br>
       • Comparação automática item por item<br>
       • Destaque visual de melhores/piores preços<br>
@@ -391,9 +391,9 @@
       • Consulta à base histórica<br>
       • Recomendações estratégicas<br><br>
 
-      📋 <strong>Para começar:</strong> Anexe o mapa de concorrência e as propostas comerciais.<br><br>
+      <strong>Para começar:</strong> Anexe o mapa de concorrência e as propostas comerciais.<br><br>
 
-      💡 <strong>Exemplo do resultado esperado:</strong><br>
+      <strong>Exemplo do resultado esperado:</strong><br>
       <table border='1' style='border-collapse:collapse;font-size:12px;margin:10px 0'>
       <tr style='background:#0e938f;color:white'><th>Item</th><th>Empresa A</th><th>Empresa B</th><th>Melhor</th></tr>
       <tr><td>Ar Condicionado</td><td style='background:#fecaca'>R$ 50.000</td><td style='background:#dcfce7'>R$ 45.000</td><td>Empresa B</td></tr>
@@ -632,7 +632,7 @@
       }
 
       async function structuredAnalysis() {
-        console.log("🚀 INICIANDO structuredAnalysis()");
+        console.log("INICIANDO structuredAnalysis()");
         const loadingId = addMessage("assistant", "");
         showLoading(loadingId);
 
@@ -670,14 +670,14 @@
         );
 
         // Prompt flexível para análise consolidada
-        const promptConsolidado = `🚨 ANÁLISE CONSOLIDADA OBRIGATÓRIA - TOOLS ENGENHARIA 🚨
+        const promptConsolidado = `ANÁLISE CONSOLIDADA OBRIGATÓRIA - TOOLS ENGENHARIA
 
-⚠️ CRÍTICO: VOCÊ RECEBEU ${fileContents.length} DOCUMENTO(S) PARA ANALISAR!
+CRÍTICO: VOCÊ RECEBEU ${fileContents.length} DOCUMENTO(S) PARA ANALISAR!
 OBRIGAÇÃO: Extrair dados de TODOS os ${
           fileContents.length
         } documento(s) e criar comparação COMPLETA!
 
-🔴 REGRA ABSOLUTA 🔴
+REGRA ABSOLUTA
 - NÃO FAZER ANÁLISE PARCIAL
 - NÃO IGNORAR NENHUM ITEM
 - NÃO RESUMIR OU SIMPLIFICAR
@@ -710,10 +710,10 @@ EXTRAIR ITENS E PREÇOS - REGRA ABSOLUTA: NENHUM ITEM PODE SER OMITIDO
         }
 
 EXTRAIR INFORMAÇÕES ADICIONAIS (CRÍTICO)
-- 🎯 DESCONTOS: Identificar descontos, abatimentos, promoções de CADA fornecedor
-- 💳 FORMAS DE PAGAMENTO: Condições comerciais de CADA fornecedor
-- 🛡️ GARANTIAS: Período de garantia, cobertura, assistência técnica de CADA fornecedor
-- 📝 OBSERVAÇÕES: Detalhes importantes de CADA fornecedor
+- DESCONTOS: Identificar descontos, abatimentos, promoções de CADA fornecedor
+- FORMAS DE PAGAMENTO: Condições comerciais de CADA fornecedor
+- GARANTIAS: Período de garantia, cobertura, assistência técnica de CADA fornecedor
+- OBSERVAÇÕES: Detalhes importantes de CADA fornecedor
 
 TABELA COMPARATIVA CONSOLIDADA (OBRIGATÓRIA COM ${
           fileContents.length
@@ -736,41 +736,41 @@ TABELA COMPARATIVA CONSOLIDADA (OBRIGATÓRIA COM ${
 </tr>
 </table>
 
-📊 INFORMAÇÕES COMERCIAIS DETALHADAS
+INFORMAÇÕES COMERCIAIS DETALHADAS
 
-🎯 DESCONTOS E PROMOÇÕES (TODOS OS ${fileContents.length} FORNECEDORES):
+DESCONTOS E PROMOÇÕES (TODOS OS ${fileContents.length} FORNECEDORES):
 • [FORNECEDOR 1]: [Descontos encontrados ou "Sem desconto identificado"]
 • [FORNECEDOR 2]: [Descontos encontrados ou "Sem desconto identificado"]
 • [FORNECEDOR 3]: [Descontos encontrados ou "Sem desconto identificado"]
 
-💳 FORMAS DE PAGAMENTO (TODOS OS ${fileContents.length} FORNECEDORES):
+FORMAS DE PAGAMENTO (TODOS OS ${fileContents.length} FORNECEDORES):
 • [FORNECEDOR 1]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
 • [FORNECEDOR 2]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
 • [FORNECEDOR 3]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
 
-🛡️ GARANTIAS E ASSISTÊNCIA (TODOS OS ${fileContents.length} FORNECEDORES):
+GARANTIAS E ASSISTÊNCIA (TODOS OS ${fileContents.length} FORNECEDORES):
 • [FORNECEDOR 1]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
 • [FORNECEDOR 2]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
 • [FORNECEDOR 3]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
 
-📝 OBSERVAÇÕES IMPORTANTES (TODOS OS ${fileContents.length} FORNECEDORES):
+OBSERVAÇÕES IMPORTANTES (TODOS OS ${fileContents.length} FORNECEDORES):
 • [FORNECEDOR 1]: [Prazos de entrega, frete, montagem, condições especiais, etc]
 • [FORNECEDOR 2]: [Prazos de entrega, frete, montagem, condições especiais, etc]
 • [FORNECEDOR 3]: [Prazos de entrega, frete, montagem, condições especiais, etc]
 
 RANKING FINAL (COMPARAÇÃO DE TODOS OS ${fileContents.length} FORNECEDORES)
-🥇 1º Lugar: [EMPRESA] - R$ [VALOR] (melhor preço geral)
-🥈 2º Lugar: [EMPRESA] - R$ [VALOR] 
-🥉 3º Lugar: [EMPRESA] - R$ [VALOR]
-💡 Economia Potencial: R$ [DIFERENÇA] ([PERCENTUAL]%)
+1º Lugar: [EMPRESA] - R$ [VALOR] (melhor preço geral)
+2º Lugar: [EMPRESA] - R$ [VALOR] 
+3º Lugar: [EMPRESA] - R$ [VALOR]
+Economia Potencial: R$ [DIFERENÇA] ([PERCENTUAL]%)
 
 RECOMENDAÇÃO EXECUTIVA
-• ✅ CONTRATAR: [EMPRESA] (melhor custo-benefício considerando preço + condições comerciais)
-• 💰 ECONOMIA: R$ [VALOR] vs concorrentes
-• 🎯 NEGOCIAR: [ITENS ESPECÍFICOS] com [EMPRESA]
-• ⚡ DIFERENCIAIS: [Destacar se há descontos, garantias ou condições de pagamento superiores]
+• CONTRATAR: [EMPRESA] (melhor custo-benefício considerando preço + condições comerciais)
+• ECONOMIA: R$ [VALOR] vs concorrentes
+• NEGOCIAR: [ITENS ESPECÍFICOS] com [EMPRESA]
+• DIFERENCIAIS: [Destacar se há descontos, garantias ou condições de pagamento superiores]
 
-📋 INSTRUÇÕES ESPECIAIS:
+INSTRUÇÕES ESPECIAIS:
 ${
   hasMapa
     ? "• Com MAPA: Usar como referência base para validar todas as ${fileContents.length} propostas"
@@ -794,19 +794,21 @@ ${
           fileContents.length
         } foram enviados
 
-✅ OBRIGATÓRIO: 
+OBRIGATÓRIO: 
 - Tabela com ${fileContents.length} colunas de fornecedores
 - Seções comerciais completas para TODOS os ${fileContents.length} fornecedores
 - Ranking com TODOS os ${fileContents.length} fornecedores
 - Números + ranking + recomendação executiva
 
-🎨 FORMATAÇÃO VISUAL (CRÍTICO):
-- NÃO ADICIONAR quebras de linha EXTRAS entre cabeçalhos (📋, 🎯, 💳, etc) e tabelas/listas
+FORMATAÇÃO VISUAL (CRÍTICO):
+- NÃO ADICIONAR quebras de linha EXTRAS entre cabeçalhos (IDENTIFICAÇÃO, ITENS, DESCONTOS, etc) e tabelas/listas
 - Colocar cabeçalho IMEDIATAMENTE SEGUIDO pela tabela ou lista (máximo 1 quebra de linha)
-- EXEMPLO CORRETO: "📋 ITENS E PREÇOS:\n<table>..." (SEM linhas em branco)
-- EXEMPLO ERRADO: "📋 ITENS E PREÇOS:\n\n\n\n<table>..." (COM linhas em branco)
+- NÃO USAR EMOJIS OU ÍCONES em nenhuma seção - apenas texto limpo e profissional
+- Usar APENAS letras, números, símbolos: R$, %, -, •, /, :
+- EXEMPLO CORRETO: "ITENS E PREÇOS:\n[lista de itens]"
+- EXEMPLO ERRADO: "📋 ITENS E PREÇOS:\n🎯 [...]" (SEM ícones emojis)
 
-⚙️ OTIMIZAÇÃO DE TOKENS (importante):
+OTIMIZAÇÃO DE TOKENS (importante):
 - Use NOMES CURTOS para colunas da tabela (ex: "Forn. 1" em vez de "Fornecedor 1")
 - Use ABREVIAÇÕES para descrições (ex: "Instação" em vez de "Instalação e montagem")
 - MANTENHA todos os itens e dados, apenas use formatação compacta
@@ -818,22 +820,22 @@ ${
             loadingId,
             "🚀 Executando análise comparativa consolidada..."
           );
-          console.log("📊 Preparando prompt consolidado...");
-          console.log("📏 Tamanho do prompt:", promptConsolidado.length);
-          console.log("📄 Tamanho dos documentos:", todosOsDocumentos.length);
+          console.log("Preparando prompt consolidado...");
+          console.log("Tamanho do prompt:", promptConsolidado.length);
+          console.log("Tamanho dos documentos:", todosOsDocumentos.length);
 
           const resultado = await callBackend(
             promptConsolidado,
             `ANÁLISE TODOS OS DOCUMENTOS SIMULTANEAMENTE:\n\n${todosOsDocumentos}`
           );
-          console.log("✅ Resultado recebido do backend");
+          console.log("Resultado recebido do backend");
 
           updateMessage(loadingId, resultado);
 
           // Salvar análise na base histórica
-          console.log("💾 Salvando na base histórica...");
+          console.log("Salvando na base histórica...");
           await salvarNaBaseHistorica(resultado);
-          console.log("✅ structuredAnalysis() CONCLUÍDA COM SUCESSO");
+          console.log("structuredAnalysis() CONCLUÍDA COM SUCESSO");
         } catch (error) {
           console.error("❌ ERRO em structuredAnalysis():", error);
           updateMessage(
@@ -1086,41 +1088,41 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
       }
 
       async function callBackend(systemPrompt, userMessage) {
-        console.log("🔗 INICIANDO callBackend()");
+        console.log("INICIANDO callBackend()");
         console.log(
-          "🎯 Model:",
+          "Model:",
           document.getElementById("model").value || "gpt-4"
         );
         console.log(
-          "🔢 MaxTokens:",
+          "MaxTokens:",
           parseInt(document.getElementById("maxTokens").value) || 4000
         );
 
         const model = document.getElementById("model").value || "gpt-4";
-        // ⚠️ AJUSTADO para 3000 tokens (limite: 8192 total - 3000 resposta = 5192 para input)
+        // AJUSTADO para 3000 tokens (limite: 8192 total - 3000 resposta = 5192 para input)
         // Isso garante espaço suficiente para PDFs grandes e evita erro de context_length_exceeded
         const maxTokens =
           parseInt(document.getElementById("maxTokens").value) || 3000;
 
         console.log(
-          "📝 Tamanho da mensagem do usuário:",
+          "Tamanho da mensagem do usuário:",
           userMessage.length,
           "caracteres"
         );
         console.log(
-          "📋 Tamanho do prompt do sistema:",
+          "Tamanho do prompt do sistema:",
           systemPrompt.length,
           "caracteres"
         );
 
-        // ⚠️ NÃO TRUNCAR A MENSAGEM DO USUÁRIO - ISSO QUEBRA A ANÁLISE COMPLETA
+        // NÃO TRUNCAR A MENSAGEM DO USUÁRIO - ISSO QUEBRA A ANÁLISE COMPLETA
         // A API pode lidar com mensagens maiores e o modelo GPT-4 tem limite de ~8k tokens
         const messages = [
           { role: "system", content: systemPrompt },
           { role: "user", content: userMessage },
         ];
 
-        console.log("📦 Mensagens a enviar:", messages.length, "mensagens");
+        console.log("Mensagens a enviar:", messages.length, "mensagens");
         console.log(
           "📌 Primeira mensagem (system) size:",
           systemPrompt.length,
@@ -1157,14 +1159,14 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
 
         if (!response.ok) {
           const error = await response.json();
-          console.error("❌ Erro da API:", error);
+          console.error("Erro da API:", error);
           throw new Error(error.error || "Erro na API do backend");
         }
 
         const data = await response.json();
-        console.log("✅ Dados recebidos do backend");
+        console.log("Dados recebidos do backend");
         console.log(
-          "📄 Tamanho da resposta:",
+          "Tamanho da resposta:",
           data.choices[0].message.content.length
         );
         return data.choices[0].message.content;
@@ -1180,7 +1182,7 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
                   <div class="avatar ${sender}">${
           sender === "user"
             ? "<img src='tools-avatar-sem-fundo.png' alt='Logo Tools' class='logo-tools-avatar'/>"
-            : "<span class='robot-emoji'>🤖</span>"
+            : "<span class='robot-emoji'>IA</span>"
         }</div>
                   <div class="message-content">${content}</div>
                     `;
@@ -1285,12 +1287,12 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
             if (hasMapa) {
               addMessage(
                 "assistant",
-                "🚀 <strong>Iniciando Análise Comparativa Automática...</strong><br>🎯 Detectado mapa de concorrência + propostas. Executando análise estruturada completa."
+                "Iniciando Análise Comparativa Automática...<br>Detectado mapa de concorrência + propostas. Executando análise estruturada completa."
               );
             } else {
               addMessage(
                 "assistant",
-                "🚀 <strong>Iniciando Análise Comparativa Automática...</strong><br>📊 Múltiplas propostas detectadas. Executando análise comparativa direta."
+                "Iniciando Análise Comparativa Automática...<br>Múltiplas propostas detectadas. Executando análise comparativa direta."
               );
             }
             await structuredAnalysis();
