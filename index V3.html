@@ -69,7 +69,7 @@
       </div>
       <div class="config-group">
         <label for="maxTokens">Max Tokens:</label>
-        <input type="number" id="maxTokens" value="4000" placeholder="4000" />
+        <input type="number" id="maxTokens" value="3000" placeholder="3000" />
       </div>
       <div class="config-group">
         <label for="chunkSize">Tamanho do Chunk (caracteres):</label>
@@ -642,21 +642,25 @@
         );
         console.log("📄 Total de arquivos:", fileContents.length);
 
-        // Consolidar conteúdo de todos os arquivos
+        // Consolidar conteúdo de todos os arquivos - SEM TRUNCAR para garantir análise completa
         let todosOsDocumentos = "";
         fileContents.forEach((file, index) => {
           todosOsDocumentos += `\n\n=== DOCUMENTO ${
             index + 1
           }: ${file.name.toUpperCase()} ===\n`;
-          // Limitar tamanho para evitar overflow
-          const conteudoLimitado =
-            file.content.length > 3000
-              ? file.content.substring(0, 1500) +
-                "\n[...CONTEÚDO TRUNCADO...]\n" +
-                file.content.substring(file.content.length - 1500)
-              : file.content;
-          todosOsDocumentos += conteudoLimitado;
+          // Incluir conteúdo COMPLETO para análise precisa de TODOS os fornecedores
+          todosOsDocumentos += file.content;
         });
+
+        console.log(
+          "📊 TOTAL DE DOCUMENTOS PARA ANÁLISE:",
+          fileContents.length
+        );
+        console.log(
+          "📏 Tamanho total consolidado:",
+          todosOsDocumentos.length,
+          "caracteres"
+        );
 
         // Detecta se há mapa de concorrência para adaptar o prompt
         const hasMapa = fileContents.some(
@@ -668,24 +672,52 @@
         // Prompt flexível para análise consolidada
         const promptConsolidado = `🚨 ANÁLISE CONSOLIDADA OBRIGATÓRIA - TOOLS ENGENHARIA 🚨
 
-MISSÃO CRÍTICA: Criar TABELA COMPARATIVA ÚNICA com TODOS os documentos anexados
+⚠️ CRÍTICO: VOCÊ RECEBEU ${fileContents.length} DOCUMENTO(S) PARA ANALISAR!
+OBRIGAÇÃO: Extrair dados de TODOS os ${
+          fileContents.length
+        } documento(s) e criar comparação COMPLETA!
+
+🔴 REGRA ABSOLUTA 🔴
+- NÃO FAZER ANÁLISE PARCIAL
+- NÃO IGNORAR NENHUM ITEM
+- NÃO RESUMIR OU SIMPLIFICAR
+- EXTRAIR TODOS E CADA UM DOS ITENS PRESENTES NAS PROPOSTAS
+- SE HÁ 50 ITENS, LISTAR OS 50 ITENS
+- SE HÁ 100 ITENS, LISTAR OS 100 ITENS
+- SEM LIMITE DE QUANTIDADE
+- SEM EXCEÇÕES
+
+MISSÃO CRÍTICA: Análise SIMULTÂNEA de TODOS os documentos anexados - Nenhum pode ser ignorado!
 
 IDENTIFICAR FORNECEDORES
-- Identificar TODOS os fornecedores/empresas mencionados nos documentos
+- Você receberá ${fileContents.length} propostas/documentos
+- OBRIGATÓRIO: Extrair dados de CADA UMA delas
+- Identificar TODOS os fornecedores/empresas mencionados
 - Extrair nomes das empresas, CNPJs, e identificações
-- Listar fornecedores encontrados
+- Listar CADA fornecedor encontrado em cada documento
 
-EXTRAIR ITENS E PREÇOS
-- Localizar TODOS os itens, produtos, serviços e valores em R$
-- Equipamentos, materiais, serviços, instalações
+EXTRAIR ITENS E PREÇOS - REGRA ABSOLUTA: NENHUM ITEM PODE SER OMITIDO
+- Localizar ABSOLUTAMENTE TODOS os itens, produtos, serviços e valores em R$ de CADA documento
+- Não importa se são 5, 50 ou 500 itens - LISTAR TODOS
+- Equipamentos, materiais, serviços, instalações, complementos, acessórios
 - Preços unitários, subtotais, e totais gerais
+- CRÍTICO: Mesmo que itens sejam diferentes entre propostas, INCLUIR CADA UM DELES
+- Criar linha para CADA item diferente encontrado
 - ${
           hasMapa
-            ? "Usar mapa de concorrência como referência base"
-            : "Comparar diretamente entre propostas anexadas"
+            ? "Usar mapa de concorrência como referência base para comparação"
+            : "Comparar DIRETAMENTE entre TODOS as ${fileContents.length} propostas anexadas"
         }
 
-TABELA COMPARATIVA CONSOLIDADA (OBRIGATÓRIA)
+EXTRAIR INFORMAÇÕES ADICIONAIS (CRÍTICO)
+- 🎯 DESCONTOS: Identificar descontos, abatimentos, promoções de CADA fornecedor
+- 💳 FORMAS DE PAGAMENTO: Condições comerciais de CADA fornecedor
+- 🛡️ GARANTIAS: Período de garantia, cobertura, assistência técnica de CADA fornecedor
+- 📝 OBSERVAÇÕES: Detalhes importantes de CADA fornecedor
+
+TABELA COMPARATIVA CONSOLIDADA (OBRIGATÓRIA COM ${
+          fileContents.length
+        } FORNECEDORES - INCLUIR TODOS OS ITENS)
 <table border='1' style='border-collapse:collapse;width:100%;font-size:14px'>
 <tr style='background:#0e938f;color:white'>
 <th>ITEM/SERVIÇO</th><th>FORNECEDOR 1</th><th>FORNECEDOR 2</th><th>FORNECEDOR 3</th><th>MELHOR PREÇO</th><th>ECONOMIA</th>
@@ -704,28 +736,82 @@ TABELA COMPARATIVA CONSOLIDADA (OBRIGATÓRIA)
 </tr>
 </table>
 
-RANKING FINAL
+📊 INFORMAÇÕES COMERCIAIS DETALHADAS
+
+🎯 DESCONTOS E PROMOÇÕES (TODOS OS ${fileContents.length} FORNECEDORES):
+• [FORNECEDOR 1]: [Descontos encontrados ou "Sem desconto identificado"]
+• [FORNECEDOR 2]: [Descontos encontrados ou "Sem desconto identificado"]
+• [FORNECEDOR 3]: [Descontos encontrados ou "Sem desconto identificado"]
+
+💳 FORMAS DE PAGAMENTO (TODOS OS ${fileContents.length} FORNECEDORES):
+• [FORNECEDOR 1]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
+• [FORNECEDOR 2]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
+• [FORNECEDOR 3]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
+
+🛡️ GARANTIAS E ASSISTÊNCIA (TODOS OS ${fileContents.length} FORNECEDORES):
+• [FORNECEDOR 1]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
+• [FORNECEDOR 2]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
+• [FORNECEDOR 3]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
+
+📝 OBSERVAÇÕES IMPORTANTES (TODOS OS ${fileContents.length} FORNECEDORES):
+• [FORNECEDOR 1]: [Prazos de entrega, frete, montagem, condições especiais, etc]
+• [FORNECEDOR 2]: [Prazos de entrega, frete, montagem, condições especiais, etc]
+• [FORNECEDOR 3]: [Prazos de entrega, frete, montagem, condições especiais, etc]
+
+RANKING FINAL (COMPARAÇÃO DE TODOS OS ${fileContents.length} FORNECEDORES)
 🥇 1º Lugar: [EMPRESA] - R$ [VALOR] (melhor preço geral)
 🥈 2º Lugar: [EMPRESA] - R$ [VALOR] 
+🥉 3º Lugar: [EMPRESA] - R$ [VALOR]
 💡 Economia Potencial: R$ [DIFERENÇA] ([PERCENTUAL]%)
 
 RECOMENDAÇÃO EXECUTIVA
-• ✅ CONTRATAR: [EMPRESA] (melhor custo-benefício)
-• 💰 ECONOMIA: R$ [VALOR] vs concorrente
+• ✅ CONTRATAR: [EMPRESA] (melhor custo-benefício considerando preço + condições comerciais)
+• 💰 ECONOMIA: R$ [VALOR] vs concorrentes
 • 🎯 NEGOCIAR: [ITENS ESPECÍFICOS] com [EMPRESA]
+• ⚡ DIFERENCIAIS: [Destacar se há descontos, garantias ou condições de pagamento superiores]
 
 📋 INSTRUÇÕES ESPECIAIS:
 ${
   hasMapa
-    ? "• Com MAPA: Usar como referência base para validar propostas"
-    : "• Sem MAPA: Comparar diretamente todas as propostas anexadas"
+    ? "• Com MAPA: Usar como referência base para validar todas as ${fileContents.length} propostas"
+    : "• Sem MAPA: Comparar DIRETAMENTE todas as ${fileContents.length} propostas anexadas"
 }
-• ADAPTAR tabela ao número real de fornecedores encontrados
-• Se 2 fornecedores: usar 2 colunas; se 3+: usar quantas necessárias
+• ADAPTAR tabela ao número REAL de fornecedores (${
+          fileContents.length
+        } documentos = até ${fileContents.length} fornecedores)
+• Se ${fileContents.length} fornecedores: usar ${
+          fileContents.length
+        } colunas na tabela
 • Sempre destacar MELHOR preço em VERDE e PIOR em VERMELHO
+• SEÇÕES COMERCIAIS são obrigatórias mesmo que informações incompletas
+• NÃO IGNORE NENHUM DOCUMENTO!
 
-⚠️ PROIBIDO: Texto descritivo, análises longas, explicações
-✅ OBRIGATÓRIO: APENAS tabela + números + ranking + recomendação`;
+⚠️ PROIBIDO: 
+- Texto descritivo longo
+- Análises genéricas
+- Ignorar qualquer um dos ${fileContents.length} documentos
+- Dizer que "apenas 1 fornecedor foi encontrado" quando ${
+          fileContents.length
+        } foram enviados
+
+✅ OBRIGATÓRIO: 
+- Tabela com ${fileContents.length} colunas de fornecedores
+- Seções comerciais completas para TODOS os ${fileContents.length} fornecedores
+- Ranking com TODOS os ${fileContents.length} fornecedores
+- Números + ranking + recomendação executiva
+
+🎨 FORMATAÇÃO VISUAL (CRÍTICO):
+- NÃO ADICIONAR quebras de linha EXTRAS entre cabeçalhos (📋, 🎯, 💳, etc) e tabelas/listas
+- Colocar cabeçalho IMEDIATAMENTE SEGUIDO pela tabela ou lista (máximo 1 quebra de linha)
+- EXEMPLO CORRETO: "📋 ITENS E PREÇOS:\n<table>..." (SEM linhas em branco)
+- EXEMPLO ERRADO: "📋 ITENS E PREÇOS:\n\n\n\n<table>..." (COM linhas em branco)
+
+⚙️ OTIMIZAÇÃO DE TOKENS (importante):
+- Use NOMES CURTOS para colunas da tabela (ex: "Forn. 1" em vez de "Fornecedor 1")
+- Use ABREVIAÇÕES para descrições (ex: "Instação" em vez de "Instalação e montagem")
+- MANTENHA todos os itens e dados, apenas use formatação compacta
+- Use símbolos (✓, ✕, R$) em vez de palavras quando possível
+- Elimine descrições longas, MAS MANTENHA TODOS OS VALORES MONETÁRIOS E ITENS`;
 
         try {
           updateLoadingMessage(
@@ -1007,56 +1093,44 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
         );
         console.log(
           "🔢 MaxTokens:",
-          parseInt(document.getElementById("maxTokens").value) || 2000
+          parseInt(document.getElementById("maxTokens").value) || 4000
         );
 
         const model = document.getElementById("model").value || "gpt-4";
+        // ⚠️ AJUSTADO para 3000 tokens (limite: 8192 total - 3000 resposta = 5192 para input)
+        // Isso garante espaço suficiente para PDFs grandes e evita erro de context_length_exceeded
         const maxTokens =
-          parseInt(document.getElementById("maxTokens").value) || 2000; // Reduzido para evitar overflow
+          parseInt(document.getElementById("maxTokens").value) || 3000;
 
-        // Calcular tamanho aproximado dos tokens
-        const systemTokens = Math.ceil(systemPrompt.length / 4);
-        const userTokens = Math.ceil(userMessage.length / 4);
-        const historyTokens = conversationHistory
-          .slice(-2)
-          .reduce((acc, msg) => acc + Math.ceil(msg.content.length / 4), 0);
+        console.log(
+          "📝 Tamanho da mensagem do usuário:",
+          userMessage.length,
+          "caracteres"
+        );
+        console.log(
+          "📋 Tamanho do prompt do sistema:",
+          systemPrompt.length,
+          "caracteres"
+        );
 
-        const totalInputTokens = systemTokens + userTokens + historyTokens;
-
-        // Se ultrapassar limite, reduzir contexto
-        let contextMessages = [];
-        if (totalInputTokens + maxTokens > 5500) {
-          // Usar apenas contexto mínimo
-          contextMessages = [];
-        } else if (totalInputTokens + maxTokens > 6000) {
-          contextMessages = conversationHistory.slice(-1);
-        } else {
-          contextMessages = conversationHistory.slice(-2);
-        }
-
+        // ⚠️ NÃO TRUNCAR A MENSAGEM DO USUÁRIO - ISSO QUEBRA A ANÁLISE COMPLETA
+        // A API pode lidar com mensagens maiores e o modelo GPT-4 tem limite de ~8k tokens
         const messages = [
           { role: "system", content: systemPrompt },
-          ...contextMessages,
           { role: "user", content: userMessage },
         ];
 
-        // Verificação final de tokens antes da chamada
-        const finalTokenCount = messages.reduce(
-          (acc, msg) => acc + Math.ceil(msg.content.length / 4),
-          0
+        console.log("📦 Mensagens a enviar:", messages.length, "mensagens");
+        console.log(
+          "📌 Primeira mensagem (system) size:",
+          systemPrompt.length,
+          "chars"
         );
-
-        if (finalTokenCount + maxTokens > 6000) {
-          // Truncar mensagem do usuário se necessário
-          const truncatedUserMessage =
-            userMessage.length > 2000
-              ? userMessage.substring(0, 1000) +
-                "\n\n[CONTEÚDO TRUNCADO]" +
-                userMessage.substring(userMessage.length - 1000)
-              : userMessage;
-
-          messages[messages.length - 1].content = truncatedUserMessage;
-        }
+        console.log(
+          "📌 Segunda mensagem (user) size:",
+          userMessage.length,
+          "chars"
+        );
 
         const backendUrl =
           "https://analise-bid-ia-backend.onrender.com/api/chat";
