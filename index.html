@@ -672,6 +672,11 @@
         // Prompt flexível para análise consolidada
         const promptConsolidado = `ANÁLISE CONSOLIDADA OBRIGATÓRIA - TOOLS ENGENHARIA
 
+FORMATAÇÃO CRÍTICA:
+- NENHUMA linha em branco antes de <table> - coloque logo após o : do cabeçalho
+- Exemplo: "<strong>TABELA COMPARATIVA CONSOLIDADA:</strong>\n<table>" (SEM \n\n entre eles)
+- Se há quebras de linha antes da tabela, REMOVA-AS
+
 CRÍTICO: VOCÊ RECEBEU ${fileContents.length} DOCUMENTO(S) PARA ANALISAR!
 OBRIGAÇÃO: Extrair dados de TODOS os ${
           fileContents.length
@@ -697,6 +702,13 @@ MISSÃO CRÍTICA: Análise SIMULTÂNEA de TODOS os documentos anexados - Nenhum 
 - Listar CADA fornecedor encontrado em cada documento
 
 <strong>EXTRAÇÃO DE ITENS E PREÇOS:</strong> (REGRA ABSOLUTA: NENHUM ITEM PODE SER OMITIDO)
+• [ITEM 1]: Marvidros R$ XXXX | Mac Vidros R$ XXXX | [Empresa 3] R$ XXXX
+• [ITEM 2]: Marvidros R$ XXXX | Mac Vidros R$ XXXX | [Empresa 3] R$ XXXX
+• [ITEM 3]: Marvidros R$ XXXX | Mac Vidros R$ XXXX | [Empresa 3] R$ XXXX
+• [ITEM N]: Marvidros R$ XXXX | Mac Vidros R$ XXXX | [Empresa 3] R$ XXXX
+• TOTAL: Marvidros R$ XXXX | Mac Vidros R$ XXXX | [Empresa 3] R$ XXXX
+
+INSTRUÇÕES:
 - Localizar ABSOLUTAMENTE TODOS os itens, produtos, serviços e valores em R$ de CADA documento
 - Não importa se são 5, 50 ou 500 itens - LISTAR TODOS
 - Equipamentos, materiais, serviços, instalações, complementos, acessórios
@@ -813,8 +825,10 @@ FORMATAÇÃO VISUAL (CRÍTICO):
 - EXEMPLO ERRADO: "<strong>TABELA COMPARATIVA:</strong>\n\n\n<table>..." (COM linhas em branco)
 
 OTIMIZAÇÃO DE TOKENS (importante):
-- Use NOMES CURTOS para colunas da tabela (ex: "Forn. 1" em vez de "Fornecedor 1")
-- Use ABREVIAÇÕES para descrições (ex: "Instação" em vez de "Instalação e montagem")
+- USAR NOMES REAIS DAS EMPRESAS em TODAS as seções (IDENTIFICAÇÃO, DESCONTOS, PAGAMENTO, GARANTIAS, OBSERVAÇÕES, RANKING)
+- Na TABELA COMPARATIVA: usar NOMES CURTOS nas COLUNAS se necessário (ex: "Empresa A", "Empresa B")
+- EXEMPLO: "DESCONTOS:" seção deve usar "• Marvidros: ...", "• Mac Vidros: ..." (NOMES REAIS)
+- Usar ABREVIAÇÕES APENAS para descrições longas (ex: "Instação" em vez de "Instalação e montagem")
 - MANTENHA todos os itens e dados, apenas use formatação compacta
 - Use símbolos (✓, ✕, R$) em vez de palavras quando possível
 - Elimine descrições longas, MAS MANTENHA TODOS OS VALORES MONETÁRIOS E ITENS`;
@@ -1210,7 +1224,20 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
         const messageDiv = document.getElementById(messageId);
         const contentDiv = messageDiv.querySelector(".message-content");
         // Remover quebras de linha duplicadas (mais de 2 seguidas) para limpeza visual
-        const cleanedContent = content.replace(/\n{3,}/g, "\n\n");
+        let cleanedContent = content.replace(/\n{3,}/g, "\n\n");
+        // Remover quebras de linha ENTRE cabeçalho e tabela - VERY AGGRESSIVE
+        cleanedContent = cleanedContent.replace(
+          /(<\/strong>:?)\n+(<table)/g,
+          "$1\n$2"
+        );
+        cleanedContent = cleanedContent.replace(
+          /(<\/strong>)\n+(<table)/g,
+          "$1\n$2"
+        );
+        cleanedContent = cleanedContent.replace(
+          /:(\s*)\n\n+(<table)/g,
+          ":\n$2"
+        );
         contentDiv.innerHTML = cleanedContent.replace(/\n/g, "<br>");
       }
 
