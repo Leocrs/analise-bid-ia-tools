@@ -800,6 +800,12 @@ ${
 - Ranking com TODOS os ${fileContents.length} fornecedores
 - Números + ranking + recomendação executiva
 
+🎨 FORMATAÇÃO VISUAL (CRÍTICO):
+- NÃO ADICIONAR quebras de linha EXTRAS entre cabeçalhos (📋, 🎯, 💳, etc) e tabelas/listas
+- Colocar cabeçalho IMEDIATAMENTE SEGUIDO pela tabela ou lista (máximo 1 quebra de linha)
+- EXEMPLO CORRETO: "📋 ITENS E PREÇOS:\n<table>..." (SEM linhas em branco)
+- EXEMPLO ERRADO: "📋 ITENS E PREÇOS:\n\n\n\n<table>..." (COM linhas em branco)
+
 ⚙️ OTIMIZAÇÃO DE TOKENS (importante):
 - Use NOMES CURTOS para colunas da tabela (ex: "Forn. 1" em vez de "Fornecedor 1")
 - Use ABREVIAÇÕES para descrições (ex: "Instação" em vez de "Instalação e montagem")
@@ -1197,12 +1203,7 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
       function updateMessage(messageId, content) {
         const messageDiv = document.getElementById(messageId);
         const contentDiv = messageDiv.querySelector(".message-content");
-        // Remove quebras de linha entre o título de itens e a tabela
-        let cleanedContent = content.replace(
-          /(ITENS E PREÇOS[\w\s:-]*)(<br>)+(<table|ITEM\/SERVIÇO)/i,
-          "$1<br>$3"
-        );
-        contentDiv.innerHTML = cleanedContent;
+        contentDiv.innerHTML = content.replace(/\n/g, "<br>");
       }
 
       function showError(message) {
