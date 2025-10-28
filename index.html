@@ -668,7 +668,7 @@
         // Prompt flexível para análise consolidada
         const promptConsolidado = `🚨 ANÁLISE CONSOLIDADA OBRIGATÓRIA - TOOLS ENGENHARIA 🚨
 
-MISSÃO CRÍTICA: Criar TABELA COMPARATIVA ÚNICA com TODOS os documentos anexados
+MISSÃO CRÍTICA: Criar ANÁLISE COMPLETA com TODOS os documentos anexados
 
 IDENTIFICAR FORNECEDORES
 - Identificar TODOS os fornecedores/empresas mencionados nos documentos
@@ -684,6 +684,12 @@ EXTRAIR ITENS E PREÇOS
             ? "Usar mapa de concorrência como referência base"
             : "Comparar diretamente entre propostas anexadas"
         }
+
+EXTRAIR INFORMAÇÕES ADICIONAIS (CRÍTICO)
+- 🎯 DESCONTOS: Identificar descontos, abatimentos, promoções (ex: 5% desconto acima de X, progressivo, etc)
+- 💳 FORMAS DE PAGAMENTO: Condições comerciais (à vista, parcelado, cartão, boleto, etc)
+- 🛡️ GARANTIAS: Período de garantia, cobertura, assistência técnica
+- 📝 OBSERVAÇÕES: Detalhes importantes, prazos, frete, montagem, condições especiais
 
 TABELA COMPARATIVA CONSOLIDADA (OBRIGATÓRIA)
 <table border='1' style='border-collapse:collapse;width:100%;font-size:14px'>
@@ -704,15 +710,38 @@ TABELA COMPARATIVA CONSOLIDADA (OBRIGATÓRIA)
 </tr>
 </table>
 
+📊 INFORMAÇÕES COMERCIAIS DETALHADAS
+
+🎯 DESCONTOS E PROMOÇÕES:
+• [FORNECEDOR 1]: [Descontos encontrados ou "Sem desconto identificado"]
+• [FORNECEDOR 2]: [Descontos encontrados ou "Sem desconto identificado"]
+• [FORNECEDOR 3]: [Descontos encontrados ou "Sem desconto identificado"]
+
+💳 FORMAS DE PAGAMENTO:
+• [FORNECEDOR 1]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
+• [FORNECEDOR 2]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
+• [FORNECEDOR 3]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
+
+🛡️ GARANTIAS E ASSISTÊNCIA:
+• [FORNECEDOR 1]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
+• [FORNECEDOR 2]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
+• [FORNECEDOR 3]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
+
+📝 OBSERVAÇÕES IMPORTANTES:
+• [FORNECEDOR 1]: [Prazos de entrega, frete, montagem, condições especiais, etc]
+• [FORNECEDOR 2]: [Prazos de entrega, frete, montagem, condições especiais, etc]
+• [FORNECEDOR 3]: [Prazos de entrega, frete, montagem, condições especiais, etc]
+
 RANKING FINAL
 🥇 1º Lugar: [EMPRESA] - R$ [VALOR] (melhor preço geral)
 🥈 2º Lugar: [EMPRESA] - R$ [VALOR] 
 💡 Economia Potencial: R$ [DIFERENÇA] ([PERCENTUAL]%)
 
 RECOMENDAÇÃO EXECUTIVA
-• ✅ CONTRATAR: [EMPRESA] (melhor custo-benefício)
+• ✅ CONTRATAR: [EMPRESA] (melhor custo-benefício considerando preço + condições comerciais)
 • 💰 ECONOMIA: R$ [VALOR] vs concorrente
 • 🎯 NEGOCIAR: [ITENS ESPECÍFICOS] com [EMPRESA]
+• ⚡ DIFERENCIAIS: [Destacar se há descontos, garantias ou condições de pagamento superiores]
 
 📋 INSTRUÇÕES ESPECIAIS:
 ${
@@ -723,9 +752,10 @@ ${
 • ADAPTAR tabela ao número real de fornecedores encontrados
 • Se 2 fornecedores: usar 2 colunas; se 3+: usar quantas necessárias
 • Sempre destacar MELHOR preço em VERDE e PIOR em VERMELHO
+• SEÇÕES COMERCIAIS são obrigatórias mesmo que informações incompletas
 
-⚠️ PROIBIDO: Texto descritivo, análises longas, explicações
-✅ OBRIGATÓRIO: APENAS tabela + números + ranking + recomendação`;
+⚠️ PROIBIDO: Texto descritivo longo, análises genéricas, explicações desnecessárias
+✅ OBRIGATÓRIO: Tabela + seções comerciais + números + ranking + recomendação executiva`;
 
         try {
           updateLoadingMessage(
