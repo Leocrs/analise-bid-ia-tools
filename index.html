@@ -1197,9 +1197,7 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
       function updateMessage(messageId, content) {
         const messageDiv = document.getElementById(messageId);
         const contentDiv = messageDiv.querySelector(".message-content");
-        // Remover quebras de linha duplicadas (mais de 2 seguidas) para limpeza visual
-        const cleanedContent = content.replace(/\n{3,}/g, "\n\n");
-        contentDiv.innerHTML = cleanedContent.replace(/\n/g, "<br>");
+        contentDiv.innerHTML = content.replace(/\n/g, "<br>");
       }
 
       function showError(message) {
