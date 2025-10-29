@@ -669,149 +669,56 @@
             file.name.toLowerCase().includes("concorrencia")
         );
 
-        // Prompt flexível para análise consolidada
-        const promptConsolidado = `🚨 ANÁLISE CONSOLIDADA OBRIGATÓRIA - TOOLS ENGENHARIA 🚨
+        // Prompt COMPACTO para análise consolidada (otimizado para tokens)
+        const promptConsolidado = `ANÁLISE CONSOLIDADA - TOOLS ENGENHARIA
 
-⚠️ CRÍTICO: VOCÊ RECEBEU ${fileContents.length} DOCUMENTO(S) PARA ANALISAR!
-OBRIGAÇÃO: Extrair dados de TODOS os ${
-          fileContents.length
-        } documento(s) e criar comparação COMPLETA!
+SEÇÃO 1️⃣: FORNECEDORES
+Para cada documento, extraia e consolide:
+📋 Forn. 1: [Nome] | CNPJ: [CNPJ] | Tel: [TODOS tel] | Email: [TODOS emails] | End: [Endereço] | Contato: [Nome-Cargo]
 
-🔴 REGRA ABSOLUTA 🔴
-- NÃO FAZER ANÁLISE PARCIAL
-- NÃO IGNORAR NENHUM ITEM
-- NÃO RESUMIR OU SIMPLIFICAR
-- EXTRAIR TODOS E CADA UM DOS ITENS PRESENTES NAS PROPOSTAS
-- SE HÁ 50 ITENS, LISTAR OS 50 ITENS
-- SE HÁ 100 ITENS, LISTAR OS 100 ITENS
-- SEM LIMITE DE QUANTIDADE
-- SEM EXCEÇÕES
+📋 Forn. 2: [Nome] | CNPJ: [CNPJ] | Tel: [TODOS tel] | Email: [TODOS emails] | End: [Endereço] | Contato: [Nome-Cargo]
 
-MISSÃO CRÍTICA: Análise SIMULTÂNEA de TODOS os documentos anexados - Nenhum pode ser ignorado!
-
-IDENTIFICAR FORNECEDORES
-- Você receberá ${fileContents.length} propostas/documentos
-- OBRIGATÓRIO: Extrair dados de CADA UMA delas
-- Identificar TODOS os fornecedores/empresas mencionados
-- Extrair nomes das empresas, CNPJs, e identificações
-- Listar CADA fornecedor encontrado em cada documento
-
-EXTRAIR ITENS E PREÇOS - REGRA ABSOLUTA: NENHUM ITEM PODE SER OMITIDO
-- Localizar ABSOLUTAMENTE TODOS os itens, produtos, serviços e valores em R$ de CADA documento
-- Não importa se são 5, 50 ou 500 itens - LISTAR TODOS
-- Equipamentos, materiais, serviços, instalações, complementos, acessórios
-- Preços unitários, subtotais, e totais gerais
-- CRÍTICO: Mesmo que itens sejam diferentes entre propostas, INCLUIR CADA UM DELES
-- Criar linha para CADA item diferente encontrado
-- ${
-          hasMapa
-            ? "Usar mapa de concorrência como referência base para comparação"
-            : "Comparar DIRETAMENTE entre TODOS as ${fileContents.length} propostas anexadas"
-        }
-
-EXTRAIR INFORMAÇÕES ADICIONAIS (CRÍTICO)
-- 🎯 DESCONTOS: Identificar descontos, abatimentos, promoções de CADA fornecedor
-- 💳 FORMAS DE PAGAMENTO: Condições comerciais de CADA fornecedor
-- 🛡️ GARANTIAS: Período de garantia, cobertura, assistência técnica de CADA fornecedor
-- 📝 OBSERVAÇÕES: Detalhes importantes de CADA fornecedor
-
-TABELA COMPARATIVA CONSOLIDADA (OBRIGATÓRIA COM ${
-          fileContents.length
-        } FORNECEDORES - INCLUIR TODOS OS ITENS)
-<table border='1' style='border-collapse:collapse;width:100%;font-size:14px'>
-<tr style='background:#0e938f;color:white'>
-<th>ITEM/SERVIÇO</th><th>FORNECEDOR 1</th><th>FORNECEDOR 2</th><th>FORNECEDOR 3</th><th>MELHOR PREÇO</th><th>ECONOMIA</th>
-</tr>
-<tr>
-<td>[ITEM 1]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td style='background:#fecaca'>R$ [VALOR]</td><td>R$ [VALOR]</td><td>[MELHOR]</td><td>R$ [DIFERENÇA]</td>
-</tr>
-<tr>
-<td>[ITEM 2]</td><td style='background:#fecaca'>R$ [VALOR]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td>R$ [VALOR]</td><td>[MELHOR]</td><td>R$ [DIFERENÇA]</td>
-</tr>
-<tr>
-<td>[ITEM 3]</td><td>R$ [VALOR]</td><td>R$ [VALOR]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td>[MELHOR]</td><td>R$ [DIFERENÇA]</td>
-</tr>
-<tr style='background:#f3f4f6;font-weight:bold'>
-<td>TOTAL GERAL</td><td>R$ [TOTAL]</td><td>R$ [TOTAL]</td><td>[VENCEDOR]</td><td>R$ [ECONOMIA]</td>
-</tr>
-</table>
-
-📊 INFORMAÇÕES COMERCIAIS DETALHADAS
-
-🎯 DESCONTOS E PROMOÇÕES (TODOS OS ${fileContents.length} FORNECEDORES):
-• [FORNECEDOR 1]: [Descontos encontrados ou "Sem desconto identificado"]
-• [FORNECEDOR 2]: [Descontos encontrados ou "Sem desconto identificado"]
-• [FORNECEDOR 3]: [Descontos encontrados ou "Sem desconto identificado"]
-
-💳 FORMAS DE PAGAMENTO (TODOS OS ${fileContents.length} FORNECEDORES):
-• [FORNECEDOR 1]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
-• [FORNECEDOR 2]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
-• [FORNECEDOR 3]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
-
-🛡️ GARANTIAS E ASSISTÊNCIA (TODOS OS ${fileContents.length} FORNECEDORES):
-• [FORNECEDOR 1]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
-• [FORNECEDOR 2]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
-• [FORNECEDOR 3]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
-
-📝 OBSERVAÇÕES IMPORTANTES (TODOS OS ${fileContents.length} FORNECEDORES):
-• [FORNECEDOR 1]: [Prazos de entrega, frete, montagem, condições especiais, etc]
-• [FORNECEDOR 2]: [Prazos de entrega, frete, montagem, condições especiais, etc]
-• [FORNECEDOR 3]: [Prazos de entrega, frete, montagem, condições especiais, etc]
-
-RANKING FINAL (COMPARAÇÃO DE TODOS OS ${fileContents.length} FORNECEDORES)
-🥇 1º Lugar: [EMPRESA] - R$ [VALOR] (melhor preço geral)
-🥈 2º Lugar: [EMPRESA] - R$ [VALOR] 
-🥉 3º Lugar: [EMPRESA] - R$ [VALOR]
-💡 Economia Potencial: R$ [DIFERENÇA] ([PERCENTUAL]%)
-
-RECOMENDAÇÃO EXECUTIVA
-• ✅ CONTRATAR: [EMPRESA] (melhor custo-benefício considerando preço + condições comerciais)
-• 💰 ECONOMIA: R$ [VALOR] vs concorrentes
-• 🎯 NEGOCIAR: [ITENS ESPECÍFICOS] com [EMPRESA]
-• ⚡ DIFERENCIAIS: [Destacar se há descontos, garantias ou condições de pagamento superiores]
-
-📋 INSTRUÇÕES ESPECIAIS:
 ${
-  hasMapa
-    ? "• Com MAPA: Usar como referência base para validar todas as ${fileContents.length} propostas"
-    : "• Sem MAPA: Comparar DIRETAMENTE todas as ${fileContents.length} propostas anexadas"
+  fileContents.length > 2
+    ? "📋 Forn. 3: [Nome] | CNPJ: [CNPJ] | Tel: [TODOS tel] | Email: [TODOS emails] | End: [Endereço] | Contato: [Nome-Cargo]"
+    : ""
 }
-• ADAPTAR tabela ao número REAL de fornecedores (${
-          fileContents.length
-        } documentos = até ${fileContents.length} fornecedores)
-• Se ${fileContents.length} fornecedores: usar ${
-          fileContents.length
-        } colunas na tabela
-• Sempre destacar MELHOR preço em VERDE e PIOR em VERMELHO
-• SEÇÕES COMERCIAIS são obrigatórias mesmo que informações incompletas
-• NÃO IGNORE NENHUM DOCUMENTO!
 
-⚠️ PROIBIDO: 
-- Texto descritivo longo
-- Análises genéricas
-- Ignorar qualquer um dos ${fileContents.length} documentos
-- Dizer que "apenas 1 fornecedor foi encontrado" quando ${
-          fileContents.length
-        } foram enviados
+SEÇÃO 2️⃣: ITENS E PREÇOS
+Crie uma tabela HTML com TODOS os itens encontrados. Estrutura obrigatória:
+- Cabeçalho: Item | [Nome Empresa 1] | [Nome Empresa 2] | Melhor | Economia
+- Linhas: Um item por linha com preços de cada empresa
+- Cores: Verde (#dcfce7) para melhor preço, Vermelho (#fecaca) para pior
+- Última linha: TOTAL com soma dos preços
+- Exemplo estrutura: <table border='1'><tr style='background:#0e938f;color:white'><th>Item</th><th>Empresa1</th><th>Empresa2</th><th>Melhor</th><th>Economia</th></tr><tr><td>Item A</td><td style='background:#dcfce7'>R$ 100</td><td>R$ 150</td><td>Empresa1</td><td>R$ 50</td></tr></table>
 
-✅ OBRIGATÓRIO: 
-- Tabela com ${fileContents.length} colunas de fornecedores
-- Seções comerciais completas para TODOS os ${fileContents.length} fornecedores
-- Ranking com TODOS os ${fileContents.length} fornecedores
-- Números + ranking + recomendação executiva
+SEÇÃO 3️⃣: MIX DE PREÇO
+Analise qual combinação de fornecedores gera a MAIOR ECONOMIA:
+• Itens de [Empresa A]: [lista de itens] = R$ [subtotal]
+• Itens de [Empresa B]: [lista de itens] = R$ [subtotal]
+• Total MIX: R$ [valor final] | Economia vs fornecedor único: R$ [diferença]
 
-🎨 FORMATAÇÃO VISUAL (CRÍTICO):
-- NÃO ADICIONAR quebras de linha EXTRAS entre cabeçalhos (📋, 🎯, 💳, etc) e tabelas/listas
-- Colocar cabeçalho IMEDIATAMENTE SEGUIDO pela tabela ou lista (máximo 1 quebra de linha)
-- EXEMPLO CORRETO: "📋 ITENS E PREÇOS:\n<table>..." (SEM linhas em branco)
-- EXEMPLO ERRADO: "📋 ITENS E PREÇOS:\n\n\n\n<table>..." (COM linhas em branco)
+SEÇÃO 4️⃣: COMERCIAL - Descontos, Pagamento, Garantia, Prazos (por fornecedor)
 
-⚙️ OTIMIZAÇÃO DE TOKENS (importante):
-- Use NOMES CURTOS para colunas da tabela (ex: "Forn. 1" em vez de "Fornecedor 1")
-- Use ABREVIAÇÕES para descrições (ex: "Instação" em vez de "Instalação e montagem")
-- MANTENHA todos os itens e dados, apenas use formatação compacta
-- Use símbolos (✓, ✕, R$) em vez de palavras quando possível
-- Elimine descrições longas, MAS MANTENHA TODOS OS VALORES MONETÁRIOS E ITENS`;
+SEÇÃO 5️⃣: RANKING - 1º, 2º, 3º lugar com valores e economia
+
+SEÇÃO 6️⃣: RECOMENDAÇÃO
+• ✅ CONTRATAR: [Empresa] (melhor custo-benefício)
+• 💰 ECONOMIA: R$ [valor]
+• ⚠️ ITENS IGUAIS?: Verificar se TODOS fornecedores consideraram os MESMOS itens
+• 🔄 MIX SUGERIDO: Se economia > [X]%, considerar mix de fornecedores
+• 🎯 NEGOCIAR: [Itens específicos]
+• ⚡ DIFERENCIAIS: [Descontos, garantias, prazos]
+
+Instruções críticas:
+- Extraia TODOS os itens, sem exceção
+- Se múltiplos tel/email: liste TODOS
+- Se não encontrar: "Não encontrado"
+- Verde para melhor, vermelho para pior
+- NOMES REAIS das empresas em SEÇÃO 2, não "Forn.1"
+- Mantenha consistência de nomes em todas as seções
+- MIX DE PREÇO: mostre qual combinação economiza mais
+- ITENS IGUAIS: responda se todos fornecedores orçaram os mesmos itens`;
 
         try {
           updateLoadingMessage(
@@ -1297,15 +1204,11 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
             }
             await structuredAnalysis();
           } else if (fileContents.length === 1) {
-            // Exibe o prompt estruturado para arquivo único
-            showStructuredPrompt();
+            // Apenas mensagem simples para arquivo único, SEM exibir o prompt detalhado
             addMessage(
               "assistant",
               "📄 <strong>Arquivo único anexado.</strong> Para análise comparativa automática, anexe pelo menos 2 propostas ou documentos."
             );
-          } else {
-            // Exibe o prompt estruturado
-            showStructuredPrompt();
           }
         });
       }
