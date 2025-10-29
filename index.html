@@ -684,12 +684,25 @@ ${
     : ""
 }
 
-SEÇÃO 2️⃣: ITENS E PREÇOS
-Usar NOMES REAIS das empresas (abreviados se necessário) em vez de "Forn.1", "Forn.2"
-Colunas: Item | [Nome Empresa 1] | [Nome Empresa 2] | ${
-          fileContents.length > 2 ? "[Nome Empresa 3] | " : ""
-        }Melhor | Economia
-Verde: melhor preço | Vermelho: pior preço | Todos itens, sem omissão
+SEÇÃO 2️⃣: ITENS E PREÇOS - TABELA HTML COMPACTA
+Gerar OBRIGATORIAMENTE como tabela HTML com bordas e cores:
+<table border='1' style='border-collapse:collapse;width:100%;font-size:13px'>
+<tr style='background:#0e938f;color:white'>
+<th>Item</th><th>[Empresa1]</th><th>[Empresa2]</th>${
+          fileContents.length > 2 ? "<th>[Empresa3]</th>" : ""
+        }<th>Melhor</th><th>Economia</th>
+</tr>
+<tr><td>[ITEM]</td><td>R$ [valor]</td><td>R$ [valor]</td>${
+          fileContents.length > 2 ? "<td>R$ [valor]</td>" : ""
+        }<td>[Melhor]</td><td>R$ [dif]</td></tr>
+<tr><td>...</td><td>...</td><td>...</td>${
+          fileContents.length > 2 ? "<td>...</td>" : ""
+        }<td>...</td><td>...</td></tr>
+<tr style='background:#f3f4f6;font-weight:bold'><td>TOTAL</td><td>R$ [TOT]</td><td>R$ [TOT]</td>${
+          fileContents.length > 2 ? "<td>R$ [TOT]</td>" : ""
+        }<td>-</td><td>R$ [ECO]</td></tr>
+</table>
+Instruções: Verde (#dcfce7) melhor preço, Vermelho (#fecaca) pior preço, Incluir TODOS itens mesmo que diferentes, Usar nomes reais das empresas
 
 SEÇÃO 3️⃣: MIX DE PREÇO
 Analise qual combinação de fornecedores gera a MAIOR ECONOMIA:
