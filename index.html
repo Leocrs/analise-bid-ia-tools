@@ -678,21 +678,47 @@ OBRIGAÇÃO: Extrair dados de TODOS os ${
         } documento(s) e criar comparação COMPLETA!
 
 ═════════════════════════════════════════════════════════════════════════════════
-SEÇÃO 1️⃣: IDENTIFICAÇÃO DOS FORNECEDORES E DADOS DE CONTATO
+SEÇÃO 1️⃣: IDENTIFICAÇÃO COMPLETA DOS FORNECEDORES - TODOS OS DADOS
 ═════════════════════════════════════════════════════════════════════════════════
 
-OBRIGATÓRIO EXTRAIR PARA CADA FORNECEDOR:
-• Nome completo da empresa / Razão social
-• CNPJ (se identificável no documento)
-• Telefone / Celular (se disponível)
-• Email / Website (se disponível)
-• Endereço completo
-• Contato responsável (nome + cargo)
+OBRIGATÓRIO EXTRAIR PARA CADA FORNECEDOR - DADOS CONSOLIDADOS EM UM ÚNICO CAMPO:
+📋 FORNECEDOR 1: 
+   Nome: [RAZÃO SOCIAL COMPLETA]
+   CNPJ: [CNPJ] (ou "Não encontrado")
+   Telefone(s): [TELEFONE(S) - CRÍTICO: BUSCAR TODOS OS NÚMEROS]
+   Email(s): [EMAIL - CRÍTICO: BUSCAR TODOS OS EMAILS]
+   Endereço: [ENDEREÇO COMPLETO]
+   Contato: [NOME DO CONTATO] - [CARGO/FUNÇÃO]
+   Observações: [Qualquer dado adicional importante]
 
-Exemplo de formato esperado:
-📋 FORNECEDORES IDENTIFICADOS:
-• FORNECEDOR 1: [NOME] (CNPJ: [CNPJ]) | Tel: [TELEFONE] | Email: [EMAIL] | Contato: [NOME]
-• FORNECEDOR 2: [NOME] (sem CNPJ identificado) | Tel: [TELEFONE] | Email: [EMAIL] | Contato: [NOME]
+📋 FORNECEDOR 2:
+   Nome: [RAZÃO SOCIAL COMPLETA]
+   CNPJ: [CNPJ] (ou "Não encontrado")
+   Telefone(s): [TELEFONE(S) - CRÍTICO: BUSCAR TODOS OS NÚMEROS]
+   Email(s): [EMAIL - CRÍTICO: BUSCAR TODOS OS EMAILS]
+   Endereço: [ENDEREÇO COMPLETO]
+   Contato: [NOME DO CONTATO] - [CARGO/FUNÇÃO]
+   Observações: [Qualquer dado adicional importante]
+
+${
+  fileContents.length > 2
+    ? `📋 FORNECEDOR 3:
+   Nome: [RAZÃO SOCIAL COMPLETA]
+   CNPJ: [CNPJ] (ou "Não encontrado")
+   Telefone(s): [TELEFONE(S) - CRÍTICO: BUSCAR TODOS OS NÚMEROS]
+   Email(s): [EMAIL - CRÍTICO: BUSCAR TODOS OS EMAILS]
+   Endereço: [ENDEREÇO COMPLETO]
+   Contato: [NOME DO CONTATO] - [CARGO/FUNÇÃO]
+   Observações: [Qualquer dado adicional importante]`
+    : ""
+}
+
+⚠️ INSTRUÇÕES CRÍTICAS PARA SEÇÃO 1:
+- PROCURAR TELEFONE EM: Cabeçalho do documento, rodapé, assinatura, propostas
+- PROCURAR EMAIL EM: Cabeçalho, contatos, assinatura
+- Se múltiplos telefones/emails encontrados, LISTAR TODOS
+- NÃO DEIXAR VAZIO: Se informação não aparecer, informar "Não encontrado no documento"
+- CONSOLIDAR TUDO EM UM ÚNICO BLOCO POR FORNECEDOR (não espalhar em várias seções)
 
 ═════════════════════════════════════════════════════════════════════════════════
 SEÇÃO 2️⃣: ITENS E PREÇOS - TABELA COMPARATIVA COMPLETA
@@ -743,39 +769,42 @@ ${fileContents.length > 2 ? "<td>R$ [TOTAL]</td>" : ""}
 SEÇÃO 3️⃣: INFORMAÇÕES COMERCIAIS DETALHADAS
 ═════════════════════════════════════════════════════════════════════════════════
 
+NOTA: Dados de contato (telefone, email, endereço) já estão consolidados na SEÇÃO 1️⃣
+Esta seção traz APENAS as informações comerciais específicas:
+
 🎯 DESCONTOS E PROMOÇÕES (TODOS OS ${fileContents.length} FORNECEDORES):
-• [FORNECEDOR 1]: [Descontos encontrados] | Tel: [TELEFONE]
-• [FORNECEDOR 2]: [Descontos encontrados] | Tel: [TELEFONE]
+• [FORNECEDOR 1]: [Descontos encontrados ou "Sem desconto identificado"]
+• [FORNECEDOR 2]: [Descontos encontrados ou "Sem desconto identificado"]
 ${
   fileContents.length > 2
-    ? "• [FORNECEDOR 3]: [Descontos encontrados] | Tel: [TELEFONE]"
+    ? '• [FORNECEDOR 3]: [Descontos encontrados ou "Sem desconto identificado"]'
     : ""
 }
 
 💳 FORMAS DE PAGAMENTO (TODOS OS ${fileContents.length} FORNECEDORES):
-• [FORNECEDOR 1]: [Condições: À vista/Parcelado/Cartão/etc] | Email: [EMAIL]
-• [FORNECEDOR 2]: [Condições: À vista/Parcelado/Cartão/etc] | Email: [EMAIL]
+• [FORNECEDOR 1]: [Condições: À vista / Parcelado (X vezes) / Cartão / Boleto / PIX / Crédito / Etc]
+• [FORNECEDOR 2]: [Condições: À vista / Parcelado (X vezes) / Cartão / Boleto / PIX / Crédito / Etc]
 ${
   fileContents.length > 2
-    ? "• [FORNECEDOR 3]: [Condições: À vista/Parcelado/Cartão/etc] | Email: [EMAIL]"
+    ? "• [FORNECEDOR 3]: [Condições: À vista / Parcelado (X vezes) / Cartão / Boleto / PIX / Crédito / Etc]"
     : ""
 }
 
 🛡️ GARANTIAS E ASSISTÊNCIA (TODOS OS ${fileContents.length} FORNECEDORES):
-• [FORNECEDOR 1]: [Período] - [Cobertura] - Assistência técnica: [Sim/Não/Informação não disponível]
-• [FORNECEDOR 2]: [Período] - [Cobertura] - Assistência técnica: [Sim/Não/Informação não disponível]
+• [FORNECEDOR 1]: Período de garantia: [PERÍODO] | Cobertura: [DESCRIÇÃO] | Assistência técnica: [Sim/Não/Não especificado]
+• [FORNECEDOR 2]: Período de garantia: [PERÍODO] | Cobertura: [DESCRIÇÃO] | Assistência técnica: [Sim/Não/Não especificado]
 ${
   fileContents.length > 2
-    ? "• [FORNECEDOR 3]: [Período] - [Cobertura] - Assistência técnica: [Sim/Não/Informação não disponível]"
+    ? "• [FORNECEDOR 3]: Período de garantia: [PERÍODO] | Cobertura: [DESCRIÇÃO] | Assistência técnica: [Sim/Não/Não especificado]"
     : ""
 }
 
-📝 OBSERVAÇÕES IMPORTANTES (TODOS OS ${fileContents.length} FORNECEDORES):
-• [FORNECEDOR 1]: Prazo: [DIAS] dias | Frete: [SIM/NÃO] | Montagem: [SIM/NÃO] | Tel: [TELEFONE]
-• [FORNECEDOR 2]: Prazo: [DIAS] dias | Frete: [SIM/NÃO] | Montagem: [SIM/NÃO] | Tel: [TELEFONE]
+📝 PRAZOS E CONDIÇÕES (TODOS OS ${fileContents.length} FORNECEDORES):
+• [FORNECEDOR 1]: Prazo de entrega: [DIAS] dias úteis | Frete: [Incluído/À cobrar] | Montagem/Instalação: [Sim/Não] | Outras observações: [...]
+• [FORNECEDOR 2]: Prazo de entrega: [DIAS] dias úteis | Frete: [Incluído/À cobrar] | Montagem/Instalação: [Sim/Não] | Outras observações: [...]
 ${
   fileContents.length > 2
-    ? "• [FORNECEDOR 3]: Prazo: [DIAS] dias | Frete: [SIM/NÃO] | Montagem: [SIM/NÃO] | Tel: [TELEFONE]"
+    ? "• [FORNECEDOR 3]: Prazo de entrega: [DIAS] dias úteis | Frete: [Incluído/À cobrar] | Montagem/Instalação: [Sim/Não] | Outras observações: [...]"
     : ""
 }
 
