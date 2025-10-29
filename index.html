@@ -367,7 +367,7 @@
 
         // Remover APENAS emojis, preservar tudo mais (acentos, quebras de linha, espaços)
         conteudo = conteudo.replace(/[\u{1F300}-\u{1F9FF}]/gu, ""); // Remove emojis Unicode
-        
+
         // Dividir por quebras de linha para preservar formatação
         const paragrafs = conteudo.split("\n");
 
