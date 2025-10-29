@@ -677,127 +677,168 @@ OBRIGAÇÃO: Extrair dados de TODOS os ${
           fileContents.length
         } documento(s) e criar comparação COMPLETA!
 
-🔴 REGRA ABSOLUTA 🔴
-- NÃO FAZER ANÁLISE PARCIAL
-- NÃO IGNORAR NENHUM ITEM
-- NÃO RESUMIR OU SIMPLIFICAR
-- EXTRAIR TODOS E CADA UM DOS ITENS PRESENTES NAS PROPOSTAS
-- SE HÁ 50 ITENS, LISTAR OS 50 ITENS
-- SE HÁ 100 ITENS, LISTAR OS 100 ITENS
-- SEM LIMITE DE QUANTIDADE
-- SEM EXCEÇÕES
+═════════════════════════════════════════════════════════════════════════════════
+SEÇÃO 1️⃣: IDENTIFICAÇÃO DOS FORNECEDORES E DADOS DE CONTATO
+═════════════════════════════════════════════════════════════════════════════════
 
-MISSÃO CRÍTICA: Análise SIMULTÂNEA de TODOS os documentos anexados - Nenhum pode ser ignorado!
+OBRIGATÓRIO EXTRAIR PARA CADA FORNECEDOR:
+• Nome completo da empresa / Razão social
+• CNPJ (se identificável no documento)
+• Telefone / Celular (se disponível)
+• Email / Website (se disponível)
+• Endereço completo
+• Contato responsável (nome + cargo)
 
-IDENTIFICAR FORNECEDORES
-- Você receberá ${fileContents.length} propostas/documentos
-- OBRIGATÓRIO: Extrair dados de CADA UMA delas
-- Identificar TODOS os fornecedores/empresas mencionados
-- Extrair nomes das empresas, CNPJs, e identificações
-- Listar CADA fornecedor encontrado em cada documento
+Exemplo de formato esperado:
+📋 FORNECEDORES IDENTIFICADOS:
+• FORNECEDOR 1: [NOME] (CNPJ: [CNPJ]) | Tel: [TELEFONE] | Email: [EMAIL] | Contato: [NOME]
+• FORNECEDOR 2: [NOME] (sem CNPJ identificado) | Tel: [TELEFONE] | Email: [EMAIL] | Contato: [NOME]
 
-EXTRAIR ITENS E PREÇOS - REGRA ABSOLUTA: NENHUM ITEM PODE SER OMITIDO
+═════════════════════════════════════════════════════════════════════════════════
+SEÇÃO 2️⃣: ITENS E PREÇOS - TABELA COMPARATIVA COMPLETA
+═════════════════════════════════════════════════════════════════════════════════
+
+CRÍTICO: SEM QUEBRAS EM BRANCO APÓS "ITENS E PREÇOS:" - TABELA DEVE COMEÇAR NA PRÓXIMA LINHA!
+
+EXTRAIR TODOS OS ITENS - REGRA ABSOLUTA: NENHUM ITEM PODE SER OMITIDO
 - Localizar ABSOLUTAMENTE TODOS os itens, produtos, serviços e valores em R$ de CADA documento
 - Não importa se são 5, 50 ou 500 itens - LISTAR TODOS
 - Equipamentos, materiais, serviços, instalações, complementos, acessórios
 - Preços unitários, subtotais, e totais gerais
 - CRÍTICO: Mesmo que itens sejam diferentes entre propostas, INCLUIR CADA UM DELES
 - Criar linha para CADA item diferente encontrado
-- ${
-          hasMapa
-            ? "Usar mapa de concorrência como referência base para comparação"
-            : "Comparar DIRETAMENTE entre TODOS as ${fileContents.length} propostas anexadas"
-        }
 
-EXTRAIR INFORMAÇÕES ADICIONAIS (CRÍTICO)
-- 🎯 DESCONTOS: Identificar descontos, abatimentos, promoções de CADA fornecedor
-- 💳 FORMAS DE PAGAMENTO: Condições comerciais de CADA fornecedor
-- 🛡️ GARANTIAS: Período de garantia, cobertura, assistência técnica de CADA fornecedor
-- 📝 OBSERVAÇÕES: Detalhes importantes de CADA fornecedor
-
-TABELA COMPARATIVA CONSOLIDADA (OBRIGATÓRIA COM ${
-          fileContents.length
-        } FORNECEDORES - INCLUIR TODOS OS ITENS)
 <table border='1' style='border-collapse:collapse;width:100%;font-size:14px'>
 <tr style='background:#0e938f;color:white'>
-<th>ITEM/SERVIÇO</th><th>FORNECEDOR 1</th><th>FORNECEDOR 2</th><th>FORNECEDOR 3</th><th>MELHOR PREÇO</th><th>ECONOMIA</th>
+<th>ITEM/SERVIÇO</th>
+<th>FORNECEDOR 1</th>
+${fileContents.length > 1 ? "<th>FORNECEDOR 2</th>" : ""}
+${fileContents.length > 2 ? "<th>FORNECEDOR 3</th>" : ""}
+<th>MELHOR PREÇO</th>
+<th>ECONOMIA</th>
 </tr>
 <tr>
-<td>[ITEM 1]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td style='background:#fecaca'>R$ [VALOR]</td><td>R$ [VALOR]</td><td>[MELHOR]</td><td>R$ [DIFERENÇA]</td>
-</tr>
-<tr>
-<td>[ITEM 2]</td><td style='background:#fecaca'>R$ [VALOR]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td>R$ [VALOR]</td><td>[MELHOR]</td><td>R$ [DIFERENÇA]</td>
-</tr>
-<tr>
-<td>[ITEM 3]</td><td>R$ [VALOR]</td><td>R$ [VALOR]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td>[MELHOR]</td><td>R$ [DIFERENÇA]</td>
+<td>[ITEM 1]</td>
+<td style='background:#dcfce7'>R$ [VALOR]</td>
+${
+  fileContents.length > 1
+    ? "<td style='background:#fecaca'>R$ [VALOR]</td>"
+    : ""
+}
+${fileContents.length > 2 ? "<td>R$ [VALOR]</td>" : ""}
+<td>[MELHOR]</td>
+<td>R$ [DIFERENÇA]</td>
 </tr>
 <tr style='background:#f3f4f6;font-weight:bold'>
-<td>TOTAL GERAL</td><td>R$ [TOTAL]</td><td>R$ [TOTAL]</td><td>[VENCEDOR]</td><td>R$ [ECONOMIA]</td>
+<td>TOTAL GERAL</td>
+<td>R$ [TOTAL]</td>
+${fileContents.length > 1 ? "<td>R$ [TOTAL]</td>" : ""}
+${fileContents.length > 2 ? "<td>R$ [TOTAL]</td>" : ""}
+<td>-</td>
+<td>R$ [ECONOMIA]</td>
 </tr>
 </table>
 
-📊 INFORMAÇÕES COMERCIAIS DETALHADAS
+═════════════════════════════════════════════════════════════════════════════════
+SEÇÃO 3️⃣: INFORMAÇÕES COMERCIAIS DETALHADAS
+═════════════════════════════════════════════════════════════════════════════════
 
 🎯 DESCONTOS E PROMOÇÕES (TODOS OS ${fileContents.length} FORNECEDORES):
-• [FORNECEDOR 1]: [Descontos encontrados ou "Sem desconto identificado"]
-• [FORNECEDOR 2]: [Descontos encontrados ou "Sem desconto identificado"]
-• [FORNECEDOR 3]: [Descontos encontrados ou "Sem desconto identificado"]
+• [FORNECEDOR 1]: [Descontos encontrados] | Tel: [TELEFONE]
+• [FORNECEDOR 2]: [Descontos encontrados] | Tel: [TELEFONE]
+${
+  fileContents.length > 2
+    ? "• [FORNECEDOR 3]: [Descontos encontrados] | Tel: [TELEFONE]"
+    : ""
+}
 
 💳 FORMAS DE PAGAMENTO (TODOS OS ${fileContents.length} FORNECEDORES):
-• [FORNECEDOR 1]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
-• [FORNECEDOR 2]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
-• [FORNECEDOR 3]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
+• [FORNECEDOR 1]: [Condições: À vista/Parcelado/Cartão/etc] | Email: [EMAIL]
+• [FORNECEDOR 2]: [Condições: À vista/Parcelado/Cartão/etc] | Email: [EMAIL]
+${
+  fileContents.length > 2
+    ? "• [FORNECEDOR 3]: [Condições: À vista/Parcelado/Cartão/etc] | Email: [EMAIL]"
+    : ""
+}
 
 🛡️ GARANTIAS E ASSISTÊNCIA (TODOS OS ${fileContents.length} FORNECEDORES):
-• [FORNECEDOR 1]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
-• [FORNECEDOR 2]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
-• [FORNECEDOR 3]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
+• [FORNECEDOR 1]: [Período] - [Cobertura] - Assistência técnica: [Sim/Não/Informação não disponível]
+• [FORNECEDOR 2]: [Período] - [Cobertura] - Assistência técnica: [Sim/Não/Informação não disponível]
+${
+  fileContents.length > 2
+    ? "• [FORNECEDOR 3]: [Período] - [Cobertura] - Assistência técnica: [Sim/Não/Informação não disponível]"
+    : ""
+}
 
 📝 OBSERVAÇÕES IMPORTANTES (TODOS OS ${fileContents.length} FORNECEDORES):
-• [FORNECEDOR 1]: [Prazos de entrega, frete, montagem, condições especiais, etc]
-• [FORNECEDOR 2]: [Prazos de entrega, frete, montagem, condições especiais, etc]
-• [FORNECEDOR 3]: [Prazos de entrega, frete, montagem, condições especiais, etc]
+• [FORNECEDOR 1]: Prazo: [DIAS] dias | Frete: [SIM/NÃO] | Montagem: [SIM/NÃO] | Tel: [TELEFONE]
+• [FORNECEDOR 2]: Prazo: [DIAS] dias | Frete: [SIM/NÃO] | Montagem: [SIM/NÃO] | Tel: [TELEFONE]
+${
+  fileContents.length > 2
+    ? "• [FORNECEDOR 3]: Prazo: [DIAS] dias | Frete: [SIM/NÃO] | Montagem: [SIM/NÃO] | Tel: [TELEFONE]"
+    : ""
+}
+
+═════════════════════════════════════════════════════════════════════════════════
+SEÇÃO 4️⃣: ANÁLISE DE MIX DE FORNECEDORES (OTIMIZAÇÃO DE PREÇO)
+═════════════════════════════════════════════════════════════════════════════════
+
+🔍 ANÁLISE: Qual é a MELHOR COMBINAÇÃO DE FORNECEDORES para MENOR PREÇO?
+
+OPÇÃO A: FORNECEDOR ÚNICO (Simplicidade - Um ponto de contato)
+• Recomendação: [Qual fornecedor?]
+• Preço Total: R$ [VALOR TOTAL]
+• Vantagens: [Listar benefícios]
+
+OPÇÃO B: MIX DE FORNECEDORES (Maior economia)
+• Itens com [FORNECEDOR 1]: [Listar itens específicos]
+  └─ Subtotal: R$ [VALOR]
+
+• Itens com [FORNECEDOR 2]: [Listar itens específicos]
+  └─ Subtotal: R$ [VALOR]
+
+${
+  fileContents.length > 2
+    ? "• Itens com [FORNECEDOR 3]: [Listar itens específicos]\n  └─ Subtotal: R$ [VALOR]"
+    : ""
+}
+
+Preço Total com MIX: R$ [VALOR TOTAL]
+Economia com MIX vs Fornecedor Único: R$ [DIFERENÇA] ([X%] mais barato)
+
+═════════════════════════════════════════════════════════════════════════════════
+SEÇÃO 5️⃣: RANKING FINAL E ANÁLISE COMPARATIVA
+═════════════════════════════════════════════════════════════════════════════════
 
 RANKING FINAL (COMPARAÇÃO DE TODOS OS ${fileContents.length} FORNECEDORES)
-🥇 1º Lugar: [EMPRESA] - R$ [VALOR] (melhor preço geral)
-🥈 2º Lugar: [EMPRESA] - R$ [VALOR] 
-🥉 3º Lugar: [EMPRESA] - R$ [VALOR]
-💡 Economia Potencial: R$ [DIFERENÇA] ([PERCENTUAL]%)
-
-RECOMENDAÇÃO EXECUTIVA
-• ✅ CONTRATAR: [EMPRESA] (melhor custo-benefício considerando preço + condições comerciais)
-• 💰 ECONOMIA: R$ [VALOR] vs concorrentes
-• 🎯 NEGOCIAR: [ITENS ESPECÍFICOS] com [EMPRESA]
-• ⚡ DIFERENCIAIS: [Destacar se há descontos, garantias ou condições de pagamento superiores]
-
-📋 INSTRUÇÕES ESPECIAIS:
+🥇 1º Lugar: [EMPRESA] - R$ [VALOR TOTAL] (melhor preço geral) | Tel: [TELEFONE]
+🥈 2º Lugar: [EMPRESA] - R$ [VALOR TOTAL] | Tel: [TELEFONE]
 ${
-  hasMapa
-    ? "• Com MAPA: Usar como referência base para validar todas as ${fileContents.length} propostas"
-    : "• Sem MAPA: Comparar DIRETAMENTE todas as ${fileContents.length} propostas anexadas"
+  fileContents.length > 2
+    ? "🥉 3º Lugar: [EMPRESA] - R$ [VALOR TOTAL] | Tel: [TELEFONE]"
+    : ""
 }
-• ADAPTAR tabela ao número REAL de fornecedores (${
-          fileContents.length
-        } documentos = até ${fileContents.length} fornecedores)
-• Se ${fileContents.length} fornecedores: usar ${
-          fileContents.length
-        } colunas na tabela
-• Sempre destacar MELHOR preço em VERDE e PIOR em VERMELHO
-• SEÇÕES COMERCIAIS são obrigatórias mesmo que informações incompletas
-• NÃO IGNORE NENHUM DOCUMENTO!
+💡 Economia Potencial: R$ [DIFERENÇA] ([PERCENTUAL]% de economia)
 
-⚠️ PROIBIDO: 
-- Texto descritivo longo
-- Análises genéricas
-- Ignorar qualquer um dos ${fileContents.length} documentos
-- Dizer que "apenas 1 fornecedor foi encontrado" quando ${
-          fileContents.length
-        } foram enviados
+═════════════════════════════════════════════════════════════════════════════════
+SEÇÃO 6️⃣: RECOMENDAÇÃO EXECUTIVA FINAL
+═════════════════════════════════════════════════════════════════════════════════
 
-✅ OBRIGATÓRIO: 
-- Tabela com ${fileContents.length} colunas de fornecedores
-- Seções comerciais completas para TODOS os ${fileContents.length} fornecedores
-- Ranking com TODOS os ${fileContents.length} fornecedores
+✅ ESTRATÉGIA RECOMENDADA: [Fornecedor Único OU Mix? Por quê?]
+
+🎯 CONTRATAÇÃO SUGERIDA:
+• Fornecedor: [EMPRESA] (Telefone: [TELEFONE] | Email: [EMAIL])
+• Preço Final: R$ [VALOR]
+• Economia: R$ [DIFERENÇA] vs segunda melhor opção
+• Diferenciais: [Descontos, formas de pagamento, prazos, garantias]
+
+📋 PRÓXIMOS PASSOS:
+1️⃣ Ligar para [FORNECEDOR] no [TELEFONE] para confirmar disponibilidade
+2️⃣ Enviar análise para [SEGUNDO FORNECEDOR] para renegociação dos itens críticos
+3️⃣ Solicitar documentação e validar antes da assinatura
+4️⃣ Preparar contrato com as condições acordadas
+
+🚨 IMPORTANTE: Todos os dados de contato (telefone, email) devem estar neste relatório para facilitar a negociação!
 - Números + ranking + recomendação executiva
 
 🎨 FORMATAÇÃO VISUAL (CRÍTICO):
