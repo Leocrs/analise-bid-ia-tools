@@ -689,11 +689,58 @@ OBRIGAÇÃO: Extrair dados de TODOS os ${
 
 MISSÃO CRÍTICA: Análise SIMULTÂNEA de TODOS os documentos anexados - Nenhum pode ser ignorado!
 
+═════════════════════════════════════════════════════════════════════════════
+SEÇÃO 1️⃣: IDENTIFICAÇÃO COMPLETA DOS FORNECEDORES (OBRIGATÓRIO - COMECE POR AQUI!)
+═════════════════════════════════════════════════════════════════════════════
+REGRA ABSOLUTA: Esta seção DEVE aparecer PRIMEIRO no relatório, ANTES de qualquer tabela!
+
+Para cada um dos ${
+          fileContents.length
+        } documentos/fornecedores, extraia E CONSOLIDE em UM ÚNICO BLOCO:
+📋 FORNECEDOR 1: [NOME COMPLETO/RAZÃO SOCIAL]
+   • CNPJ: [CNPJ ou "Não encontrado"]
+   • Telefone(s): [TODOS OS TELEFONES encontrados - OBRIGATÓRIO BUSCAR EM CABEÇALHO, RODAPÉ, ASSINATURA]
+   • Email(s): [TODOS OS EMAILS encontrados]
+   • Endereço: [ENDEREÇO COMPLETO]
+   • Contato: [NOME DO CONTATO] - [CARGO/FUNÇÃO]
+   • Observações: [Dados importantes adicionais]
+
+📋 FORNECEDOR 2: [NOME COMPLETO/RAZÃO SOCIAL]
+   • CNPJ: [CNPJ ou "Não encontrado"]
+   • Telefone(s): [TODOS OS TELEFONES encontrados]
+   • Email(s): [TODOS OS EMAILS encontrados]
+   • Endereço: [ENDEREÇO COMPLETO]
+   • Contato: [NOME DO CONTATO] - [CARGO/FUNÇÃO]
+   • Observações: [Dados importantes adicionais]
+
+${
+  fileContents.length > 2
+    ? `📋 FORNECEDOR 3: [NOME COMPLETO/RAZÃO SOCIAL]
+   • CNPJ: [CNPJ ou "Não encontrado"]
+   • Telefone(s): [TODOS OS TELEFONES encontrados]
+   • Email(s): [TODOS OS EMAILS encontrados]
+   • Endereço: [ENDEREÇO COMPLETO]
+   • Contato: [NOME DO CONTATO] - [CARGO/FUNÇÃO]
+   • Observações: [Dados importantes adicionais]`
+    : ""
+}
+
+⚠️ INSTRUÇÕES CRÍTICAS PARA SEÇÃO 1:
+- BUSCAR TELEFONE EM: Cabeçalho, rodapé, página de contatos, assinatura, corpo da proposta
+- BUSCAR EMAIL EM: Cabeçalho, rodapé, página de contatos, assinatura
+- Se múltiplos telefones/emails: LISTAR TODOS, não deixar vazio
+- Se informação não aparecer: escrever "Não encontrado no documento"
+- CRÍTICO: NÃO PULE ESTA SEÇÃO! Ela vem PRIMEIRO no relatório!
+
+═════════════════════════════════════════════════════════════════════════════
+SEÇÃO 2️⃣: ITENS E PREÇOS - TABELA COMPARATIVA
+═════════════════════════════════════════════════════════════════════════════
+
 IDENTIFICAR FORNECEDORES
 - Você receberá ${fileContents.length} propostas/documentos
 - OBRIGATÓRIO: Extrair dados de CADA UMA delas
-- Identificar TODOS os fornecedores/empresas mencionados
-- Extrair nomes das empresas, CNPJs, e identificações
+- Identificar TODOS os fornecedores/empresas mencionados nos documentos
+- Usar os mesmos nomes da SEÇÃO 1 para manter consistência
 - Listar CADA fornecedor encontrado em cada documento
 
 EXTRAIR ITENS E PREÇOS - REGRA ABSOLUTA: NENHUM ITEM PODE SER OMITIDO
@@ -746,9 +793,9 @@ TABELA COMPARATIVA CONSOLIDADA (OBRIGATÓRIA COM ${
 💳 FORMAS DE PAGAMENTO (TODOS OS ${fileContents.length} FORNECEDORES):
 • [FORNECEDOR 1]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
 • [FORNECEDOR 2]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
-• [FORNECEDOR 3]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
-
-🛡️ GARANTIAS E ASSISTÊNCIA (TODOS OS ${fileContents.length} FORNECEDORES):
+• [FORNECEDOR 3]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]🛡️ GARANTIAS E ASSISTÊNCIA (TODOS OS ${
+          fileContents.length
+        } FORNECEDORES):
 • [FORNECEDOR 1]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
 • [FORNECEDOR 2]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
 • [FORNECEDOR 3]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
