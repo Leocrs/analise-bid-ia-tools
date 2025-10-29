@@ -718,32 +718,27 @@ ${
 }
 
 SEÇÃO 2️⃣: ITENS E PREÇOS
-GERE OBRIGATORIAMENTE UMA TABELA HTML COM TODOS OS ITENS E CORES:
+RESPONDA APENAS COM TABELA HTML - SEM PIPES, SEM TEXTO ANTES/DEPOIS:
 
-<table border='1' style='border-collapse:collapse;width:100%;font-size:13px'>
-<tr style='background:#0e938f;color:white'>
-<th>Item</th><th>Empresa 1</th><th>Empresa 2</th><th>Melhor</th><th>Economia</th>
-</tr>
-<tr>
-<td>Item 1</td><td style='background:#dcfce7'>R$ 1.000</td><td>R$ 1.500</td><td>Empresa 1</td><td>R$ 500</td>
-</tr>
-<tr>
-<td>Item 2</td><td>R$ 2.000</td><td style='background:#dcfce7'>R$ 1.800</td><td>Empresa 2</td><td>R$ 200</td>
-</tr>
-<tr style='background:#f3f4f6;font-weight:bold'>
-<td>TOTAL</td><td>R$ 3.000</td><td>R$ 3.300</td><td>Empresa 1</td><td>R$ 300</td>
-</tr>
-</table>
+Sua resposta DEVE começar com: <table border='1' style='border-collapse:collapse;width:100%;font-size:13px'>
+E terminar com: </table>
 
-REGRAS OBRIGATÓRIAS:
-✓ GERE EXATAMENTE ASSIM - com <table>, <tr>, <td>, etc
-✓ Cabeçalho com background #0e938f e texto branco
-✓ Linha TOTAL com background #f3f4f6 e font-weight:bold
-✓ Verde (#dcfce7) = MELHOR PREÇO (menor valor)
-✓ Coloque style='background:#dcfce7' NO MELHOR PREÇO de cada linha
-✓ TODOS os itens dos documentos
-✓ NOMES REAIS das empresas (não "Empresa 1", "Empresa 2")
-✓ Calcule a economia (diferença entre maior e menor preço)
+ESTRUTURA OBRIGATÓRIA:
+1. Abra a tabela: <table border='1' style='border-collapse:collapse;width:100%;font-size:13px'>
+2. Cabeçalho: <tr style='background:#0e938f;color:white'><th>Item</th><th>[EMPRESA_1]</th><th>[EMPRESA_2]</th><th>Melhor</th><th>Economia</th></tr>
+3. Para CADA item: <tr><td>[NOME_ITEM]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td>R$ [VALOR]</td><td>[EMPRESA]</td><td>R$ [ECO]</td></tr>
+   - Repita <tr>...</tr> para CADA item
+4. Linha TOTAL: <tr style='background:#f3f4f6;font-weight:bold'><td>TOTAL</td><td>R$ [SOMA]</td><td>R$ [SOMA]</td><td>[MELHOR]</td><td>R$ [ECO]</td></tr>
+5. Feche a tabela: </table>
+
+CRÍTICO - NENHUMA EXCEÇÃO:
+- SEM LINHAS EM BRANCO (nem antes nem depois)
+- SEM TEXTO COM PIPES (Item | Empresa | ...)
+- SEM PALAVRAS ANTES/DEPOIS DA TABELA
+- APENAS O CÓDIGO HTML DA TABELA
+- Verde (#dcfce7) = melhor preço em cada linha
+- NOMES REAIS das empresas nos cabeçalhos
+- TODOS os itens encontrados
 
 SEÇÃO 3️⃣: MIX DE PREÇO
 Se há possibilidade de combinar fornecedores para economia:
