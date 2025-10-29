@@ -308,22 +308,32 @@
         const chatContainer = document.getElementById("chatContainer");
         const wb = XLSX.utils.book_new();
 
-        // Extrair dados das tabelas HTML se existirem
-        const tables = chatContainer.querySelectorAll("table");
-        if (tables.length > 0) {
-          tables.forEach((table, index) => {
-            const ws = XLSX.utils.table_to_sheet(table);
-            XLSX.utils.book_append_sheet(wb, ws, `Análise_${index + 1}`);
-          });
-        } else {
-          const chatContent = chatContainer.innerText;
-          const ws = XLSX.utils.aoa_to_sheet([
-            ["Análise de Propostas"],
-            ["Data:", new Date().toLocaleDateString()],
-            [""],
-            [chatContent],
-          ]);
-          XLSX.utils.book_append_sheet(wb, ws, "Análise");
+        // Extrair APENAS a última mensagem de análise (relatório completo)
+        const messages = chatContainer.querySelectorAll(".message.assistant");
+        if (messages.length > 0) {
+          const ultimaMensagem = messages[messages.length - 1];
+          const conteudoDiv = ultimaMensagem.querySelector(".message-content");
+
+          // Tentar extrair tabelas primeiro
+          const tables = conteudoDiv.querySelectorAll("table");
+          if (tables.length > 0) {
+            // Se tem tabelas, criar abas por seção
+            tables.forEach((table, index) => {
+              const ws = XLSX.utils.table_to_sheet(table);
+              XLSX.utils.book_append_sheet(wb, ws, `Análise_${index + 1}`);
+            });
+          } else {
+            // Se não tem tabelas, exportar o texto completo
+            const texto = conteudoDiv.innerText;
+            const linhas = texto.split("\n").map((linha) => [linha]);
+            const ws = XLSX.utils.aoa_to_sheet([
+              ["TOOLS ENGENHARIA - ANÁLISE DE PROPOSTAS"],
+              [`Data: ${new Date().toLocaleDateString("pt-BR")}`],
+              [""],
+              ...linhas,
+            ]);
+            XLSX.utils.book_append_sheet(wb, ws, "Relatório");
+          }
         }
 
         const filename = `analise_propostas_${new Date()
@@ -344,19 +354,42 @@
         doc.setFontSize(10);
         doc.text(`Data: ${new Date().toLocaleDateString("pt-BR")}`, 10, 30);
 
-        // Conteúdo
-        const chatContent = chatContainer.innerText;
-        doc.setFontSize(12);
-        const lines = doc.splitTextToSize(chatContent, 180);
+        // Extrair APENAS a última mensagem de análise
+        const messages = chatContainer.querySelectorAll(".message.assistant");
+        let conteudo = "";
+        if (messages.length > 0) {
+          const ultimaMensagem = messages[messages.length - 1];
+          const conteudoDiv = ultimaMensagem.querySelector(".message-content");
+          conteudo = conteudoDiv.innerText;
+        } else {
+          conteudo = chatContainer.innerText;
+        }
 
+        // Remover APENAS emojis, preservar tudo mais (acentos, quebras de linha, espaços)
+        conteudo = conteudo.replace(/[\u{1F300}-\u{1F9FF}]/gu, ""); // Remove emojis Unicode
+
+        // Dividir por quebras de linha para preservar formatação
+        const paragrafs = conteudo.split("\n");
+
+        doc.setFontSize(11);
         let yPosition = 40;
-        lines.forEach((line) => {
-          if (yPosition > 280) {
-            doc.addPage();
-            yPosition = 20;
+
+        paragrafs.forEach((paragrafo) => {
+          if (paragrafo.trim() === "") {
+            // Linha vazia = adicionar espaço
+            yPosition += 3;
+          } else {
+            // Dividir cada parágrafo em linhas que cabem na página
+            const linhas = doc.splitTextToSize(paragrafo, 190);
+            linhas.forEach((linha) => {
+              if (yPosition > 280) {
+                doc.addPage();
+                yPosition = 20;
+              }
+              doc.text(linha, 10, yPosition);
+              yPosition += 5;
+            });
           }
-          doc.text(line, 10, yPosition);
-          yPosition += 7;
         });
 
         const filename = `analise_propostas_${new Date()
@@ -685,30 +718,52 @@ ${
 }
 
 SEÇÃO 2️⃣: ITENS E PREÇOS
-Crie uma tabela HTML com TODOS os itens encontrados. Estrutura obrigatória:
-- Cabeçalho: Item | [Nome Empresa 1] | [Nome Empresa 2] | Melhor | Economia
-- Linhas: Um item por linha com preços de cada empresa
-- Cores: Verde (#dcfce7) para melhor preço, Vermelho (#fecaca) para pior
-- Última linha: TOTAL com soma dos preços
-- Exemplo estrutura: <table border='1'><tr style='background:#0e938f;color:white'><th>Item</th><th>Empresa1</th><th>Empresa2</th><th>Melhor</th><th>Economia</th></tr><tr><td>Item A</td><td style='background:#dcfce7'>R$ 100</td><td>R$ 150</td><td>Empresa1</td><td>R$ 50</td></tr></table>
+GERE TABELA HTML EXATAMENTE COMO O MODELO (SEM LINHAS VAZIAS):
+<table border='1' style='border-collapse:collapse;width:100%;font-size:13px'>
+<tr style='background:#0e938f;color:white'><th>Item</th><th>Marvidros</th><th>Vidraçaria Mac Vidros</th><th>Melhor</th><th>Economia</th></tr>
+<tr><td>Ar Condicionado</td><td style='background:#dcfce7'>R$ 50.000</td><td style='background:#fecaca'>R$ 45.000</td><td>Vidraçaria</td><td>R$ 5.000</td></tr>
+<tr><td>Instalação</td><td style='background:#dcfce7'>R$ 10.000</td><td style='background:#fecaca'>R$ 12.000</td><td>Marvidros</td><td>R$ 2.000</td></tr>
+<tr style='background:#f3f4f6;font-weight:bold'><td>TOTAL</td><td>R$ 60.000</td><td>R$ 57.000</td><td>Vidraçaria</td><td>R$ 3.000</td></tr>
+</table>
+REGRAS OBRIGATÓRIAS (NENHUMA EXCEÇÃO):
+1. COMECE direto com <table - SEM espaços em branco antes
+2. Cabeçalho: background #0e938f + color white
+3. Para CADA item - alternando cores:
+   - Coloque style='background:#dcfce7' (verde) NO MELHOR PREÇO
+   - Coloque style='background:#fecaca' (vermelho) NO PIOR PREÇO
+4. Linha TOTAL: background #f3f4f6 + font-weight:bold
+5. TERMINE com </table> - SEM espaços em branco depois
+6. TODOS os itens encontrados nos documentos
+7. NOMES REAIS das empresas
+8. Calcule a economia (diferença entre maior e menor)
+SEM NENHUMA LINHA VAZIA ANTES OU DEPOIS DA TABELA
 
 SEÇÃO 3️⃣: MIX DE PREÇO
-Analise qual combinação de fornecedores gera a MAIOR ECONOMIA:
-• Itens de [Empresa A]: [lista de itens] = R$ [subtotal]
-• Itens de [Empresa B]: [lista de itens] = R$ [subtotal]
-• Total MIX: R$ [valor final] | Economia vs fornecedor único: R$ [diferença]
+Se há possibilidade de combinar fornecedores para economia:
+• Empresa A: Itens [Lista] = R$ [subtotal]
+• Empresa B: Itens [Lista] = R$ [subtotal]
+• Total com MIX: R$ [valor] | Economia: R$ [diferença]
+
+Se não há possibilidade (todos itens de uma empresa): Responda "Não aplicável - todos itens de mesma empresa"
 
 SEÇÃO 4️⃣: COMERCIAL - Descontos, Pagamento, Garantia, Prazos (por fornecedor)
+Liste para CADA fornecedor:
+- Desconto oferecido
+- Forma de pagamento
+- Garantia (se informado)
+- Prazo de entrega
 
 SEÇÃO 5️⃣: RANKING - 1º, 2º, 3º lugar com valores e economia
+1º - [Empresa] | Valor Total: R$ [XXX] | Economia: R$ [XXX]
+2º - [Empresa] | Valor Total: R$ [XXX] | Economia: R$ [XXX]
 
 SEÇÃO 6️⃣: RECOMENDAÇÃO
-• ✅ CONTRATAR: [Empresa] (melhor custo-benefício)
-• 💰 ECONOMIA: R$ [valor]
-• ⚠️ ITENS IGUAIS?: Verificar se TODOS fornecedores consideraram os MESMOS itens
-• 🔄 MIX SUGERIDO: Se economia > [X]%, considerar mix de fornecedores
-• 🎯 NEGOCIAR: [Itens específicos]
-• ⚡ DIFERENCIAIS: [Descontos, garantias, prazos]
+• CONTRATAR: [Empresa] (melhor custo-benefício)
+• ECONOMIA: R$ [valor]
+• ITENS IGUAIS?: Sim ou Não - explicar brevemente
+• MIX SUGERIDO: Sim (com detalhes) ou Não
+• NEGOCIAR: [Itens específicos com maior variação]
+• DIFERENCIAIS: [Descontos, garantias, prazos]
 
 Instruções críticas:
 - Extraia TODOS os itens, sem exceção
