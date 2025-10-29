@@ -718,26 +718,32 @@ ${
 }
 
 SEÇÃO 2️⃣: ITENS E PREÇOS
-GERE UMA TABELA REAL COM OS DADOS ENCONTRADOS:
-Coluna 1: Nome do Item
-Coluna 2: Preço da Empresa 1
-Coluna 3: Preço da Empresa 2
-Coluna 4: Qual empresa tem o melhor preço
-Coluna 5: Economia em R$
+GERE OBRIGATORIAMENTE UMA TABELA HTML COM TODOS OS ITENS E CORES:
 
-Exemplo de resposta esperada (substitua pelos dados reais):
-Item | Empresa A | Empresa B | Melhor | Economia
-Produto 1 | R$ 1.000 | R$ 1.500 | Empresa A | R$ 500
-Produto 2 | R$ 2.000 | R$ 1.800 | Empresa B | R$ 200
-TOTAL | R$ 3.000 | R$ 3.300 | Empresa A | R$ 300
+<table border='1' style='border-collapse:collapse;width:100%;font-size:13px'>
+<tr style='background:#0e938f;color:white'>
+<th>Item</th><th>Empresa 1</th><th>Empresa 2</th><th>Melhor</th><th>Economia</th>
+</tr>
+<tr>
+<td>Item 1</td><td style='background:#dcfce7'>R$ 1.000</td><td>R$ 1.500</td><td>Empresa 1</td><td>R$ 500</td>
+</tr>
+<tr>
+<td>Item 2</td><td>R$ 2.000</td><td style='background:#dcfce7'>R$ 1.800</td><td>Empresa 2</td><td>R$ 200</td>
+</tr>
+<tr style='background:#f3f4f6;font-weight:bold'>
+<td>TOTAL</td><td>R$ 3.000</td><td>R$ 3.300</td><td>Empresa 1</td><td>R$ 300</td>
+</tr>
+</table>
 
-INSTRUÇÕES OBRIGATÓRIAS:
-1. Extraia TODOS os itens dos documentos
-2. Liste TODOS os preços encontrados
-3. Identifique o melhor preço em cada linha
-4. Calcule a economia
-5. Adicione linha TOTAL no final
-6. Use nomes REAIS das empresas
+REGRAS OBRIGATÓRIAS:
+✓ GERE EXATAMENTE ASSIM - com <table>, <tr>, <td>, etc
+✓ Cabeçalho com background #0e938f e texto branco
+✓ Linha TOTAL com background #f3f4f6 e font-weight:bold
+✓ Verde (#dcfce7) = MELHOR PREÇO (menor valor)
+✓ Coloque style='background:#dcfce7' NO MELHOR PREÇO de cada linha
+✓ TODOS os itens dos documentos
+✓ NOMES REAIS das empresas (não "Empresa 1", "Empresa 2")
+✓ Calcule a economia (diferença entre maior e menor preço)
 
 SEÇÃO 3️⃣: MIX DE PREÇO
 Se há possibilidade de combinar fornecedores para economia:
