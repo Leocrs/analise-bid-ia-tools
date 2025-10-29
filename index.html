@@ -670,7 +670,8 @@
         );
 
         // Prompt flexível para análise consolidada - VERSÃO APRIMORADA COM TODAS AS ETAPAS
-              const promptConsolidado = `
+        const promptConsolidado =
+          `
 ╔════════════════════════════════════════════════════════════════════════════════╗
 ║         SISTEMA DE ANÁLISE COMPARATIVA DE PROPOSTAS E LICITAÇÕES - BID        ║
 ║                           ANÁLISE CONSOLIDADA MULTI-FORNECEDOR                 ║
@@ -930,9 +931,10 @@ INSTRUÇÕES CRÍTICAS FINAIS - OBRIGATÓRIO ENTREGAR TUDO:
 ═════════════════════════════════════════════════════════════════════════════════
 FIM DO PROMPT - INICIAR ANÁLISE AGORA COM TODAS AS SEÇÕES ACIMA
 ═════════════════════════════════════════════════════════════════════════════════
-` + `
+` +
+          `
 
-```
+```;
       }
 
       async function callBackend(systemPrompt, userMessage) {
@@ -1073,6 +1075,63 @@ FIM DO PROMPT - INICIAR ANÁLISE AGORA COM TODAS AS SEÇÕES ACIMA
       ["model", "maxTokens", "chunkSize"].forEach((id) => {
         document.getElementById(id).addEventListener("input", saveSettings);
       });
+      // Função para extrair texto de PDF
+      async function extractPDFText(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = async function (e) {
+            try {
+              const typedArray = new Uint8Array(e.target.result);
+              const pdf = await pdfjsLib.getDocument(typedArray).promise;
+              let fullText = "";
+              for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items
+                  .map((item) => item.str)
+                  .join(" ");
+                fullText += `\n\n--- Página ${i} ---\n${pageText}`;
+              }
+              resolve(fullText.trim());
+            } catch (error) {
+              reject(error);
+            }
+          };
+          reader.onerror = () => reject(new Error("Erro ao ler arquivo PDF"));
+          reader.readAsArrayBuffer(file);
+        });
+      }
+
+      // Função para extrair dados de Excel
+      async function extractExcelData(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            try {
+              const data = new Uint8Array(e.target.result);
+              const workbook = XLSX.read(data, { type: "array" });
+              let allData = "";
+              workbook.SheetNames.forEach((sheetName) => {
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+                  header: 1,
+                });
+                allData += `\n\n--- Planilha: ${sheetName} ---\n`;
+                jsonData.forEach((row, index) => {
+                  if (row.length > 0) {
+                    allData += `Linha ${index + 1}: ${row.join(" | ")}\n`;
+                  }
+                });
+              });
+              resolve(allData.trim());
+            } catch (error) {
+              reject(error);
+            }
+          };
+          reader.onerror = () => reject(new Error("Erro ao ler arquivo Excel"));
+          reader.readAsArrayBuffer(file);
+        });
+      }
 
       function handleFileSelect(e) {
         const preview = document.getElementById("filePreview");
