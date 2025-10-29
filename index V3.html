@@ -672,7 +672,7 @@
         // Prompt COMPACTO para análise consolidada (otimizado para tokens)
         const promptConsolidado = `ANÁLISE CONSOLIDADA - TOOLS ENGENHARIA
 
-SEÇÃO 1️⃣: FORNECEDORES (COMECE AQUI!)
+SEÇÃO 1️⃣: FORNECEDORES
 Para cada documento, extraia e consolide:
 📋 Forn. 1: [Nome] | CNPJ: [CNPJ] | Tel: [TODOS tel] | Email: [TODOS emails] | End: [Endereço] | Contato: [Nome-Cargo]
 
@@ -684,90 +684,41 @@ ${
     : ""
 }
 
-SEÇÃO 2️⃣: ITENS E PREÇOS - Tabela com TODOS itens de CADA documento
-Colunas: Item | Forn.1 | Forn.2 | ${
-          fileContents.length > 2 ? "Forn.3 | " : ""
-        }Melhor | Economia
-Verde: melhor preço | Vermelho: pior preço | Todos itens, sem omissão
+SEÇÃO 2️⃣: ITENS E PREÇOS
+Crie uma tabela HTML com TODOS os itens encontrados. Estrutura obrigatória:
+- Cabeçalho: Item | [Nome Empresa 1] | [Nome Empresa 2] | Melhor | Economia
+- Linhas: Um item por linha com preços de cada empresa
+- Cores: Verde (#dcfce7) para melhor preço, Vermelho (#fecaca) para pior
+- Última linha: TOTAL com soma dos preços
+- Exemplo estrutura: <table border='1'><tr style='background:#0e938f;color:white'><th>Item</th><th>Empresa1</th><th>Empresa2</th><th>Melhor</th><th>Economia</th></tr><tr><td>Item A</td><td style='background:#dcfce7'>R$ 100</td><td>R$ 150</td><td>Empresa1</td><td>R$ 50</td></tr></table>
 
-SEÇÃO 3️⃣: COMERCIAL - Descontos, Pagamento, Garantia, Prazos (por fornecedor)
+SEÇÃO 3️⃣: MIX DE PREÇO
+Analise qual combinação de fornecedores gera a MAIOR ECONOMIA:
+• Itens de [Empresa A]: [lista de itens] = R$ [subtotal]
+• Itens de [Empresa B]: [lista de itens] = R$ [subtotal]
+• Total MIX: R$ [valor final] | Economia vs fornecedor único: R$ [diferença]
 
-SEÇÃO 4️⃣: RANKING - 1º, 2º, 3º lugar com valores e economia
+SEÇÃO 4️⃣: COMERCIAL - Descontos, Pagamento, Garantia, Prazos (por fornecedor)
 
-SEÇÃO 5️⃣: RECOMENDAÇÃO - Qual contratar e por quê
+SEÇÃO 5️⃣: RANKING - 1º, 2º, 3º lugar com valores e economia
+
+SEÇÃO 6️⃣: RECOMENDAÇÃO
+• ✅ CONTRATAR: [Empresa] (melhor custo-benefício)
+• 💰 ECONOMIA: R$ [valor]
+• ⚠️ ITENS IGUAIS?: Verificar se TODOS fornecedores consideraram os MESMOS itens
+• 🔄 MIX SUGERIDO: Se economia > [X]%, considerar mix de fornecedores
+• 🎯 NEGOCIAR: [Itens específicos]
+• ⚡ DIFERENCIAIS: [Descontos, garantias, prazos]
 
 Instruções críticas:
 - Extraia TODOS os itens, sem exceção
 - Se múltiplos tel/email: liste TODOS
 - Se não encontrar: "Não encontrado"
 - Verde para melhor, vermelho para pior
-- Mantenha nomes de fornecedores iguais em todas seções
-- Use abreviações (Forn., End., etc) para economizar tokens🛡️ GARANTIAS E ASSISTÊNCIA (TODOS OS ${
-          fileContents.length
-        } FORNECEDORES):
-• [FORNECEDOR 1]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
-• [FORNECEDOR 2]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
-• [FORNECEDOR 3]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
-
-📝 OBSERVAÇÕES IMPORTANTES (TODOS OS ${fileContents.length} FORNECEDORES):
-• [FORNECEDOR 1]: [Prazos de entrega, frete, montagem, condições especiais, etc]
-• [FORNECEDOR 2]: [Prazos de entrega, frete, montagem, condições especiais, etc]
-• [FORNECEDOR 3]: [Prazos de entrega, frete, montagem, condições especiais, etc]
-
-RANKING FINAL (COMPARAÇÃO DE TODOS OS ${fileContents.length} FORNECEDORES)
-🥇 1º Lugar: [EMPRESA] - R$ [VALOR] (melhor preço geral)
-🥈 2º Lugar: [EMPRESA] - R$ [VALOR] 
-🥉 3º Lugar: [EMPRESA] - R$ [VALOR]
-💡 Economia Potencial: R$ [DIFERENÇA] ([PERCENTUAL]%)
-
-RECOMENDAÇÃO EXECUTIVA
-• ✅ CONTRATAR: [EMPRESA] (melhor custo-benefício considerando preço + condições comerciais)
-• 💰 ECONOMIA: R$ [VALOR] vs concorrentes
-• 🎯 NEGOCIAR: [ITENS ESPECÍFICOS] com [EMPRESA]
-• ⚡ DIFERENCIAIS: [Destacar se há descontos, garantias ou condições de pagamento superiores]
-
-📋 INSTRUÇÕES ESPECIAIS:
-${
-  hasMapa
-    ? "• Com MAPA: Usar como referência base para validar todas as ${fileContents.length} propostas"
-    : "• Sem MAPA: Comparar DIRETAMENTE todas as ${fileContents.length} propostas anexadas"
-}
-• ADAPTAR tabela ao número REAL de fornecedores (${
-          fileContents.length
-        } documentos = até ${fileContents.length} fornecedores)
-• Se ${fileContents.length} fornecedores: usar ${
-          fileContents.length
-        } colunas na tabela
-• Sempre destacar MELHOR preço em VERDE e PIOR em VERMELHO
-• SEÇÕES COMERCIAIS são obrigatórias mesmo que informações incompletas
-• NÃO IGNORE NENHUM DOCUMENTO!
-
-⚠️ PROIBIDO: 
-- Texto descritivo longo
-- Análises genéricas
-- Ignorar qualquer um dos ${fileContents.length} documentos
-- Dizer que "apenas 1 fornecedor foi encontrado" quando ${
-          fileContents.length
-        } foram enviados
-
-✅ OBRIGATÓRIO: 
-- Tabela com ${fileContents.length} colunas de fornecedores
-- Seções comerciais completas para TODOS os ${fileContents.length} fornecedores
-- Ranking com TODOS os ${fileContents.length} fornecedores
-- Números + ranking + recomendação executiva
-
-🎨 FORMATAÇÃO VISUAL (CRÍTICO):
-- NÃO ADICIONAR quebras de linha EXTRAS entre cabeçalhos (📋, 🎯, 💳, etc) e tabelas/listas
-- Colocar cabeçalho IMEDIATAMENTE SEGUIDO pela tabela ou lista (máximo 1 quebra de linha)
-- EXEMPLO CORRETO: "📋 ITENS E PREÇOS:\n<table>..." (SEM linhas em branco)
-- EXEMPLO ERRADO: "📋 ITENS E PREÇOS:\n\n\n\n<table>..." (COM linhas em branco)
-
-⚙️ OTIMIZAÇÃO DE TOKENS (importante):
-- Use NOMES CURTOS para colunas da tabela (ex: "Forn. 1" em vez de "Fornecedor 1")
-- Use ABREVIAÇÕES para descrições (ex: "Instação" em vez de "Instalação e montagem")
-- MANTENHA todos os itens e dados, apenas use formatação compacta
-- Use símbolos (✓, ✕, R$) em vez de palavras quando possível
-- Elimine descrições longas, MAS MANTENHA TODOS OS VALORES MONETÁRIOS E ITENS`;
+- NOMES REAIS das empresas em SEÇÃO 2, não "Forn.1"
+- Mantenha consistência de nomes em todas as seções
+- MIX DE PREÇO: mostre qual combinação economiza mais
+- ITENS IGUAIS: responda se todos fornecedores orçaram os mesmos itens`;
 
         try {
           updateLoadingMessage(
