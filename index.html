@@ -365,22 +365,31 @@
           conteudo = chatContainer.innerText;
         }
 
-        // Remover emojis e caracteres especiais problemáticos
-        conteudo = conteudo
-          .replace(/[^\w\s\n\r\.\,\$\(\)\-\:\;\/]/g, "")
-          .replace(/\s+/g, " "); // Remover espaços múltiplos
+        // Remover APENAS emojis, preservar tudo mais (acentos, quebras de linha, espaços)
+        conteudo = conteudo.replace(/[\u{1F300}-\u{1F9FF}]/gu, ""); // Remove emojis Unicode
+        
+        // Dividir por quebras de linha para preservar formatação
+        const paragrafs = conteudo.split("\n");
 
         doc.setFontSize(11);
-        const lines = doc.splitTextToSize(conteudo, 190);
-
         let yPosition = 40;
-        lines.forEach((line) => {
-          if (yPosition > 280) {
-            doc.addPage();
-            yPosition = 20;
+
+        paragrafs.forEach((paragrafo) => {
+          if (paragrafo.trim() === "") {
+            // Linha vazia = adicionar espaço
+            yPosition += 3;
+          } else {
+            // Dividir cada parágrafo em linhas que cabem na página
+            const linhas = doc.splitTextToSize(paragrafo, 190);
+            linhas.forEach((linha) => {
+              if (yPosition > 280) {
+                doc.addPage();
+                yPosition = 20;
+              }
+              doc.text(linha, 10, yPosition);
+              yPosition += 5;
+            });
           }
-          doc.text(line, 10, yPosition);
-          yPosition += 5;
         });
 
         const filename = `analise_propostas_${new Date()
