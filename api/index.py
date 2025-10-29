@@ -292,7 +292,7 @@ def serve_app_ia_files(filename):
 def index():
     try:
         app_ia_path = os.path.dirname(os.path.dirname(__file__))
-        return send_file(os.path.join(app_ia_path, 'document_ai_app.html'))
+        return send_file(os.path.join(app_ia_path, 'index.html'))
     except Exception as e:
         print(f"❌ Erro ao servir página principal: {e}")
         return jsonify({'error': 'Página não encontrada'}), 404
