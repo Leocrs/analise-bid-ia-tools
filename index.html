@@ -718,29 +718,52 @@ ${
 }
 
 SEÇÃO 2️⃣: ITENS E PREÇOS
-Crie uma tabela HTML com TODOS os itens encontrados. Estrutura obrigatória:
-- Cabeçalho: Item | [Nome Empresa 1] | [Nome Empresa 2] | Melhor | Economia
-- Linhas: Um item por linha com preços de cada empresa
-- Cores: Verde (#dcfce7) para melhor preço, Vermelho (#fecaca) para pior
-- Última linha: TOTAL com soma dos preços
-- Exemplo estrutura: <table border='1'><tr style='background:#0e938f;color:white'><th>Item</th><th>Empresa1</th><th>Empresa2</th><th>Melhor</th><th>Economia</th></tr><tr><td>Item A</td><td style='background:#dcfce7'>R$ 100</td><td>R$ 150</td><td>Empresa1</td><td>R$ 50</td></tr></table>
+GERE UMA TABELA REAL COM OS DADOS ENCONTRADOS:
+Coluna 1: Nome do Item
+Coluna 2: Preço da Empresa 1
+Coluna 3: Preço da Empresa 2
+Coluna 4: Qual empresa tem o melhor preço
+Coluna 5: Economia em R$
+
+Exemplo de resposta esperada (substitua pelos dados reais):
+Item | Empresa A | Empresa B | Melhor | Economia
+Produto 1 | R$ 1.000 | R$ 1.500 | Empresa A | R$ 500
+Produto 2 | R$ 2.000 | R$ 1.800 | Empresa B | R$ 200
+TOTAL | R$ 3.000 | R$ 3.300 | Empresa A | R$ 300
+
+INSTRUÇÕES OBRIGATÓRIAS:
+1. Extraia TODOS os itens dos documentos
+2. Liste TODOS os preços encontrados
+3. Identifique o melhor preço em cada linha
+4. Calcule a economia
+5. Adicione linha TOTAL no final
+6. Use nomes REAIS das empresas
 
 SEÇÃO 3️⃣: MIX DE PREÇO
-Analise qual combinação de fornecedores gera a MAIOR ECONOMIA:
-• Itens de [Empresa A]: [lista de itens] = R$ [subtotal]
-• Itens de [Empresa B]: [lista de itens] = R$ [subtotal]
-• Total MIX: R$ [valor final] | Economia vs fornecedor único: R$ [diferença]
+Se há possibilidade de combinar fornecedores para economia:
+• Empresa A: Itens [Lista] = R$ [subtotal]
+• Empresa B: Itens [Lista] = R$ [subtotal]
+• Total com MIX: R$ [valor] | Economia: R$ [diferença]
+
+Se não há possibilidade (todos itens de uma empresa): Responda "Não aplicável - todos itens de mesma empresa"
 
 SEÇÃO 4️⃣: COMERCIAL - Descontos, Pagamento, Garantia, Prazos (por fornecedor)
+Liste para CADA fornecedor:
+- Desconto oferecido
+- Forma de pagamento
+- Garantia (se informado)
+- Prazo de entrega
 
 SEÇÃO 5️⃣: RANKING - 1º, 2º, 3º lugar com valores e economia
+1º - [Empresa] | Valor Total: R$ [XXX] | Economia: R$ [XXX]
+2º - [Empresa] | Valor Total: R$ [XXX] | Economia: R$ [XXX]
 
 SEÇÃO 6️⃣: RECOMENDAÇÃO
 • CONTRATAR: [Empresa] (melhor custo-benefício)
 • ECONOMIA: R$ [valor]
-• ITENS IGUAIS?: Verificar se TODOS fornecedores consideraram os MESMOS itens
-• MIX SUGERIDO: Se economia > [X]%, considerar mix de fornecedores
-• NEGOCIAR: [Itens específicos]
+• ITENS IGUAIS?: Sim ou Não - explicar brevemente
+• MIX SUGERIDO: Sim (com detalhes) ou Não
+• NEGOCIAR: [Itens específicos com maior variação]
 • DIFERENCIAIS: [Descontos, garantias, prazos]
 
 Instruções críticas:
