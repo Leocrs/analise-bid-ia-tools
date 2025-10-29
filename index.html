@@ -1297,15 +1297,11 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
             }
             await structuredAnalysis();
           } else if (fileContents.length === 1) {
-            // Exibe o prompt estruturado para arquivo único
-            showStructuredPrompt();
+            // Apenas mensagem simples para arquivo único, SEM exibir o prompt detalhado
             addMessage(
               "assistant",
               "📄 <strong>Arquivo único anexado.</strong> Para análise comparativa automática, anexe pelo menos 2 propostas ou documentos."
             );
-          } else {
-            // Exibe o prompt estruturado
-            showStructuredPrompt();
           }
         });
       }
