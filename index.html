@@ -684,25 +684,33 @@ ${
     : ""
 }
 
-SEÇÃO 2️⃣: ITENS E PREÇOS - TABELA HTML COMPACTA
-Gerar OBRIGATORIAMENTE como tabela HTML com bordas e cores:
+SEÇÃO 2️⃣: ITENS E PREÇOS
+GERE EXATAMENTE ASSIM - tabela pronta para renderizar no navegador (SEM PALAVRAS EXTRAS):
+
 <table border='1' style='border-collapse:collapse;width:100%;font-size:13px'>
 <tr style='background:#0e938f;color:white'>
-<th>Item</th><th>[Empresa1]</th><th>[Empresa2]</th>${
-          fileContents.length > 2 ? "<th>[Empresa3]</th>" : ""
-        }<th>Melhor</th><th>Economia</th>
+<th>Item</th><th>[EMPRESA_1]</th><th>[EMPRESA_2]</th><th>Melhor</th><th>Economia</th>
 </tr>
-<tr><td>[ITEM]</td><td>R$ [valor]</td><td>R$ [valor]</td>${
-          fileContents.length > 2 ? "<td>R$ [valor]</td>" : ""
-        }<td>[Melhor]</td><td>R$ [dif]</td></tr>
-<tr><td>...</td><td>...</td><td>...</td>${
-          fileContents.length > 2 ? "<td>...</td>" : ""
-        }<td>...</td><td>...</td></tr>
-<tr style='background:#f3f4f6;font-weight:bold'><td>TOTAL</td><td>R$ [TOT]</td><td>R$ [TOT]</td>${
-          fileContents.length > 2 ? "<td>R$ [TOT]</td>" : ""
-        }<td>-</td><td>R$ [ECO]</td></tr>
+<tr>
+<td>[Item 1]</td><td style='background:#dcfce7'>R$ 1.000</td><td>R$ 1.500</td><td>[EMPRESA_1]</td><td>R$ 500</td>
+</tr>
+<tr>
+<td>[Item 2]</td><td>R$ 2.000</td><td style='background:#dcfce7'>R$ 1.800</td><td>[EMPRESA_2]</td><td>R$ 200</td>
+</tr>
+<tr style='background:#f3f4f6;font-weight:bold'>
+<td>TOTAL</td><td>R$ 3.000</td><td>R$ 3.300</td><td>-</td><td>R$ 300</td>
+</tr>
 </table>
-Instruções: Verde (#dcfce7) melhor preço, Vermelho (#fecaca) pior preço, Incluir TODOS itens mesmo que diferentes, Usar nomes reais das empresas
+
+REGRAS - LEIA COM ATENÇÃO:
+1. Extrair TODOS os itens (mesmo que incompletos)
+2. Usar NOMES REAIS das empresas (não "Forn.1")
+3. Verde (#dcfce7) = melhor preço em cada linha
+4. Vermelho (#fecaca) = pior preço em cada linha
+5. Se 3+ fornecedores: adicionar coluna extra <th>[EMPRESA_3]</th>
+6. NUNCA escrever antes da tabela: "tabela", "HTML", "abaixo", etc
+7. NUNCA escrever depois da tabela qualquer descrição
+8. APENAS a tabela HTML (pronta para renderizar)
 
 SEÇÃO 3️⃣: MIX DE PREÇO
 Analise qual combinação de fornecedores gera a MAIOR ECONOMIA:
