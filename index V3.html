@@ -669,86 +669,42 @@
             file.name.toLowerCase().includes("concorrencia")
         );
 
-        // Prompt flexível para análise consolidada
-        const promptConsolidado = `🚨 ANÁLISE CONSOLIDADA OBRIGATÓRIA - TOOLS ENGENHARIA 🚨
+        // Prompt COMPACTO para análise consolidada (otimizado para tokens)
+        const promptConsolidado = `ANÁLISE CONSOLIDADA - TOOLS ENGENHARIA
 
-⚠️ CRÍTICO: VOCÊ RECEBEU ${fileContents.length} DOCUMENTO(S) PARA ANALISAR!
-OBRIGAÇÃO: Extrair dados de TODOS os ${
+SEÇÃO 1️⃣: FORNECEDORES (COMECE AQUI!)
+Para cada documento, extraia e consolide:
+📋 Forn. 1: [Nome] | CNPJ: [CNPJ] | Tel: [TODOS tel] | Email: [TODOS emails] | End: [Endereço] | Contato: [Nome-Cargo]
+
+📋 Forn. 2: [Nome] | CNPJ: [CNPJ] | Tel: [TODOS tel] | Email: [TODOS emails] | End: [Endereço] | Contato: [Nome-Cargo]
+
+${
+  fileContents.length > 2
+    ? "📋 Forn. 3: [Nome] | CNPJ: [CNPJ] | Tel: [TODOS tel] | Email: [TODOS emails] | End: [Endereço] | Contato: [Nome-Cargo]"
+    : ""
+}
+
+SEÇÃO 2️⃣: ITENS E PREÇOS - Tabela com TODOS itens de CADA documento
+Colunas: Item | Forn.1 | Forn.2 | ${
+          fileContents.length > 2 ? "Forn.3 | " : ""
+        }Melhor | Economia
+Verde: melhor preço | Vermelho: pior preço | Todos itens, sem omissão
+
+SEÇÃO 3️⃣: COMERCIAL - Descontos, Pagamento, Garantia, Prazos (por fornecedor)
+
+SEÇÃO 4️⃣: RANKING - 1º, 2º, 3º lugar com valores e economia
+
+SEÇÃO 5️⃣: RECOMENDAÇÃO - Qual contratar e por quê
+
+Instruções críticas:
+- Extraia TODOS os itens, sem exceção
+- Se múltiplos tel/email: liste TODOS
+- Se não encontrar: "Não encontrado"
+- Verde para melhor, vermelho para pior
+- Mantenha nomes de fornecedores iguais em todas seções
+- Use abreviações (Forn., End., etc) para economizar tokens🛡️ GARANTIAS E ASSISTÊNCIA (TODOS OS ${
           fileContents.length
-        } documento(s) e criar comparação COMPLETA!
-
-🔴 REGRA ABSOLUTA 🔴
-- NÃO FAZER ANÁLISE PARCIAL
-- NÃO IGNORAR NENHUM ITEM
-- NÃO RESUMIR OU SIMPLIFICAR
-- EXTRAIR TODOS E CADA UM DOS ITENS PRESENTES NAS PROPOSTAS
-- SE HÁ 50 ITENS, LISTAR OS 50 ITENS
-- SE HÁ 100 ITENS, LISTAR OS 100 ITENS
-- SEM LIMITE DE QUANTIDADE
-- SEM EXCEÇÕES
-
-MISSÃO CRÍTICA: Análise SIMULTÂNEA de TODOS os documentos anexados - Nenhum pode ser ignorado!
-
-IDENTIFICAR FORNECEDORES
-- Você receberá ${fileContents.length} propostas/documentos
-- OBRIGATÓRIO: Extrair dados de CADA UMA delas
-- Identificar TODOS os fornecedores/empresas mencionados
-- Extrair nomes das empresas, CNPJs, e identificações
-- Listar CADA fornecedor encontrado em cada documento
-
-EXTRAIR ITENS E PREÇOS - REGRA ABSOLUTA: NENHUM ITEM PODE SER OMITIDO
-- Localizar ABSOLUTAMENTE TODOS os itens, produtos, serviços e valores em R$ de CADA documento
-- Não importa se são 5, 50 ou 500 itens - LISTAR TODOS
-- Equipamentos, materiais, serviços, instalações, complementos, acessórios
-- Preços unitários, subtotais, e totais gerais
-- CRÍTICO: Mesmo que itens sejam diferentes entre propostas, INCLUIR CADA UM DELES
-- Criar linha para CADA item diferente encontrado
-- ${
-          hasMapa
-            ? "Usar mapa de concorrência como referência base para comparação"
-            : "Comparar DIRETAMENTE entre TODOS as ${fileContents.length} propostas anexadas"
-        }
-
-EXTRAIR INFORMAÇÕES ADICIONAIS (CRÍTICO)
-- 🎯 DESCONTOS: Identificar descontos, abatimentos, promoções de CADA fornecedor
-- 💳 FORMAS DE PAGAMENTO: Condições comerciais de CADA fornecedor
-- 🛡️ GARANTIAS: Período de garantia, cobertura, assistência técnica de CADA fornecedor
-- 📝 OBSERVAÇÕES: Detalhes importantes de CADA fornecedor
-
-TABELA COMPARATIVA CONSOLIDADA (OBRIGATÓRIA COM ${
-          fileContents.length
-        } FORNECEDORES - INCLUIR TODOS OS ITENS)
-<table border='1' style='border-collapse:collapse;width:100%;font-size:14px'>
-<tr style='background:#0e938f;color:white'>
-<th>ITEM/SERVIÇO</th><th>FORNECEDOR 1</th><th>FORNECEDOR 2</th><th>FORNECEDOR 3</th><th>MELHOR PREÇO</th><th>ECONOMIA</th>
-</tr>
-<tr>
-<td>[ITEM 1]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td style='background:#fecaca'>R$ [VALOR]</td><td>R$ [VALOR]</td><td>[MELHOR]</td><td>R$ [DIFERENÇA]</td>
-</tr>
-<tr>
-<td>[ITEM 2]</td><td style='background:#fecaca'>R$ [VALOR]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td>R$ [VALOR]</td><td>[MELHOR]</td><td>R$ [DIFERENÇA]</td>
-</tr>
-<tr>
-<td>[ITEM 3]</td><td>R$ [VALOR]</td><td>R$ [VALOR]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td>[MELHOR]</td><td>R$ [DIFERENÇA]</td>
-</tr>
-<tr style='background:#f3f4f6;font-weight:bold'>
-<td>TOTAL GERAL</td><td>R$ [TOTAL]</td><td>R$ [TOTAL]</td><td>[VENCEDOR]</td><td>R$ [ECONOMIA]</td>
-</tr>
-</table>
-
-📊 INFORMAÇÕES COMERCIAIS DETALHADAS
-
-🎯 DESCONTOS E PROMOÇÕES (TODOS OS ${fileContents.length} FORNECEDORES):
-• [FORNECEDOR 1]: [Descontos encontrados ou "Sem desconto identificado"]
-• [FORNECEDOR 2]: [Descontos encontrados ou "Sem desconto identificado"]
-• [FORNECEDOR 3]: [Descontos encontrados ou "Sem desconto identificado"]
-
-💳 FORMAS DE PAGAMENTO (TODOS OS ${fileContents.length} FORNECEDORES):
-• [FORNECEDOR 1]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
-• [FORNECEDOR 2]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
-• [FORNECEDOR 3]: [Condições: À vista/Parcelado/Cartão/Boleto/etc]
-
-🛡️ GARANTIAS E ASSISTÊNCIA (TODOS OS ${fileContents.length} FORNECEDORES):
+        } FORNECEDORES):
 • [FORNECEDOR 1]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
 • [FORNECEDOR 2]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
 • [FORNECEDOR 3]: [Período de garantia] - [Cobertura] - [Assistência técnica: Sim/Não]
@@ -1203,7 +1159,9 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
       function updateMessage(messageId, content) {
         const messageDiv = document.getElementById(messageId);
         const contentDiv = messageDiv.querySelector(".message-content");
-        contentDiv.innerHTML = content.replace(/\n/g, "<br>");
+        // Remover quebras de linha duplicadas (mais de 2 seguidas) para limpeza visual
+        const cleanedContent = content.replace(/\n{3,}/g, "\n\n");
+        contentDiv.innerHTML = cleanedContent.replace(/\n/g, "<br>");
       }
 
       function showError(message) {
@@ -1295,15 +1253,11 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
             }
             await structuredAnalysis();
           } else if (fileContents.length === 1) {
-            // Exibe o prompt estruturado para arquivo único
-            showStructuredPrompt();
+            // Apenas mensagem simples para arquivo único, SEM exibir o prompt detalhado
             addMessage(
               "assistant",
               "📄 <strong>Arquivo único anexado.</strong> Para análise comparativa automática, anexe pelo menos 2 propostas ou documentos."
             );
-          } else {
-            // Exibe o prompt estruturado
-            showStructuredPrompt();
           }
         });
       }
