@@ -670,442 +670,269 @@
         );
 
         // Prompt flexível para análise consolidada - VERSÃO APRIMORADA COM TODAS AS ETAPAS
-        const promptConsolidado = `🚨 ANÁLISE CONSOLIDADA OBRIGATÓRIA - TOOLS ENGENHARIA 🚨
+              const promptConsolidado = `
+╔════════════════════════════════════════════════════════════════════════════════╗
+║         SISTEMA DE ANÁLISE COMPARATIVA DE PROPOSTAS E LICITAÇÕES - BID        ║
+║                           ANÁLISE CONSOLIDADA MULTI-FORNECEDOR                 ║
+╚════════════════════════════════════════════════════════════════════════════════╝
 
-RECEBIMENTO: ${fileContents.length} documento(s) para análise imediata
-ENTREGA OBRIGATÓRIA: Relatório com 6 seções + recomendação final
+🎯 OBJETIVO FINAL: Gerar RELATÓRIO EXECUTIVO COMPLETO com 6 SEÇÕES OBRIGATÓRIAS
 
-═══════════════════════════════════════════════════════════════════════
+⚠️ REGRAS CRÍTICAS:
+1. ANALISAR TODOS OS FORNECEDORES ENVIADOS SIMULTANEAMENTE
+2. GERAR TABELA COMPARATIVA OBRIGATÓRIA com cores (🟢 🔴 🟡)
+3. INCLUIR TODAS AS 6 SEÇÕES em ordem sequencial
+4. FINALIZAR COM CHECKLIST DE CONFORMIDADE
 
-SEÇÃO 1️⃣: VALIDAÇÃO DOS ARQUIVOS (OBRIGATÓRIA)
-═══════════════════════════════════════════════════════════════════════
+═════════════════════════════════════════════════════════════════════════════════
 
-ETAPA 1: RECEBIMENTO E VALIDAÇÃO ✅
-• Arquivos recebidos: ${fileContents.length} documento(s)
-• Status: VALIDAÇÃO INICIADA
-• Conferir se documentos contêm itens, quantidades e valores unitários
-• ❌ Se faltarem informações críticas em algum doc, destacar na seção de DIVERGÊNCIAS
+SEÇÃO 1️⃣: VALIDAÇÃO E RECEBIMENTO DOS ARQUIVOS
+═════════════════════════════════════════════════════════════════════════════════
 
-ETAPA 2: ANÁLISE TÉCNICA DETALHADA 🔍
-Extração Obrigatória de:
-- FORNECEDORES: Nome, CNPJ, contato de CADA empresa
-- ITENS COMPLETOS: Descrição, quantidade, valor unitário, subtotal de CADA item
-- ADERÊNCIA: Verificar se propostas atendem 100% do mapa de concorrência (se houver)
-- DIVERGÊNCIAS: Itens faltantes, excedentes, especificações diferentes
+✅ PASO 1 - VALIDAÇÃO INICIAL:
+• Confirmar recebimento de todas as propostas/documentos enviados
+• Listar cada fornecedor/empresa identificado
+• Verificar se há MAPA DE CONCORRÊNCIA como referência
+• Validar se todos os fornecedores cobrem o ESCOPO COMPLETO
+• Identificar lacunas ou itens não cotados
 
-TABELA COMPARATIVA PRINCIPAL - ETAPA 3: RELATÓRIO VISUAL 📊
-<table border='1' style='border-collapse:collapse;width:100%;font-size:13px'>
-<tr style='background:#0e938f;color:white'>
-<th>ITEM</th><th>QTD</th><th>UNID</th><th>Forn. 1</th><th>Forn. 2</th>${
-          fileContents.length > 2 ? `<th>Forn. 3</th>` : ""
-        }${
-          fileContents.length > 3 ? `<th>Forn. 4</th>` : ""
-        }<th>Preço Médio</th><th>Melhor</th><th>Pior</th><th>Variação %</th><th>Rank</th>
-</tr>
-<tr>
-<td>[ITEM 1]</td><td>[QTD]</td><td>[UN]</td><td style='background:#dcfce7'>R$ X.XXX</td><td style='background:#fecaca'>R$ X.XXX</td>${
-          fileContents.length > 2
-            ? `<td style='background:#fef08a'>R$ X.XXX</td>`
-            : ""
-        }${
-          fileContents.length > 3 ? `<td>R$ X.XXX</td>` : ""
-        }<td>R$ X.XXX</td><td>Forn.1</td><td>Forn.2</td><td>45%</td><td>1º, 2º</td>
-</tr>
-<tr style='background:#f3f4f6;font-weight:bold'>
-<td>TOTAL GERAL</td><td colspan='2'>-</td><td>R$ [TOTAL]</td><td>R$ [TOTAL]</td>${
-          fileContents.length > 2 ? `<td>R$ [TOTAL]</td>` : ""
-        }${
-          fileContents.length > 3 ? `<td>R$ [TOTAL]</td>` : ""
-        }<td>R$ [MÉDIA]</td><td colspan='4'>Economia: R$ [DIFF]</td>
-</tr>
-</table>
+✅ PASSO 2 - EXTRAÇÃO DE DADOS:
+Extrair para CADA fornecedor:
+  └─ Nome/Razão Social
+  └─ CNPJ (se disponível)
+  └─ Lista completa de itens/serviços
+  └─ Preços unitários e totais
+  └─ Condições comerciais (prazo, pagamento, garantia)
 
-LEGENDA DE CORES E RANKING:
-• � Verde: Melhor preço do item (1º lugar)
-• 🔴 Vermelho: Pior preço do item (último lugar)
-• 🟡 Amarelo: Preço intermediário (2º/3º lugar)
-• Variação %: Diferença percentual entre melhor e pior preço
-• Rank: Posição do fornecedor neste item (ex: "1º, 2º, 3º")
+═════════════════════════════════════════════════════════════════════════════════
 
-INFORMAÇÕES EXTRAÍDAS DOS DOCUMENTOS:
-[Fornecedor, CNPJ, Contato, E-mail, Telefone para CADA]
+SEÇÃO 2️⃣: ANÁLISE TÉCNICA DETALHADA
+═════════════════════════════════════════════════════════════════════════════════
 
-ITENS E PREÇOS DETALHADOS:
-[Listar TODOS os itens de CADA fornecedor com quantidade, valor unitário e subtotal]
+🔍 ANÁLISE POR ITEM/SERVIÇO:
 
-ANÁLISE DE ADERÊNCIA AO ESCOPO:
-• Conferência de cobertura 100% do escopo
-• Itens faltantes (❌): [Listar se houver]
-• Itens excedentes (✓): [Listar se houver]
-• Especificações divergentes (⚠️): [Listar se houver]
+Para cada item cotado, analisar:
+• ADERÊNCIA AO ESCOPO: Item atende 100% às especificações? (SIM/NÃO)
+• ESPECIFICAÇÕES: Quais são? (Marca, modelo, versão, características)
+• DIFERENCIAIS: Algo que diferencia este fornecedor? (Ex: garantia estendida)
+• COMPATIBILIDADE: Será necessário adaptações? (SIM/NÃO)
 
-ITENS CRÍTICOS - MAIOR VARIAÇÃO DE PREÇO 📈
-[Identificar os 3-5 itens com maior diferença percentual entre fornecedores - ALTÍSSIMA oportunidade de negociação]
+📊 TABELA TÉCNICA OBRIGATÓRIA:
+IMPORTANTE: Gerar tabela HTML com TODAS as colunas abaixo:
+• Item
+• Quantidade
+• Unidade
+• Preço Forn. 1, 2, 3 (conforme quantidade de fornecedores)
+• Preço Médio
+• Melhor Preço
+• Pior Preço
+• Variação %
+• Ranking (1º, 2º, 3º)
 
-ANÁLISE COMERCIAL DETALHADA:
-🎯 DESCONTOS E PROMOÇÕES (TODOS OS FORNECEDORES)
-• Forn. 1 [NOME]: [Desconto ou % ou "Sem desconto"]
-• Forn. 2 [NOME]: [Desconto ou % ou "Sem desconto"]
+CORES OBRIGATÓRIAS:
+🟢 Verde = MELHOR PREÇO (1º lugar) - DESTACAR COM FUNDO VERDE
+🟡 Amarelo = PREÇO INTERMEDIÁRIO (2º lugar) - DESTACAR COM FUNDO AMARELO
+🔴 Vermelho = PIOR PREÇO (último lugar) - DESTACAR COM FUNDO VERMELHO
 
-💳 FORMAS DE PAGAMENTO (TODOS OS FORNECEDORES)
-• Forn. 1 [NOME]: [À vista / Parcelado em X / Cartão / Boleto]
-• Forn. 2 [NOME]: [À vista / Parcelado em X / Cartão / Boleto]
+CÁLCULOS OBRIGATÓRIOS:
+• PREÇO MÉDIO = Soma de todos / quantidade de fornecedores
+• VARIAÇÃO % = ((Pior - Melhor) ÷ Melhor) × 100
+• RANKING = Ordenar de menor para maior preço (1º = melhor)
 
-🛡️ GARANTIAS E ASSISTÊNCIA (TODOS OS FORNECEDORES)
-• Forn. 1 [NOME]: [Período] - [Cobertura] - [Assistência: Sim/Não]
-• Forn. 2 [NOME]: [Período] - [Cobertura] - [Assistência: Sim/Não]
+═════════════════════════════════════════════════════════════════════════════════
 
-📝 PRAZOS E OBSERVAÇÕES (TODOS OS FORNECEDORES)
-• Forn. 1 [NOME]: Entrega [DIAS], Frete [SIM/NÃO], Montagem [SIM/NÃO], Outras: [...]
-• Forn. 2 [NOME]: Entrega [DIAS], Frete [SIM/NÃO], Montagem [SIM/NÃO], Outras: [...]
+SEÇÃO 3️⃣: ANÁLISE COMERCIAL COMPLETA
+═════════════════════════════════════════════════════════════════════════════════
 
-� ALERTAS DE PREÇOS SUSPEITOS:
-[Identificar se algum preço está MUITO ABAIXO do mercado (risco de qualidade) ou MUITO ACIMA (risco de superfaturamento)]
-• Preços muito baixos (⚠️ suspeita de qualidade): [Listar]
-• Preços muito altos (⚠️ superfaturamento): [Listar]
+💰 DESCONTOS E CONDIÇÕES DE PREÇO (PARA CADA FORNECEDOR):
+Para cada fornecedor, detalhar:
+  • Desconto por volume? (SIM/NÃO - QUANTO?)
+  • Desconto à vista? (SIM/NÃO - QUANTO?)
+  • Preço mínimo de pedido? (VALOR)
+  • Outras promoções? (LISTAR)
 
-MIX IDEAL DE FORNECEDORES - ETAPA 4: RECOMENDAÇÕES ESTRATÉGICAS 🏆
-OPÇÃO 1 - FORNECEDOR ÚNICO (+ viável):
-• Recomendação: [Qual fornecedor?]
-• Vantagens: [Simplicidade, garantia única, relacionamento único]
-• Preço total: R$ [VALOR]
+💳 FORMAS DE PAGAMENTO (TODOS OS FORNECEDORES):
+Listar para cada um: À vista / Parcelado em X / Cartão / Boleto / PIX / Crédito
 
-OPÇÃO 2 - MIX DE FORNECEDORES (+ económico):
-• Itens com Forn. 1: [Listar itens onde Forn.1 é mais barato]
-• Itens com Forn. 2: [Listar itens onde Forn.2 é mais barato]
-• Preço total com mix: R$ [VALOR]
-• Economia adicional: R$ [DIFERENÇA] vs fornecedor único
+🛡️ GARANTIAS E ASSISTÊNCIA (TODOS OS FORNECEDORES):
+Para cada fornecedor: Período - Cobertura - Assistência (SIM/NÃO)
 
-RANKING FINAL DE TODOS OS ${fileContents.length} FORNECEDORES:
-🥇 1º Lugar: [NOME] - R$ [VALOR] ([% economia vs. outros])
-🥈 2º Lugar: [NOME] - R$ [VALOR] ([% más caro que 1º])
-🥉 3º Lugar: [NOME] - R$ [VALOR] ([% más caro que 1º])
-💡 Economia Potencial Total: R$ [DIFERENÇA] (que é [%]% de economia)
+📅 PRAZOS E OBSERVAÇÕES (TODOS OS FORNECEDORES):
+Detalhar: Entrega (dias) - Frete (SIM/NÃO) - Montagem (SIM/NÃO) - Validade (dias)
 
-RECOMENDAÇÃO EXECUTIVA FINAL:
-• ✅ ESTRATÉGIA: [Fornecedor único vs Mix? Por quê?]
-• 🎯 PRIORIDADE: [Qual é o melhor fornecedor e por quê?]
-• 💰 ECONOMIA: R$ [VALOR] vs segundo colocado
-• ⚡ DIFERENCIAIS: [Descontos, prazos, garantias, formas de pagamento - Qual é o diferencial?]
-• 🔄 NEGOCIAÇÃO: [Itens e valores específicos para renegociar com concorrentes]
+═════════════════════════════════════════════════════════════════════════════════
 
-PRÓXIMOS PASSOS ESTRUTURADOS:
-1️⃣ CONTATO INICIAL: Entrar em contato com [Melhor fornecedor] para CONFIRMAÇÃO de disponibilidade
-2️⃣ NEGOCIAÇÃO: Apresentar análise comparativa para [2º/3º colocado] para renegociação dos itens críticos
-3️⃣ VALIDAÇÃO: Solicitar documentação (CNPJ, Referências, Certificações) do fornecedor recomendado
-4️⃣ CONTRATO: Preparar contrato com termos de: Preço, Prazos, Garantia, Forma pagamento
-5️⃣ ACOMPANHAMENTO: Monitorar cumprimento de prazos e qualidade dos produtos/serviços
+SEÇÃO 4️⃣: ITENS CRÍTICOS E ALERTAS DE PREÇOS SUSPEITOS
+═════════════════════════════════════════════════════════════════════════════════
 
-📋 INSTRUÇÕES CRÍTICAS FINAIS:
-${
-  hasMapa
-    ? "• Com MAPA DE CONCORRÊNCIA: Usar como referência base - conferir se todas propostas cobrem 100%"
-    : "• Sem MAPA: Comparar DIRETAMENTE os ${fileContents.length} fornecedores pelo escopo solicitado"
-}
-• ✅ TABELA OBRIGATÓRIA com: Item, Qtd, Unid., Preços de TODOS os fornecedores, Média, Melhor, Pior, Variação %, Ranking
-• ✅ Cores: 🟢 Verde (melhor), 🔴 Vermelho (pior), 🟡 Amarelo (intermediário)
-• ✅ Seções comerciais completas para TODOS os ${
-          fileContents.length
-        } fornecedores
-• ✅ Análise de itens críticos com variação alta
-• ✅ Alertas de preços suspeitos (muito altos ou muito baixos)
-• ✅ Mix de fornecedores vs fornecedor único
-• ✅ Próximos passos estruturados em 5 etapas
+🚨 ITENS COM MAIOR VARIAÇÃO (VARIAÇÃO > 30%):
+Listar TOP 5 itens com maior diferença de preço entre fornecedores:
+1. [ITEM]: Variação de XX% | Melhor: Forn X - R$ VALOR | Pior: Forn Y - R$ VALOR
+2. [ITEM]: Similar...
+(Continue para top 5)
 
-⚠️ PROIBIDO: 
-❌ Análise parcial de apenas 1 fornecedor quando ${
-          fileContents.length
-        } foram enviados
-❌ Omitir itens ou preços
-❌ Não incluir Quantidade e Variação % na tabela
-❌ Não destacar cores (verde/vermelho/amarelo)
-❌ Não incluir ranking por item
-❌ Não fazer análise de mix vs fornecedor único
-❌ Deixar de listar itens críticos
-❌ Ignorar alertas de preços suspeitos
+⚠️ ALERTAS DE PREÇOS SUSPEITOS:
+Identificar preços MUITO ABAIXO (risco de qualidade) ou MUITO ACIMA (superfaturamento)
 
-✅ OBRIGATÓRIO ENTREGAR: 
-✓ Validação clara dos arquivos
-✓ Tabela técnica detalhada com TODAS as colunas
-✓ Seções comerciais (Descontos, Pagamento, Garantia, Prazos)
-✓ Análise de aderência ao escopo
-✓ Itens críticos com maior variação
-✓ Alertas de preços suspeitos
-✓ Análise de mix vs fornecedor único
-✓ Ranking com TODOS os fornecedores
-✓ Próximos passos em 5 etapas claras
-✓ Recomendação executiva definitiva`;
+🟢 PREÇOS MUITO BAIXOS (⚠️ Suspeita de qualidade):
+• Listar itens com preços anormalmente baixos
+• Análise de risco: Por que tão barato?
 
-        try {
-          updateLoadingMessage(
-            loadingId,
-            "🚀 Executando análise comparativa consolidada..."
-          );
-          console.log("📊 Preparando prompt consolidado...");
-          console.log("📏 Tamanho do prompt:", promptConsolidado.length);
-          console.log("📄 Tamanho dos documentos:", todosOsDocumentos.length);
+🔴 PREÇOS MUITO ALTOS (⚠️ Superfaturamento):
+• Listar itens com preços anormalmente altos
+• Análise de risco: Por que tão caro?
 
-          const resultado = await callBackend(
-            promptConsolidado,
-            `ANÁLISE TODOS OS DOCUMENTOS SIMULTANEAMENTE:\n\n${todosOsDocumentos}`
-          );
-          console.log("✅ Resultado recebido do backend");
+═════════════════════════════════════════════════════════════════════════════════
 
-          updateMessage(loadingId, resultado);
+SEÇÃO 5️⃣: ANÁLISE ESTRATÉGICA - FORNECEDOR ÚNICO vs MIX
+═════════════════════════════════════════════════════════════════════════════════
 
-          // Salvar análise na base histórica
-          console.log("💾 Salvando na base histórica...");
-          await salvarNaBaseHistorica(resultado);
-          console.log("✅ structuredAnalysis() CONCLUÍDA COM SUCESSO");
-        } catch (error) {
-          console.error("❌ ERRO em structuredAnalysis():", error);
-          updateMessage(
-            loadingId,
-            `❌ <span style='color:red;'>Erro na análise consolidada: ${error.message}</span>`
-          );
-        }
-      }
+🏆 OPÇÃO 1: FORNECEDOR ÚNICO (Simplicidade & Relacionamento)
 
-      async function extractPDFText(file) {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = async function (e) {
-            try {
-              const typedArray = new Uint8Array(e.target.result);
-              const pdf = await pdfjsLib.getDocument(typedArray).promise;
-              let fullText = "";
-              for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const textContent = await page.getTextContent();
-                const pageText = textContent.items
-                  .map((item) => item.str)
-                  .join(" ");
-                fullText += `\n\n--- Página ${i} ---\n${pageText}`;
-              }
-              resolve(fullText.trim());
-            } catch (error) {
-              reject(error);
-            }
-          };
-          reader.onerror = () => reject(new Error("Erro ao ler arquivo PDF"));
-          reader.readAsArrayBuffer(file);
-        });
-      }
+Recomendação: [QUAL FORNECEDOR?]
+Vantagens:
+  ✓ Simplicidade operacional (um ponto de contato)
+  ✓ Garantia única e centralizada
+  ✓ Potencial para melhor relacionamento comercial
+  ✓ Facilita cumprimento de prazos
 
-      async function extractExcelData(file) {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = function (e) {
-            try {
-              const data = new Uint8Array(e.target.result);
-              const workbook = XLSX.read(data, { type: "array" });
-              let allData = "";
-              workbook.SheetNames.forEach((sheetName) => {
-                const worksheet = workbook.Sheets[sheetName];
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, {
-                  header: 1,
-                });
-                allData += `\n\n--- Planilha: ${sheetName} ---\n`;
-                jsonData.forEach((row, index) => {
-                  if (row.length > 0) {
-                    allData += `Linha ${index + 1}: ${row.join(" | ")}\n`;
-                  }
-                });
-              });
-              resolve(allData.trim());
-            } catch (error) {
-              reject(error);
-            }
-          };
-          reader.onerror = () => reject(new Error("Erro ao ler arquivo Excel"));
-          reader.readAsArrayBuffer(file);
-        });
-      }
+Preço Total com Fornecedor Único: R$ [VALOR TOTAL]
 
-      function removeFile() {
-        // Limpa os arrays e variáveis
-        currentFiles = [];
-        fileContents = [];
-        processedChunks.clear();
+📊 OPÇÃO 2: MIX DE FORNECEDORES (Otimização de Preço)
 
-        const fileInput = document.getElementById("fileInput");
-        if (fileInput) fileInput.value = "";
+Estratégia Recomendada:
+  • Itens com Fornecedor 1: [Listar itens específicos] - Subtotal: R$ VALOR
+  • Itens com Fornecedor 2: [Listar itens específicos] - Subtotal: R$ VALOR
+  • Itens com Fornecedor 3: [Se houver] - Subtotal: R$ VALOR
 
-        const preview = document.getElementById("filePreview");
-        if (preview) {
-          preview.classList.remove("show");
-          preview.style.display = "none";
-        }
+Preço Total com Mix: R$ [VALOR TOTAL]
+Economia adicional com Mix: R$ [DIFERENÇA] vs fornecedor único
+Percentual de economia: [X%] adicional
+Complexidade: [BAIXA/MÉDIA/ALTA] - [X] pontos de contato
 
-        const fileName = document.getElementById("fileName");
-        if (fileName) fileName.textContent = "";
+═════════════════════════════════════════════════════════════════════════════════
 
-        updateProcessingStatus("");
-      }
+SEÇÃO 6️⃣: RECOMENDAÇÃO EXECUTIVA FINAL E PRÓXIMOS PASSOS
+═════════════════════════════════════════════════════════════════════════════════
 
-      async function sendMessage() {
-        const input = document.getElementById("messageInput");
-        const message = input ? input.value.trim() : "";
+✨ RECOMENDAÇÃO ESTRATÉGICA:
+═════════════════════════════════════════════════════════════════════════════════
 
-        // Verifica se há conteúdo para enviar
-        if (!message && (!fileContents || fileContents.length === 0)) return;
+🎯 ESTRATÉGIA RECOMENDADA: [Fornecedor Único vs Mix? Por quê?]
 
-        // Adiciona input do usuário ao histórico se houver mensagem
-        if (message) {
-          addMessage("user", message);
-          conversationHistory.push({ role: "user", content: message });
-        }
+🥇 FORNECEDOR PREFERENCIAL: [NOME DO FORNECEDOR]
+  • Posição: 1º Lugar no Ranking Geral
+  • Preço Total: R$ [VALOR]
+  • Diferenciais principais: [Listar 3-5 pontos fortes]
+  • Economia vs 2º lugar: R$ [DIFERENÇA] ([X%] mais barato)
 
-        // Limpa input apenas se existe
-        if (input) {
-          input.value = "";
-          adjustTextareaHeight();
-        }
+🥈 FORNECEDOR ALTERNATIVO: [NOME DO FORNECEDOR]
+  • Posição: 2º Lugar
+  • Preço Total: R$ [VALOR]
+  • Por que considerar? [Motivo para ter alternativa]
 
-        const loadingId = addMessage("assistant", "");
-        showLoading(loadingId);
+💡 JUSTIFICATIVA DA RECOMENDAÇÃO:
+• Fator Preço: [Análise de custo-benefício]
+• Fator Qualidade: [Aderência ao escopo]
+• Fator Prazo: [Capacidade de cumprimento]
+• Fator Relacionamento: [Histórico ou potencial]
+• Fator Risco: [Análise de riscos identificados]
 
-        try {
-          let response = "";
+💰 IMPACTO FINANCEIRO:
+• Economia com recomendação: R$ [DIFERENÇA]
+• Percentual de economia: [X%]
+• ROI Estimado: [Análise]
 
-          if (fileContents && fileContents.length > 0) {
-            // Processar arquivos chunk por chunk
-            for (const file of fileContents) {
-              if (file.chunks && file.chunks.length > 1) {
-                // Arquivo grande - processar em chunks
-                updateLoadingMessage(
-                  loadingId,
-                  `Analisando ${file.name} (${file.chunks.length} partes)...`
-                );
+📋 ITENS PARA RENEGOCIAR:
+Apresentar análise ao 2º colocado para renegociação dos seguintes itens (maior variação):
+1. [ITEM]: Diferença de R$ [VALOR]
+2. [ITEM]: Diferença de R$ [VALOR]
+3. [ITEM]: Diferença de R$ [VALOR]
 
-                let fileAnalysis = `\n\n=== ANÁLISE DE ${file.name.toUpperCase()} ===\n`;
+═════════════════════════════════════════════════════════════════════════════════
 
-                for (let i = 0; i < file.chunks.length; i++) {
-                  const chunk = file.chunks[i];
-                  const chunkMessage = `Analise esta parte ${i + 1} de ${
-                    file.chunks.length
-                  } do arquivo "${file.name}":\n\n${chunk}`;
+🚀 PRÓXIMOS PASSOS ESTRUTURADOS (5 ETAPAS):
+═════════════════════════════════════════════════════════════════════════════════
 
-                  updateLoadingMessage(
-                    loadingId,
-                    `Analisando ${file.name} - Parte ${i + 1}/${
-                      file.chunks.length
-                    }...`
-                  );
+1️⃣ CONTATO INICIAL (Hoje):
+   └─ Entrar em contato com FORNECEDOR RECOMENDADO para CONFIRMAÇÃO
+   └─ Informações: Disponibilidade, prazos de entrega, quantidade em estoque
+   └─ Solicitar: Proposta formal com data de validade
 
-                  const chunkResponse = await callBackend(
-                    `STOP! NÃO FAÇA ANÁLISE DESCRITIVA!
+2️⃣ NEGOCIAÇÃO (Próximos 3 dias):
+   └─ Apresentar análise comparativa ao 2º e 3º colocados
+   └─ Solicitar redução nos ITENS CRÍTICOS COM MAIOR VARIAÇÃO
+   └─ Negociar em bloco: "Se reduzir X%, fechamos pedido"
 
-OBRIGATÓRIO: APENAS TABELA COMPARATIVA + NÚMEROS
+3️⃣ VALIDAÇÃO (Próximos 5 dias):
+   └─ Solicitar documentação do fornecedor recomendado:
+      ✓ CNPJ e Inscrição Estadual
+      ✓ Referências comerciais
+      ✓ Certificações (ISO, qualidade, etc)
+      ✓ Histórico de entregas
+   └─ Conferir se atende 100% ao escopo
 
-PASSO 1: EXTRAIR VALORES
-- Encontrar TODOS os preços em R$
-- Identificar empresas/fornecedores
-- Listar itens/serviços cotados
+4️⃣ ELABORAÇÃO DE CONTRATO (Próximos 7 dias):
+   └─ Preparar termos comerciais:
+      ✓ Preços fixos (validar reajustes automáticos)
+      ✓ Prazos de entrega (multa por atraso?)
+      ✓ Garantia e assistência técnica
+      ✓ Forma de pagamento (prazo, juros, multas)
+      ✓ Cláusulas de penalidade e rescisão
+   └─ Enviar para aprovação jurídica
 
-PASSO 2: CRIAR TABELA HTML (OBRIGATÓRIO)
-<table border='1' style='border-collapse:collapse;width:100%;font-size:14px'>
-<tr style='background:#0e938f;color:white'>
-<th>ITEM/SERVIÇO</th><th>FORNECEDOR</th><th>PREÇO</th><th>OBSERVAÇÕES</th>
-</tr>
-<tr>
-<td>[ITEM]</td><td>[EMPRESA]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td>[OBS]</td>
-</tr>
-</table>
+5️⃣ ACOMPANHAMENTO E MONITORAMENTO (Contínuo):
+   └─ Acompanhar cumprimento de prazos de entrega
+   └─ Validar qualidade conforme recebimento
+   └─ Monitorar desempenho vs acordado
+   └─ Manter contato regular para feedback
 
-NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
-                    chunkMessage
-                  );
+═════════════════════════════════════════════════════════════════════════════════
 
-                  fileAnalysis += `\n--- Parte ${
-                    i + 1
-                  } ---\n${chunkResponse}\n`;
+✅ CHECKLIST DE CONFORMIDADE - VALIDAÇÃO FINAL
+═════════════════════════════════════════════════════════════════════════════════
 
-                  // Pequena pausa entre chunks
-                  await new Promise((resolve) => setTimeout(resolve, 500));
-                }
+INSTRUÇÕES CRÍTICAS FINAIS - OBRIGATÓRIO ENTREGAR TUDO:
 
-                response += fileAnalysis;
-              } else {
-                // Arquivo pequeno - processar normalmente
-                updateLoadingMessage(loadingId, `Analisando ${file.name}...`);
-                const fileResponse = await callBackend(
-                  `STOP! NÃO FAÇA ANÁLISE DESCRITIVA!
+✅ TABELA OBRIGATÓRIA:
+  ✓ Incluir TODAS as colunas: Item, Quantidade, Unidade, Preços, Média, Melhor, Pior, Variação %, Ranking
+  ✓ Cores obrigatórias: 🟢 Verde (melhor), 🔴 Vermelho (pior), 🟡 Amarelo (intermediário)
+  ✓ Cálculos corretos: Média = (P1+P2+P3)/3 | Variação = ((Pior-Melhor)/Melhor)*100
 
-OBRIGATÓRIO: APENAS TABELA COMPARATIVA + NÚMEROS
+✅ SEÇÕES OBRIGATÓRIAS:
+  ✓ SEÇÃO 1: Validação dos arquivos e dados extraídos
+  ✓ SEÇÃO 2: Análise técnica com aderência ao escopo + TABELA HTML
+  ✓ SEÇÃO 3: Análise comercial (descontos, pagamento, garantia, prazos)
+  ✓ SEÇÃO 4: Itens críticos e alertas de preços suspeitos
+  ✓ SEÇÃO 5: Análise de mix vs fornecedor único
+  ✓ SEÇÃO 6: Recomendação executiva + próximos passos em 5 etapas
 
-PASSO 1: EXTRAIR VALORES
-- Encontrar TODOS os preços em R$
-- Identificar empresas/fornecedores
-- Listar itens/serviços cotados
+✅ ANÁLISES ESPECÍFICAS:
+  ✓ Análise de aderência ao escopo (100%? Faltou algo?)
+  ✓ Identificar itens com variação > 30%
+  ✓ Alertas de preços suspeitos (muito altos ou muito baixos)
+  ✓ Ranking de fornecedores com 1º, 2º, 3º lugar
+  ✓ Análise de mix: qual combinação é mais barata?
+  ✓ Próximos passos estruturados em 5 etapas claras
 
-PASSO 2: CRIAR TABELA HTML (OBRIGATÓRIO)
-<table border='1' style='border-collapse:collapse;width:100%;font-size:14px'>
-<tr style='background:#0e938f;color:white'>
-<th>ITEM/SERVIÇO</th><th>FORNECEDOR</th><th>PREÇO</th><th>OBSERVAÇÕES</th>
-</tr>
-<tr>
-<td>[ITEM]</td><td>[EMPRESA]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td>[OBS]</td>
-</tr>
-</table>
+⚠️ PROIBIDO NÃO FAZER:
+  ❌ Análise parcial - analisar TODOS os fornecedores enviados
+  ❌ Omitir itens ou preços na tabela
+  ❌ Esquecer coluna "Quantidade" ou "Variação %"
+  ❌ Não destacar cores (verde/vermelho/amarelo)
+  ❌ Não incluir ranking (1º, 2º, 3º) por item
+  ❌ Não fazer análise de mix vs fornecedor único
+  ❌ Deixar de listar itens críticos com maior variação
+  ❌ Ignorar alertas de preços suspeitos
+  ❌ Não estruturar próximos passos em 5 etapas
+  ❌ Fornecer recomendação vaga - deve ser CLARA e EXECUTIVA
 
-PASSO 3: TOTAIS POR FORNECEDOR
-• [EMPRESA]: R$ [TOTAL]
+═════════════════════════════════════════════════════════════════════════════════
+FIM DO PROMPT - INICIAR ANÁLISE AGORA COM TODAS AS SEÇÕES ACIMA
+═════════════════════════════════════════════════════════════════════════════════
+` + `
 
-NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
-                  `Analise o seguinte documento "${file.name}":\n\n${file.content}`
-                );
-                response += `\n\n=== ANÁLISE DE ${file.name.toUpperCase()} ===\n${fileResponse}\n`;
-              }
-            }
-
-            // Se havia uma mensagem do usuário junto, processar também
-            if (message) {
-              updateLoadingMessage(loadingId, "Processando sua pergunta...");
-              const messageResponse = await callBackend(
-                "Você é um assistente especializado em análise de documentos. Com base nas análises dos documentos fornecidos anteriormente, responda à pergunta do usuário. Responda em português.",
-                `Com base nas análises dos documentos, responda: ${message}`
-              );
-              response += `\n\n=== RESPOSTA À SUA PERGUNTA ===\n${messageResponse}`;
-            }
-          } else {
-            // Apenas mensagem sem arquivos - verificar se é consulta histórica
-            if (
-              message.toLowerCase().includes("histórico") ||
-              message.toLowerCase().includes("historico") ||
-              message.toLowerCase().includes("comparar preços") ||
-              message.toLowerCase().includes("comparar precos") ||
-              message.toLowerCase().includes("fornecedores histórico")
-            ) {
-              response = await consultarHistoricoEspecifico(message);
-            } else {
-              response = await callBackend(
-                `Você é um assistente especializado em análise de documentos da Tools Engenharia. Responda em português e seja detalhado em suas análises.
-
-      INFORMAÇÃO IMPORTANTE: Temos ${baseHistorica.length} análises na base histórica. Se o usuário mencionar histórico ou quiser comparar com análises anteriores, oriente-o a usar comandos específicos como "histórico completo" ou o botão "Base Histórica".`,
-                message
-              );
-            }
-          }
-
-          updateMessage(loadingId, response);
-          conversationHistory.push({ role: "assistant", content: response });
-
-          // Não remover os arquivos automaticamente após análise
-        } catch (error) {
-          updateMessage(loadingId, `Erro: ${error.message}`);
-        }
-      }
-
-      function updateLoadingMessage(messageId, text) {
-        const messageDiv = document.getElementById(messageId);
-        const contentDiv = messageDiv.querySelector(".message-content");
-        contentDiv.innerHTML = `
-                              <div class="loading">
-                                  <div class="spinner"></div>
-                                  ${text}
-                              </div>
-                          `;
+```
       }
 
       async function callBackend(systemPrompt, userMessage) {
