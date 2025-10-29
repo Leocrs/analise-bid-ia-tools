@@ -308,22 +308,32 @@
         const chatContainer = document.getElementById("chatContainer");
         const wb = XLSX.utils.book_new();
 
-        // Extrair dados das tabelas HTML se existirem
-        const tables = chatContainer.querySelectorAll("table");
-        if (tables.length > 0) {
-          tables.forEach((table, index) => {
-            const ws = XLSX.utils.table_to_sheet(table);
-            XLSX.utils.book_append_sheet(wb, ws, `Análise_${index + 1}`);
-          });
-        } else {
-          const chatContent = chatContainer.innerText;
-          const ws = XLSX.utils.aoa_to_sheet([
-            ["Análise de Propostas"],
-            ["Data:", new Date().toLocaleDateString()],
-            [""],
-            [chatContent],
-          ]);
-          XLSX.utils.book_append_sheet(wb, ws, "Análise");
+        // Extrair APENAS a última mensagem de análise (relatório completo)
+        const messages = chatContainer.querySelectorAll(".message.assistant");
+        if (messages.length > 0) {
+          const ultimaMensagem = messages[messages.length - 1];
+          const conteudoDiv = ultimaMensagem.querySelector(".message-content");
+
+          // Tentar extrair tabelas primeiro
+          const tables = conteudoDiv.querySelectorAll("table");
+          if (tables.length > 0) {
+            // Se tem tabelas, criar abas por seção
+            tables.forEach((table, index) => {
+              const ws = XLSX.utils.table_to_sheet(table);
+              XLSX.utils.book_append_sheet(wb, ws, `Análise_${index + 1}`);
+            });
+          } else {
+            // Se não tem tabelas, exportar o texto completo
+            const texto = conteudoDiv.innerText;
+            const linhas = texto.split("\n").map((linha) => [linha]);
+            const ws = XLSX.utils.aoa_to_sheet([
+              ["TOOLS ENGENHARIA - ANÁLISE DE PROPOSTAS"],
+              [`Data: ${new Date().toLocaleDateString("pt-BR")}`],
+              [""],
+              ...linhas,
+            ]);
+            XLSX.utils.book_append_sheet(wb, ws, "Relatório");
+          }
         }
 
         const filename = `analise_propostas_${new Date()
@@ -344,10 +354,24 @@
         doc.setFontSize(10);
         doc.text(`Data: ${new Date().toLocaleDateString("pt-BR")}`, 10, 30);
 
-        // Conteúdo
-        const chatContent = chatContainer.innerText;
-        doc.setFontSize(12);
-        const lines = doc.splitTextToSize(chatContent, 180);
+        // Extrair APENAS a última mensagem de análise
+        const messages = chatContainer.querySelectorAll(".message.assistant");
+        let conteudo = "";
+        if (messages.length > 0) {
+          const ultimaMensagem = messages[messages.length - 1];
+          const conteudoDiv = ultimaMensagem.querySelector(".message-content");
+          conteudo = conteudoDiv.innerText;
+        } else {
+          conteudo = chatContainer.innerText;
+        }
+
+        // Remover emojis e caracteres especiais problemáticos
+        conteudo = conteudo
+          .replace(/[^\w\s\n\r\.\,\$\(\)\-\:\;\/]/g, "")
+          .replace(/\s+/g, " "); // Remover espaços múltiplos
+
+        doc.setFontSize(11);
+        const lines = doc.splitTextToSize(conteudo, 190);
 
         let yPosition = 40;
         lines.forEach((line) => {
@@ -356,7 +380,7 @@
             yPosition = 20;
           }
           doc.text(line, 10, yPosition);
-          yPosition += 7;
+          yPosition += 5;
         });
 
         const filename = `analise_propostas_${new Date()
