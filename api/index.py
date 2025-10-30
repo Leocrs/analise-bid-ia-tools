@@ -178,12 +178,18 @@ def chat():
         
         # OTIMIZAÇÃO: Reduzir limite de tamanho total para economizar memória
         # Consolidação muito grande de documentos causa out of memory
-        if len(str(messages)) > 30000:  # Reduzido de 50000 para 30000
-            print("⚠️ AVISO: Prompt muito longo, truncando documentos...")
+        tamanho_messages = len(str(messages))
+        truncado = False
+        
+        if tamanho_messages > 30000:  # Reduzido de 50000 para 30000
+            print(f"⚠️ AVISO: Prompt muito longo ({tamanho_messages} chars), truncando documentos...")
+            truncado = True
             # Truncar mensagem do usuário se muito grande
             for msg in messages:
                 if msg.get('role') == 'user' and len(msg.get('content', '')) > 20000:
-                    msg['content'] = msg['content'][:20000] + "\n\n[DOCUMENTO TRUNCADO - LIMITE DE MEMÓRIA]"
+                    tamanho_antes = len(msg.get('content', ''))
+                    msg['content'] = msg['content'][:20000] + "\n\n[⚠️ DOCUMENTO TRUNCADO - LIMITE DE MEMÓRIA DO SERVIDOR]"
+                    print(f"   📄 Documento reduzido de {tamanho_antes} para 20000 caracteres")
             print("✅ Documentos truncados com sucesso")
 
         # Processar requisição OpenAI
@@ -198,6 +204,12 @@ def chat():
 
         content = response.choices[0].message.content
         processing_time = time.time() - start_time
+        
+        # VALIDAÇÃO: Avisar se a análise pode estar incompleta
+        if truncado and len(content) < 500:
+            print("⚠️ AVISO: Resposta muito curta - análise pode estar incompleta!")
+            print(f"   Tamanho da resposta: {len(content)} caracteres")
+            content += "\n\n⚠️ **AVISO:** A análise pode estar incompleta devido ao tamanho dos documentos. Para análise completa, envie documentos menores separadamente."
         
         print("✅ Resposta da OpenAI recebida com sucesso!")
         print(f"📄 Tamanho da resposta: {len(content)} caracteres")
