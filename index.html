@@ -65,7 +65,7 @@
       <h3>Configurações</h3>
       <div class="config-group">
         <label for="model">Modelo:</label>
-        <input type="text" id="model" value="gpt-4" placeholder="gpt-4" />
+        <input type="text" id="model" value="gpt-5" placeholder="gpt-5" />
       </div>
       <div class="config-group">
         <label for="maxTokens">Max Tokens:</label>
@@ -1051,14 +1051,14 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
         console.log("🔗 INICIANDO callBackend()");
         console.log(
           "🎯 Model:",
-          document.getElementById("model").value || "gpt-4"
+          document.getElementById("model").value || "gpt-5"
         );
         console.log(
           "🔢 MaxTokens:",
           parseInt(document.getElementById("maxTokens").value) || 4000
         );
 
-        const model = document.getElementById("model").value || "gpt-4";
+        const model = document.getElementById("model").value || "gpt-5";
         // ⚠️ AJUSTADO para 3000 tokens (limite: 8192 total - 3000 resposta = 5192 para input)
         // Isso garante espaço suficiente para PDFs grandes e evita erro de context_length_exceeded
         const maxTokens =
@@ -1076,7 +1076,7 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
         );
 
         // ⚠️ NÃO TRUNCAR A MENSAGEM DO USUÁRIO - ISSO QUEBRA A ANÁLISE COMPLETA
-        // A API pode lidar com mensagens maiores e o modelo GPT-4 tem limite de ~8k tokens
+        // A API pode lidar com mensagens maiores e o modelo GPT-5 tem limite maior que ~8k tokens
         const messages = [
           { role: "system", content: systemPrompt },
           { role: "user", content: userMessage },
