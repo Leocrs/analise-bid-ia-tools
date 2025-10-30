@@ -6,6 +6,14 @@ import threading
 import time
 from contextlib import contextmanager
 
+# 🔧 Função para forçar logs aparecerem em qualquer lugar
+def log_debug(msg):
+    """Force log to appear in Render/console"""
+    print(msg, flush=True)
+    sys.stdout.flush()
+    sys.stderr.write(f"{msg}\n")
+    sys.stderr.flush()
+
 # Função para inicializar o banco e criar tabela se não existir
 def init_db():
     try:
@@ -126,17 +134,17 @@ client = OpenAI(
 def process_openai_request(messages, model, max_tokens):
     """Processa requisição OpenAI com controle de timeout"""
     try:
-        print(f"\n🤖 === CHAMANDO OPENAI (Tentativa) ===", flush=True)
-        print(f"   Model: {model}", flush=True)
-        print(f"   Max Tokens: {max_tokens}", flush=True)
-        print(f"   Temperature: 1 (GPT-5 obrigatório)", flush=True)
-        print(f"   Número de mensagens: {len(messages)}", flush=True)
+        log_debug(f"\n🤖 === CHAMANDO OPENAI (Tentativa) ===")
+        log_debug(f"   Model: {model}")
+        log_debug(f"   Max Tokens: {max_tokens}")
+        log_debug(f"   Temperature: 1 (GPT-5 obrigatório)")
+        log_debug(f"   Número de mensagens: {len(messages)}")
         for idx, msg in enumerate(messages):
-            print(f"   • Mensagem {idx+1}: {msg.get('role')} - {len(msg.get('content', ''))} chars", flush=True)
+            log_debug(f"   • Mensagem {idx+1}: {msg.get('role')} - {len(msg.get('content', ''))} chars")
         
         # GPT-5 usa max_completion_tokens em vez de max_tokens
         # GPT-5 requer temperature=1 (não suporta outros valores)
-        print("   ⏳ Aguardando resposta da OpenAI...")
+        log_debug("   ⏳ Aguardando resposta da OpenAI...")
         response = client.chat.completions.create(
             model=model,
             messages=messages,
@@ -144,46 +152,46 @@ def process_openai_request(messages, model, max_tokens):
             temperature=1,  # GPT-5 só aceita valor padrão (1)
             timeout=OPENAI_TIMEOUT
         )
-        print("   ✅ Resposta recebida da OpenAI", flush=True)
+        log_debug("   ✅ Resposta recebida da OpenAI")
         
         # 🔍 LOG DETALHADO DA RESPOSTA
-        print(f"\n🔎 === ANALISANDO RESPOSTA DO OPENAI ===", flush=True)
-        print(f"   Tipo do response: {type(response).__name__}", flush=True)
-        print(f"   Has .choices: {hasattr(response, 'choices')}", flush=True)
+        log_debug(f"\n🔎 === ANALISANDO RESPOSTA DO OPENAI ===")
+        log_debug(f"   Tipo do response: {type(response).__name__}")
+        log_debug(f"   Has .choices: {hasattr(response, 'choices')}")
         
         if not hasattr(response, 'choices'):
-            print("   ❌ Response não tem atributo 'choices'!", flush=True)
+            log_debug("   ❌ Response não tem atributo 'choices'!")
             return response, None
             
         if not response.choices:
-            print("   ❌ response.choices está vazio!", flush=True)
+            log_debug("   ❌ response.choices está vazio!")
             return response, None
         
         choice = response.choices[0]
-        print(f"   Número de choices: {len(response.choices)}", flush=True)
-        print(f"   Choice[0] type: {type(choice).__name__}", flush=True)
-        print(f"   Has .message: {hasattr(choice, 'message')}", flush=True)
+        log_debug(f"   Número de choices: {len(response.choices)}")
+        log_debug(f"   Choice[0] type: {type(choice).__name__}")
+        log_debug(f"   Has .message: {hasattr(choice, 'message')}")
         
         if not hasattr(choice, 'message'):
-            print("   ❌ Choice não tem atributo 'message'!", flush=True)
+            log_debug("   ❌ Choice não tem atributo 'message'!")
             return response, None
         
         msg = choice.message
-        print(f"   Message type: {type(msg).__name__}", flush=True)
-        print(f"   Has .content: {hasattr(msg, 'content')}", flush=True)
+        log_debug(f"   Message type: {type(msg).__name__}")
+        log_debug(f"   Has .content: {hasattr(msg, 'content')}")
         
         if not hasattr(msg, 'content'):
-            print("   ❌ Message não tem atributo 'content'!", flush=True)
+            log_debug("   ❌ Message não tem atributo 'content'!")
             return response, None
         
         content = msg.content
-        print(f"   Content type: {type(content).__name__}", flush=True)
-        print(f"   Content value: {repr(content) if content else 'NULO/VAZIO'}", flush=True)
-        print(f"   Content length: {len(content) if content else 0}", flush=True)
-        print(f"   Is None: {content is None}", flush=True)
-        print(f"   Is empty string: {content == ''}", flush=True)
-        print(f"   Is whitespace only: {content.isspace() if isinstance(content, str) else 'N/A'}", flush=True)
-        print("🔎 === FIM DA ANÁLISE ===\n", flush=True)
+        log_debug(f"   Content type: {type(content).__name__}")
+        log_debug(f"   Content value: {repr(content) if content else 'NULO/VAZIO'}")
+        log_debug(f"   Content length: {len(content) if content else 0}")
+        log_debug(f"   Is None: {content is None}")
+        log_debug(f"   Is empty string: {content == ''}")
+        log_debug(f"   Is whitespace only: {content.isspace() if isinstance(content, str) else 'N/A'}")
+        log_debug("🔎 === FIM DA ANÁLISE ===\n")
         
         return response, None
     except Exception as e:
@@ -300,41 +308,41 @@ def chat():
         
         # ✅ VALIDAÇÃO RIGOROSA: Content não pode ser None, vazio ou só espaços
         if not content or not content.strip():
-            print("\n" + "="*60, flush=True)
-            print("❌ ERRO CRÍTICO: Content vazio ou só espaços!", flush=True)
-            print(f"   Content recebido: {repr(content)}", flush=True)
-            print(f"   Is None: {content is None}", flush=True)
-            print(f"   Type: {type(content)}", flush=True)
-            print(f"   Len: {len(content) if content else 0}", flush=True)
-            print("="*60, flush=True)
-            print(f"Response object: {response}", flush=True)
-            print(f"Response choices: {response.choices}", flush=True)
-            print(f"Message: {response.choices[0].message}", flush=True)
+            log_debug("\n" + "="*60)
+            log_debug("❌ ERRO CRÍTICO: Content vazio ou só espaços!")
+            log_debug(f"   Content recebido: {repr(content)}")
+            log_debug(f"   Is None: {content is None}")
+            log_debug(f"   Type: {type(content)}")
+            log_debug(f"   Len: {len(content) if content else 0}")
+            log_debug("="*60)
+            log_debug(f"Response object: {response}")
+            log_debug(f"Response choices: {response.choices}")
+            log_debug(f"Message: {response.choices[0].message}")
             
             # 🔄 RETRY: Tentar novamente com temperature maior
-            print("\n🔄 🔄 🔄 ACIONANDO RETRY 🔄 🔄 🔄", flush=True)
-            print(f"   Tentativa 1: Falhou (content vazio)", flush=True)
-            print(f"   Tentativa 2: Iniciando...", flush=True)
+            log_debug("\n🔄 🔄 🔄 ACIONANDO RETRY 🔄 🔄 🔄")
+            log_debug(f"   Tentativa 1: Falhou (content vazio)")
+            log_debug(f"   Tentativa 2: Iniciando...")
             response2, error2 = process_openai_request(messages, model, max_tokens)
             if error2:
-                print(f"❌ RETRY falhou com erro: {error2}", flush=True)
+                log_debug(f"❌ RETRY falhou com erro: {error2}")
                 return jsonify({'error': 'OpenAI não conseguiu gerar resposta - documentos podem estar corrompidos'}), 500
             
-            print(f"   Retry: Resposta recebida", flush=True)
+            log_debug(f"   Retry: Resposta recebida")
             content2 = response2.choices[0].message.content if response2 and response2.choices else ""
-            print(f"   Content retry: {repr(content2[:100] if content2 else 'VAZIO')}", flush=True)
+            log_debug(f"   Content retry: {repr(content2[:100] if content2 else 'VAZIO')}")
             
             if not content2 or not content2.strip():
-                print("❌ ERRO CRÍTICO: Mesmo após RETRY, resposta está VAZIA!", flush=True)
-                print(f"   Tentativa 1: Vazio", flush=True)
-                print(f"   Tentativa 2: Vazio", flush=True)
-                print("   ⚠️ GPT-5 está retornando vazio em ambas as tentativas", flush=True)
+                log_debug("❌ ERRO CRÍTICO: Mesmo após RETRY, resposta está VAZIA!")
+                log_debug(f"   Tentativa 1: Vazio")
+                log_debug(f"   Tentativa 2: Vazio")
+                log_debug("   ⚠️ GPT-5 está retornando vazio em ambas as tentativas")
                 return jsonify({'error': 'OpenAI retornou resposta vazia mesmo após tentativas - tente novamente'}), 500
             
             content = content2
-            print(f"✅ ✅ ✅ RETRY BEM-SUCEDIDO! ✅ ✅ ✅", flush=True)
-            print(f"   Tamanho do conteúdo: {len(content)} chars", flush=True)
-            print(f"   Primeiros 100 chars: {content[:100]}", flush=True)
+            log_debug(f"✅ ✅ ✅ RETRY BEM-SUCEDIDO! ✅ ✅ ✅")
+            log_debug(f"   Tamanho do conteúdo: {len(content)} chars")
+            log_debug(f"   Primeiros 100 chars: {content[:100]}")
         
         processing_time = time.time() - start_time
         print(f"✅ Resposta da OpenAI recebida com sucesso!")
