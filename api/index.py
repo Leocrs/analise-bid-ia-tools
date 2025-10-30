@@ -162,11 +162,13 @@ def chat():
         data = request.json
         messages = data.get('messages', [])
         model = data.get('model', 'gpt-5')
-        max_tokens = min(data.get('max_tokens', 8000), 128000)  # GPT-5 suporta até 128k tokens
+        # OTIMIZAÇÃO: Reduzir max_tokens para evitar out of memory
+        # GPT-5 funciona bem com 4000 tokens mantendo qualidade de análise
+        max_tokens = min(data.get('max_tokens', 4000), 32000)
         
         print("🚀 === NOVA REQUISIÇÃO DE ANÁLISE ===")
         print(f"📧 Modelo: {model}")
-        print(f"🔢 Max Tokens: {max_tokens}")
+        print(f"🔢 Max Tokens (otimizado): {max_tokens}")
         print(f"📝 Total de mensagens: {len(messages)}")
         print("=" * 50)
 
@@ -174,8 +176,15 @@ def chat():
         if not messages:
             return jsonify({'error': 'Nenhuma mensagem fornecida'}), 400
         
-        if len(str(messages)) > 50000:  # Limitar tamanho do prompt
-            return jsonify({'error': 'Prompt muito longo. Reduza o tamanho do texto.'}), 400
+        # OTIMIZAÇÃO: Reduzir limite de tamanho total para economizar memória
+        # Consolidação muito grande de documentos causa out of memory
+        if len(str(messages)) > 30000:  # Reduzido de 50000 para 30000
+            print("⚠️ AVISO: Prompt muito longo, truncando documentos...")
+            # Truncar mensagem do usuário se muito grande
+            for msg in messages:
+                if msg.get('role') == 'user' and len(msg.get('content', '')) > 20000:
+                    msg['content'] = msg['content'][:20000] + "\n\n[DOCUMENTO TRUNCADO - LIMITE DE MEMÓRIA]"
+            print("✅ Documentos truncados com sucesso")
 
         # Processar requisição OpenAI
         response, error = process_openai_request(messages, model, max_tokens)

@@ -69,7 +69,7 @@
       </div>
       <div class="config-group">
         <label for="maxTokens">Max Tokens:</label>
-        <input type="number" id="maxTokens" value="8000" placeholder="8000" />
+        <input type="number" id="maxTokens" value="4000" placeholder="4000" />
       </div>
       <div class="config-group">
         <label for="chunkSize">Tamanho do Chunk (caracteres):</label>
@@ -495,7 +495,7 @@
             console.log("📥 Configurações carregadas do backend:", data);
             document.getElementById("model").value = data.modelo || "gpt-5";
             document.getElementById("maxTokens").value =
-              data.max_tokens || 8000;
+              data.max_tokens || 4000;
             document.getElementById("chunkSize").value =
               data.chunk_size || 8000;
 
@@ -518,7 +518,7 @@
 
       function loadSettingsFromLocalStorage() {
         const model = localStorage.getItem("openai_model") || "gpt-5";
-        const maxTokens = localStorage.getItem("max_tokens") || 8000;
+        const maxTokens = localStorage.getItem("max_tokens") || 4000;
         const chunkSize = localStorage.getItem("chunk_size") || 8000;
 
         document.getElementById("model").value = model;
@@ -742,125 +742,88 @@
 
         updateLoadingMessage(
           loadingId,
-          "🔍 Consolidando todos os documentos..."
+          "🔍 Analisando documentos (processamento otimizado)..."
         );
         console.log("📄 Total de arquivos:", fileContents.length);
 
-        // Consolidar conteúdo de todos os arquivos - SEM TRUNCAR para garantir análise completa
-        let todosOsDocumentos = "";
-        fileContents.forEach((file, index) => {
-          todosOsDocumentos += `\n\n=== DOCUMENTO ${
-            index + 1
-          }: ${file.name.toUpperCase()} ===\n`;
-          // Incluir conteúdo COMPLETO para análise precisa de TODOS os fornecedores
-          todosOsDocumentos += file.content;
-        });
-
-        console.log(
-          "📊 TOTAL DE DOCUMENTOS PARA ANÁLISE:",
-          fileContents.length
-        );
-        console.log(
-          "📏 Tamanho total consolidado:",
-          todosOsDocumentos.length,
-          "caracteres"
-        );
-
-        // Detecta se há mapa de concorrência para adaptar o prompt
-        const hasMapa = fileContents.some(
-          (file) =>
-            file.name.toLowerCase().includes("mapa") ||
-            file.name.toLowerCase().includes("concorrencia")
-        );
-
-        // Prompt COMPACTO para análise consolidada (otimizado para tokens)
-        const promptConsolidado = `ANÁLISE CONSOLIDADA - TOOLS ENGENHARIA
-
-SEÇÃO 1️⃣: FORNECEDORES
-Para cada documento, extraia e consolide:
-📋 Forn. 1: [Nome] | CNPJ: [CNPJ] | Tel: [TODOS tel] | Email: [TODOS emails] | End: [Endereço] | Contato: [Nome-Cargo]
-
-📋 Forn. 2: [Nome] | CNPJ: [CNPJ] | Tel: [TODOS tel] | Email: [TODOS emails] | End: [Endereço] | Contato: [Nome-Cargo]
-
-${
-  fileContents.length > 2
-    ? "📋 Forn. 3: [Nome] | CNPJ: [CNPJ] | Tel: [TODOS tel] | Email: [TODOS emails] | End: [Endereço] | Contato: [Nome-Cargo]"
-    : ""
-}
-
-SEÇÃO 2️⃣: ITENS E PREÇOS
-GERE TABELA HTML EXATAMENTE COMO O MODELO (SEM LINHAS VAZIAS):
-<table border='1' style='border-collapse:collapse;width:100%;font-size:13px'>
-<tr style='background:#0e938f;color:white'><th>Item</th><th>Marvidros</th><th>Vidraçaria Mac Vidros</th><th>Melhor</th><th>Economia</th></tr>
-<tr><td>Ar Condicionado</td><td style='background:#dcfce7'>R$ 50.000</td><td style='background:#fecaca'>R$ 45.000</td><td>Vidraçaria</td><td>R$ 5.000</td></tr>
-<tr><td>Instalação</td><td style='background:#dcfce7'>R$ 10.000</td><td style='background:#fecaca'>R$ 12.000</td><td>Marvidros</td><td>R$ 2.000</td></tr>
-<tr style='background:#f3f4f6;font-weight:bold'><td>TOTAL</td><td>R$ 60.000</td><td>R$ 57.000</td><td>Vidraçaria</td><td>R$ 3.000</td></tr>
-</table>
-REGRAS OBRIGATÓRIAS (NENHUMA EXCEÇÃO):
-1. COMECE direto com <table - SEM espaços em branco antes
-2. Cabeçalho: background #0e938f + color white
-3. Para CADA item - alternando cores:
-   - Coloque style='background:#dcfce7' (verde) NO MELHOR PREÇO
-   - Coloque style='background:#fecaca' (vermelho) NO PIOR PREÇO
-4. Linha TOTAL: background #f3f4f6 + font-weight:bold
-5. TERMINE com </table> - SEM espaços em branco depois
-6. TODOS os itens encontrados nos documentos
-7. NOMES REAIS das empresas
-8. Calcule a economia (diferença entre maior e menor)
-SEM NENHUMA LINHA VAZIA ANTES OU DEPOIS DA TABELA
-
-SEÇÃO 3️⃣: MIX DE PREÇO
-Se há possibilidade de combinar fornecedores para economia:
-• Empresa A: Itens [Lista] = R$ [subtotal]
-• Empresa B: Itens [Lista] = R$ [subtotal]
-• Total com MIX: R$ [valor] | Economia: R$ [diferença]
-
-Se não há possibilidade (todos itens de uma empresa): Responda "Não aplicável - todos itens de mesma empresa"
-
-SEÇÃO 4️⃣: COMERCIAL - Descontos, Pagamento, Garantia, Prazos (por fornecedor)
-Liste para CADA fornecedor:
-- Desconto oferecido
-- Forma de pagamento
-- Garantia (se informado)
-- Prazo de entrega
-
-SEÇÃO 5️⃣: RANKING - 1º, 2º, 3º lugar com valores e economia
-1º - [Empresa] | Valor Total: R$ [XXX] | Economia: R$ [XXX]
-2º - [Empresa] | Valor Total: R$ [XXX] | Economia: R$ [XXX]
-
-SEÇÃO 6️⃣: RECOMENDAÇÃO
-• CONTRATAR: [Empresa] (melhor custo-benefício)
-• ECONOMIA: R$ [valor]
-• ITENS IGUAIS?: Sim ou Não - explicar brevemente
-• MIX SUGERIDO: Sim (com detalhes) ou Não
-• NEGOCIAR: [Itens específicos com maior variação]
-• DIFERENCIAIS: [Descontos, garantias, prazos]
-
-Instruções críticas:
-- Extraia TODOS os itens, sem exceção
-- Se múltiplos tel/email: liste TODOS
-- Se não encontrar: "Não encontrado"
-- Verde para melhor, vermelho para pior
-- NOMES REAIS das empresas em SEÇÃO 2, não "Forn.1"
-- Mantenha consistência de nomes em todas as seções
-- MIX DE PREÇO: mostre qual combinação economiza mais
-- ITENS IGUAIS: responda se todos fornecedores orçaram os mesmos itens`;
-
         try {
+          // OTIMIZAÇÃO: Processar cada arquivo SEPARADAMENTE para economizar memória
+          // Depois consolidar resultados (não consolidar conteúdo bruto)
+          let analisesIndividuais = [];
+
+          for (let i = 0; i < fileContents.length; i++) {
+            const file = fileContents[i];
+            updateLoadingMessage(
+              loadingId,
+              `📄 Analisando arquivo ${i + 1}/${fileContents.length}: ${
+                file.name
+              }...`
+            );
+
+            // TRUNCAR conteúdo se muito grande (evita out of memory)
+            let conteudo = file.content;
+            if (conteudo.length > 15000) {
+              console.warn(
+                `⚠️ Arquivo "${file.name}" truncado de ${conteudo.length} para 15000 caracteres`
+              );
+              conteudo =
+                conteudo.substring(0, 15000) +
+                "\n\n[DOCUMENTO TRUNCADO - LIMITE DE MEMÓRIA]";
+            }
+
+            const analise = await callBackend(
+              `Você é especialista em análise comparativa de orçamentos e propostas comerciais.
+              
+Extraia APENAS os dados estruturados:
+- Nome da empresa/fornecedor
+- CNPJ (se houver)
+- Contatos (email, telefone)
+- Lista de itens com preços (formato: ITEM | Qtd | R$ VALOR)
+- Valor total
+- Condições comerciais (desconto, prazo, garantia)
+
+Responda em formato ESTRUTURADO, sem narrativa.`,
+              `Arquivo: ${file.name}\n\nConteúdo:\n${conteudo}`
+            );
+
+            analisesIndividuais.push({
+              arquivo: file.name,
+              analise: analise,
+            });
+
+            // Pausa entre requisições para não sobrecarregar
+            await new Promise((resolve) => setTimeout(resolve, 500));
+          }
+
+          // CONSOLIDAR análises individuais (muito menor em tamanho)
+          updateLoadingMessage(loadingId, "📊 Consolidando análises...");
+
+          let consolidacao = "=== ANÁLISE COMPARATIVA CONSOLIDADA ===\n\n";
+          analisesIndividuais.forEach((item, idx) => {
+            consolidacao += `\n📄 ${item.arquivo}:\n${item.analise}\n`;
+            consolidacao += "\n" + "=".repeat(60) + "\n";
+          });
+
+          // RESUMO FINAL (menos memória que análise bruta)
           updateLoadingMessage(
             loadingId,
-            "🚀 Executando análise comparativa consolidada..."
+            "� Gerando relatório comparativo final..."
           );
-          console.log("📊 Preparando prompt consolidado...");
-          console.log("📏 Tamanho do prompt:", promptConsolidado.length);
-          console.log("📄 Tamanho dos documentos:", todosOsDocumentos.length);
 
           const resultado = await callBackend(
-            promptConsolidado,
-            `ANÁLISE TODOS OS DOCUMENTOS SIMULTANEAMENTE:\n\n${todosOsDocumentos}`
-          );
-          console.log("✅ Resultado recebido do backend");
+            `Com base nas análises extraídas dos documentos fornecidos, crie um RELATÓRIO COMPARATIVO FINAL.
 
+ESTRUTURA OBRIGATÓRIA:
+1. TABELA COMPARATIVA (HTML com cores: verde=melhor, vermelho=pior)
+2. RANKING DE FORNECEDORES
+3. ECONOMIA POTENCIAL
+4. RECOMENDAÇÃO FINAL
+
+Seja conciso e direto. Use tabelas e números, não narrativa.`,
+            `Análises consolidadas:\n\n${consolidacao}`
+          );
+
+          console.log("✅ Resultado recebido do backend");
           updateMessage(loadingId, resultado);
 
           // Salvar análise na base histórica
