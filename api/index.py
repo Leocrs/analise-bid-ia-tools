@@ -170,6 +170,16 @@ def chat():
         print(f"📧 Modelo: {model}")
         print(f"🔢 Max Tokens (otimizado): {max_tokens}")
         print(f"📝 Total de mensagens: {len(messages)}")
+        
+        # 🔍 DEBUG: Mostrar conteúdo das mensagens para diagnosticar problemas
+        for idx, msg in enumerate(messages):
+            role = msg.get('role', 'unknown')
+            content_size = len(msg.get('content', ''))
+            print(f"   Mensagem {idx + 1} ({role}): {content_size} chars")
+            if role == 'user' and content_size < 200:
+                print(f"      [⚠️ Mensagem do usuário muito pequena!]")
+                print(f"      Conteúdo: {repr(msg.get('content', '')[:100])}")
+        
         print("=" * 50)
 
         # Validação básica
@@ -206,12 +216,14 @@ def chat():
         # ✅ VALIDAÇÃO CRÍTICA: Verificar se content está vazio
         content = response.choices[0].message.content
         
-        if not content:
-            print("❌ ERRO CRÍTICO: Content vazio! Resposta da OpenAI não contém texto")
+        # ✅ VALIDAÇÃO RIGOROSA: Content não pode ser None, vazio ou só espaços
+        if not content or not content.strip():
+            print("❌ ERRO CRÍTICO: Content vazio ou só espaços!")
+            print(f"   Content recebido: {repr(content)}")
             print(f"Response object: {response}")
             print(f"Response choices: {response.choices}")
             print(f"Message: {response.choices[0].message}")
-            return jsonify({'error': 'OpenAI retornou resposta vazia - tente novamente'}), 500
+            return jsonify({'error': 'OpenAI retornou resposta vazia - tente novamente com um documento diferente'}), 500
         
         processing_time = time.time() - start_time
         print(f"✅ Resposta da OpenAI recebida com sucesso!")
