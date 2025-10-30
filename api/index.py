@@ -21,6 +21,17 @@ def init_db():
                 data DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        # Criar tabela de configurações
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS configuracoes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                api_key TEXT UNIQUE,
+                modelo TEXT DEFAULT 'gpt-5',
+                max_tokens INTEGER DEFAULT 8000,
+                chunk_size INTEGER DEFAULT 8000,
+                data_atualizacao DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
         conn.commit()
         conn.close()
         print("✅ Banco de dados inicializado com sucesso")
@@ -275,6 +286,90 @@ def get_historico():
         })
     except Exception as e:
         print(f"❌ Erro ao buscar histórico: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/settings', methods=['GET'])
+def get_settings():
+    """Endpoint para recuperar configurações do usuário"""
+    try:
+        # Tentar obter API Key do header
+        api_key = request.headers.get('X-API-Key') or request.args.get('api_key', 'default')
+        
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                'SELECT modelo, max_tokens, chunk_size FROM configuracoes WHERE api_key = ?',
+                (api_key,)
+            )
+            row = cursor.fetchone()
+        
+        if row:
+            return jsonify({
+                'modelo': row[0],
+                'max_tokens': row[1],
+                'chunk_size': row[2],
+                'cached': False
+            })
+        else:
+            # Retornar valores padrão se não encontrado
+            return jsonify({
+                'modelo': 'gpt-5',
+                'max_tokens': 8000,
+                'chunk_size': 8000,
+                'cached': True
+            })
+    except Exception as e:
+        print(f"❌ Erro ao buscar configurações: {e}")
+        return jsonify({
+            'modelo': 'gpt-5',
+            'max_tokens': 8000,
+            'chunk_size': 8000,
+            'error': str(e),
+            'cached': True
+        }), 200  # Retornar 200 mesmo com erro para fallback
+
+@app.route('/api/settings', methods=['POST'])
+def save_settings():
+    """Endpoint para salvar configurações do usuário"""
+    try:
+        data = request.json
+        api_key = data.get('api_key', 'default')
+        modelo = data.get('modelo', 'gpt-5')
+        max_tokens = data.get('max_tokens', 8000)
+        chunk_size = data.get('chunk_size', 8000)
+        
+        # Validações básicas
+        if max_tokens < 100 or max_tokens > 128000:
+            return jsonify({'error': 'max_tokens deve estar entre 100 e 128000'}), 400
+        
+        if chunk_size < 100 or chunk_size > 128000:
+            return jsonify({'error': 'chunk_size deve estar entre 100 e 128000'}), 400
+        
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            # Tentar atualizar, senão inserir (UPSERT)
+            cursor.execute('''
+                INSERT INTO configuracoes (api_key, modelo, max_tokens, chunk_size)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(api_key) 
+                DO UPDATE SET 
+                    modelo = excluded.modelo,
+                    max_tokens = excluded.max_tokens,
+                    chunk_size = excluded.chunk_size,
+                    data_atualizacao = CURRENT_TIMESTAMP
+            ''', (api_key, modelo, max_tokens, chunk_size))
+            conn.commit()
+        
+        print(f"✅ Configurações salvas para API Key: {api_key[:10]}...")
+        return jsonify({
+            'success': True,
+            'message': 'Configurações salvas com sucesso',
+            'modelo': modelo,
+            'max_tokens': max_tokens,
+            'chunk_size': chunk_size
+        })
+    except Exception as e:
+        print(f"❌ Erro ao salvar configurações: {e}")
         return jsonify({'error': str(e)}), 500
 
 # Rota otimizada para servir arquivos da pasta App-IA
