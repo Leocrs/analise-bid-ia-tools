@@ -66,7 +66,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 app = Flask(__name__)
-CORS(app)
+
+# ✅ CONFIGURAR CORS EXPLICITAMENTE
+CORS(app, 
+     origins=["https://analise-bid-ia-tools.vercel.app", "http://localhost:3000", "http://localhost:5000"],
+     supports_credentials=True,
+     allow_headers=["Content-Type", "Authorization"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 
 # Configurações de timeout
 REQUEST_TIMEOUT = 120  # 2 minutos para requisições OpenAI
@@ -120,6 +126,11 @@ client = OpenAI(
 def process_openai_request(messages, model, max_tokens):
     """Processa requisição OpenAI com controle de timeout"""
     try:
+        print(f"\n🤖 === CHAMANDO OPENAI (Tentativa) ===")
+        print(f"   Model: {model}")
+        print(f"   Max Tokens: {max_tokens}")
+        print(f"   Temperature: 1 (GPT-5 obrigatório)")
+        
         # GPT-5 usa max_completion_tokens em vez de max_tokens
         # GPT-5 requer temperature=1 (não suporta outros valores)
         response = client.chat.completions.create(
@@ -129,8 +140,33 @@ def process_openai_request(messages, model, max_tokens):
             temperature=1,  # GPT-5 só aceita valor padrão (1)
             timeout=OPENAI_TIMEOUT
         )
+        
+        # 🔍 LOG DETALHADO DA RESPOSTA
+        print(f"\n✅ Resposta recebida de {model}")
+        print(f"   Tipo: {type(response)}")
+        print(f"   Has choices: {hasattr(response, 'choices')}")
+        if hasattr(response, 'choices') and response.choices:
+            print(f"   Número de choices: {len(response.choices)}")
+            choice = response.choices[0]
+            print(f"   Choice type: {type(choice)}")
+            print(f"   Has message: {hasattr(choice, 'message')}")
+            if hasattr(choice, 'message'):
+                msg = choice.message
+                print(f"   Message type: {type(msg)}")
+                print(f"   Has content: {hasattr(msg, 'content')}")
+                if hasattr(msg, 'content'):
+                    content = msg.content
+                    print(f"   Content type: {type(content)}")
+                    print(f"   Content value: {repr(content[:100] if content else 'VAZIO')}")
+                    print(f"   Content length: {len(content) if content else 0}")
+        
         return response, None
     except Exception as e:
+        print(f"\n❌ ERRO ao chamar OpenAI:")
+        print(f"   Tipo do erro: {type(e).__name__}")
+        print(f"   Mensagem: {str(e)}")
+        import traceback
+        print(f"   Traceback: {traceback.format_exc()}")
         return None, str(e)
 
 # Função assíncrona para salvar histórico
