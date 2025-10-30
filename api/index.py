@@ -5,14 +5,30 @@ import sys
 import threading
 import time
 from contextlib import contextmanager
+from datetime import datetime
 
 # 🔧 Função para forçar logs aparecerem em qualquer lugar
 def log_debug(msg):
-    """Force log to appear in Render/console"""
-    print(msg, flush=True)
+    """Force log to appear in Render/console AND file"""
+    timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+    log_msg = f"[{timestamp}] {msg}"
+    
+    # 1. Console stdout
+    print(log_msg, flush=True)
     sys.stdout.flush()
-    sys.stderr.write(f"{msg}\n")
+    
+    # 2. Console stderr
+    sys.stderr.write(f"{log_msg}\n")
     sys.stderr.flush()
+    
+    # 3. File (persists data)
+    try:
+        log_file = os.path.join(os.path.dirname(__file__), 'app_debug.log')
+        with open(log_file, 'a', encoding='utf-8') as f:
+            f.write(f"{log_msg}\n")
+            f.flush()
+    except:
+        pass
 
 # Função para inicializar o banco e criar tabela se não existir
 def init_db():
@@ -631,6 +647,42 @@ def index():
     except Exception as e:
         print(f"❌ Erro ao servir página principal: {e}")
         return jsonify({'error': 'Página não encontrado'}), 404
+
+# 🔍 ROTA DE DEBUG: Acessar logs
+@app.route('/api/debug-logs', methods=['GET'])
+def get_debug_logs():
+    """Retorna os últimos 100 logs do arquivo app_debug.log"""
+    try:
+        log_file = os.path.join(os.path.dirname(__file__), 'app_debug.log')
+        if not os.path.exists(log_file):
+            return jsonify({'logs': 'Nenhum log disponível ainda'}), 200
+        
+        with open(log_file, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+        
+        # Retorna os últimos 200 logs
+        recent_logs = ''.join(lines[-200:])
+        
+        return jsonify({
+            'logs': recent_logs,
+            'total_lines': len(lines),
+            'last_updated': datetime.now().isoformat()
+        }), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# 🔍 ROTA DE DEBUG: Limpar logs
+@app.route('/api/clear-logs', methods=['POST'])
+def clear_logs():
+    """Limpa o arquivo de log"""
+    try:
+        log_file = os.path.join(os.path.dirname(__file__), 'app_debug.log')
+        if os.path.exists(log_file):
+            open(log_file, 'w').close()
+            return jsonify({'status': 'Logs limpos com sucesso'}), 200
+        return jsonify({'status': 'Arquivo de log não existe'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     print("=" * 70)
