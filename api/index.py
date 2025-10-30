@@ -235,31 +235,32 @@ def chat():
         # GPT-5 funciona bem com 4000 tokens mantendo qualidade de análise
         max_tokens = min(data.get('max_tokens', 4000), 32000)
         
-        print("🚀 === NOVA REQUISIÇÃO DE ANÁLISE ===")
-        print(f"📧 Modelo: {model}")
-        print(f"🔢 Max Tokens (otimizado): {max_tokens}")
-        print(f"📝 Total de mensagens: {len(messages)}")
+        log_debug("🚀 === NOVA REQUISIÇÃO DE ANÁLISE ===")
+        log_debug(f"📧 Modelo: {model}")
+        log_debug(f"🔢 Max Tokens (otimizado): {max_tokens}")
+        log_debug(f"📝 Total de mensagens: {len(messages)}")
         
         # 🔍 DEBUG: Mostrar conteúdo das mensagens para diagnosticar problemas
         for idx, msg in enumerate(messages):
             role = msg.get('role', 'unknown')
             content_size = len(msg.get('content', ''))
-            print(f"   Mensagem {idx + 1} ({role}): {content_size} chars")
+            log_debug(f"   Mensagem {idx + 1} ({role}): {content_size} chars")
             if role == 'user' and content_size < 200:
-                print(f"      [⚠️ Mensagem do usuário muito pequena!]")
-                print(f"      Conteúdo: {repr(msg.get('content', '')[:100])}")
+                log_debug(f"      [⚠️ Mensagem do usuário muito pequena!]")
+                log_debug(f"      Conteúdo: {repr(msg.get('content', '')[:100])}")
         
-        print("=" * 50)
+        log_debug("=" * 50)
 
         # Validação básica
         if not messages:
+            log_debug('❌ Nenhuma mensagem fornecida')
             return jsonify({'error': 'Nenhuma mensagem fornecida'}), 400
         
         # ⚠️ VALIDAÇÃO CRÍTICA: Se a mensagem do usuário estiver vazia, é um problema!
         user_message = next((m for m in messages if m.get('role') == 'user'), None)
         if not user_message or not user_message.get('content', '').strip():
-            print("❌ ERRO: Mensagem do usuário está VAZIA!")
-            print(f"   Messages recebidas: {messages}")
+            log_debug("❌ ERRO: Mensagem do usuário está VAZIA!")
+            log_debug(f"   Messages recebidas: {messages}")
             return jsonify({'error': 'Mensagem do usuário está vazia - não é possível processar'}), 400
         
         # OTIMIZAÇÃO: Reduzir limite de tamanho total para economizar memória
@@ -268,39 +269,39 @@ def chat():
         truncado = False
         
         if tamanho_messages > 30000:  # Reduzido de 50000 para 30000
-            print(f"⚠️ AVISO: Prompt muito longo ({tamanho_messages} chars), truncando documentos...")
+            log_debug(f"⚠️ AVISO: Prompt muito longo ({tamanho_messages} chars), truncando documentos...")
             truncado = True
             # Truncar mensagem do usuário se muito grande
             for msg in messages:
                 if msg.get('role') == 'user' and len(msg.get('content', '')) > 20000:
                     tamanho_antes = len(msg.get('content', ''))
                     msg['content'] = msg['content'][:20000] + "\n\n[⚠️ DOCUMENTO TRUNCADO - LIMITE DE MEMÓRIA DO SERVIDOR]"
-                    print(f"   📄 Documento reduzido de {tamanho_antes} para 20000 caracteres")
-            print("✅ Documentos truncados com sucesso")
+                    log_debug(f"   📄 Documento reduzido de {tamanho_antes} para 20000 caracteres")
+            log_debug("✅ Documentos truncados com sucesso")
 
         # 🔍 LOG: Mostrar conteúdo completo do prompt que será enviado
-        print("🔍 === PROMPT ENVIADO PARA OPENAI ===")
+        log_debug("🔍 === PROMPT ENVIADO PARA OPENAI ===")
         for idx, msg in enumerate(messages):
             role = msg.get('role', 'unknown')
             content = msg.get('content', '')
-            print(f"\n📌 MENSAGEM {idx + 1} ({role}):")
+            log_debug(f"\n📌 MENSAGEM {idx + 1} ({role}):")
             if role == 'system':
-                print(f"Primeiros 200 chars: {content[:200]}")
+                log_debug(f"Primeiros 200 chars: {content[:200]}")
             else:
-                print(f"Primeiros 300 chars: {content[:300]}")
-                print(f"Total: {len(content)} caracteres")
-        print("=" * 50)
+                log_debug(f"Primeiros 300 chars: {content[:300]}")
+                log_debug(f"Total: {len(content)} caracteres")
+        log_debug("=" * 50)
         
         # Processar requisição OpenAI
         response, error = process_openai_request(messages, model, max_tokens)
         
         if error:
-            print(f"❌ ERRO na API OpenAI: {error}")
-            print(f"   Mensagens que causaram erro: {len(messages)} mensagens")
+            log_debug(f"❌ ERRO na API OpenAI: {error}")
+            log_debug(f"   Mensagens que causaram erro: {len(messages)} mensagens")
             return jsonify({'error': f'Erro na API OpenAI: {error}'}), 500
         
         if not response or not response.choices:
-            print("❌ ERRO: Resposta vazia da OpenAI")
+            log_debug("❌ ERRO: Resposta vazia da OpenAI")
             return jsonify({'error': 'Resposta vazia da OpenAI'}), 500
 
         # ✅ VALIDAÇÃO CRÍTICA: Verificar se content está vazio
@@ -345,19 +346,17 @@ def chat():
             log_debug(f"   Primeiros 100 chars: {content[:100]}")
         
         processing_time = time.time() - start_time
-        print(f"✅ Resposta da OpenAI recebida com sucesso!")
-        print(f"📄 Tamanho da resposta: {len(content)} caracteres")
+        log_debug(f"✅ Resposta da OpenAI recebida com sucesso!")
+        log_debug(f"📄 Tamanho da resposta: {len(content)} caracteres")
         
         # VALIDAÇÃO: Avisar se a análise pode estar incompleta
         if truncado and len(content) < 500:
-            print("⚠️ AVISO: Resposta muito curta - análise pode estar incompleta!")
-            print(f"   Tamanho da resposta: {len(content)} caracteres")
+            log_debug("⚠️ AVISO: Resposta muito curta - análise pode estar incompleta!")
+            log_debug(f"   Tamanho da resposta: {len(content)} caracteres")
             content += "\n\n⚠️ **AVISO:** A análise pode estar incompleta devido ao tamanho dos documentos. Para análise completa, envie documentos menores separadamente."
         
-        print("✅ Resposta da OpenAI recebida com sucesso!")
-        print(f"📄 Tamanho da resposta: {len(content)} caracteres")
-        print(f"⏱️ Tempo de processamento: {processing_time:.2f}s")
-        print("=" * 50)
+        log_debug(f"⏱️ Tempo de processamento: {processing_time:.2f}s")
+        log_debug("=" * 50)
 
         # Salvar histórico de forma assíncrona
         save_to_history_async(
