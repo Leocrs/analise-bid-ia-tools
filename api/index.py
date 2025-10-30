@@ -130,9 +130,13 @@ def process_openai_request(messages, model, max_tokens):
         print(f"   Model: {model}")
         print(f"   Max Tokens: {max_tokens}")
         print(f"   Temperature: 1 (GPT-5 obrigatório)")
+        print(f"   Número de mensagens: {len(messages)}")
+        for idx, msg in enumerate(messages):
+            print(f"   • Mensagem {idx+1}: {msg.get('role')} - {len(msg.get('content', ''))} chars")
         
         # GPT-5 usa max_completion_tokens em vez de max_tokens
         # GPT-5 requer temperature=1 (não suporta outros valores)
+        print("   ⏳ Aguardando resposta da OpenAI...")
         response = client.chat.completions.create(
             model=model,
             messages=messages,
@@ -140,25 +144,46 @@ def process_openai_request(messages, model, max_tokens):
             temperature=1,  # GPT-5 só aceita valor padrão (1)
             timeout=OPENAI_TIMEOUT
         )
+        print("   ✅ Resposta recebida da OpenAI")
         
         # 🔍 LOG DETALHADO DA RESPOSTA
-        print(f"\n✅ Resposta recebida de {model}")
-        print(f"   Tipo: {type(response)}")
-        print(f"   Has choices: {hasattr(response, 'choices')}")
-        if hasattr(response, 'choices') and response.choices:
-            print(f"   Número de choices: {len(response.choices)}")
-            choice = response.choices[0]
-            print(f"   Choice type: {type(choice)}")
-            print(f"   Has message: {hasattr(choice, 'message')}")
-            if hasattr(choice, 'message'):
-                msg = choice.message
-                print(f"   Message type: {type(msg)}")
-                print(f"   Has content: {hasattr(msg, 'content')}")
-                if hasattr(msg, 'content'):
-                    content = msg.content
-                    print(f"   Content type: {type(content)}")
-                    print(f"   Content value: {repr(content[:100] if content else 'VAZIO')}")
-                    print(f"   Content length: {len(content) if content else 0}")
+        print(f"\n🔎 === ANALISANDO RESPOSTA DO OPENAI ===")
+        print(f"   Tipo do response: {type(response).__name__}")
+        print(f"   Has .choices: {hasattr(response, 'choices')}")
+        
+        if not hasattr(response, 'choices'):
+            print("   ❌ Response não tem atributo 'choices'!")
+            return response, None
+            
+        if not response.choices:
+            print("   ❌ response.choices está vazio!")
+            return response, None
+        
+        choice = response.choices[0]
+        print(f"   Número de choices: {len(response.choices)}")
+        print(f"   Choice[0] type: {type(choice).__name__}")
+        print(f"   Has .message: {hasattr(choice, 'message')}")
+        
+        if not hasattr(choice, 'message'):
+            print("   ❌ Choice não tem atributo 'message'!")
+            return response, None
+        
+        msg = choice.message
+        print(f"   Message type: {type(msg).__name__}")
+        print(f"   Has .content: {hasattr(msg, 'content')}")
+        
+        if not hasattr(msg, 'content'):
+            print("   ❌ Message não tem atributo 'content'!")
+            return response, None
+        
+        content = msg.content
+        print(f"   Content type: {type(content).__name__}")
+        print(f"   Content value: {repr(content) if content else 'NULO/VAZIO'}")
+        print(f"   Content length: {len(content) if content else 0}")
+        print(f"   Is None: {content is None}")
+        print(f"   Is empty string: {content == ''}")
+        print(f"   Is whitespace only: {content.isspace() if isinstance(content, str) else 'N/A'}")
+        print("🔎 === FIM DA ANÁLISE ===\n")
         
         return response, None
     except Exception as e:
@@ -275,26 +300,41 @@ def chat():
         
         # ✅ VALIDAÇÃO RIGOROSA: Content não pode ser None, vazio ou só espaços
         if not content or not content.strip():
+            print("\n" + "="*60)
             print("❌ ERRO CRÍTICO: Content vazio ou só espaços!")
             print(f"   Content recebido: {repr(content)}")
+            print(f"   Is None: {content is None}")
+            print(f"   Type: {type(content)}")
+            print(f"   Len: {len(content) if content else 0}")
+            print("="*60)
             print(f"Response object: {response}")
             print(f"Response choices: {response.choices}")
             print(f"Message: {response.choices[0].message}")
             
             # 🔄 RETRY: Tentar novamente com temperature maior
-            print("\n🔄 Tentando novamente com parâmetros ajustados...")
+            print("\n🔄 🔄 🔄 ACIONANDO RETRY 🔄 🔄 🔄")
+            print(f"   Tentativa 1: Falhou (content vazio)")
+            print(f"   Tentativa 2: Iniciando...")
             response2, error2 = process_openai_request(messages, model, max_tokens)
             if error2:
-                print(f"❌ RETRY falhou: {error2}")
+                print(f"❌ RETRY falhou com erro: {error2}")
                 return jsonify({'error': 'OpenAI não conseguiu gerar resposta - documentos podem estar corrompidos'}), 500
             
+            print(f"   Retry: Resposta recebida")
             content2 = response2.choices[0].message.content if response2 and response2.choices else ""
+            print(f"   Content retry: {repr(content2[:100] if content2 else 'VAZIO')}")
+            
             if not content2 or not content2.strip():
-                print("❌ ERRO CRÍTICO: Mesmo após retry, resposta está vazia!")
+                print("❌ ERRO CRÍTICO: Mesmo após RETRY, resposta está VAZIA!")
+                print(f"   Tentativa 1: Vazio")
+                print(f"   Tentativa 2: Vazio")
+                print("   ⚠️ GPT-5 está retornando vazio em ambas as tentativas")
                 return jsonify({'error': 'OpenAI retornou resposta vazia mesmo após tentativas - tente novamente'}), 500
             
             content = content2
-            print(f"✅ RETRY bem-sucedido! Tamanho: {len(content)} chars")
+            print(f"✅ ✅ ✅ RETRY BEM-SUCEDIDO! ✅ ✅ ✅")
+            print(f"   Tamanho do conteúdo: {len(content)} chars")
+            print(f"   Primeiros 100 chars: {content[:100]}")
         
         processing_time = time.time() - start_time
         print(f"✅ Resposta da OpenAI recebida com sucesso!")
