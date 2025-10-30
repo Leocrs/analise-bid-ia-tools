@@ -69,7 +69,7 @@
       </div>
       <div class="config-group">
         <label for="maxTokens">Max Tokens:</label>
-        <input type="number" id="maxTokens" value="3000" placeholder="3000" />
+        <input type="number" id="maxTokens" value="8000" placeholder="8000" />
       </div>
       <div class="config-group">
         <label for="chunkSize">Tamanho do Chunk (caracteres):</label>
@@ -1055,14 +1055,14 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
         );
         console.log(
           "🔢 MaxTokens:",
-          parseInt(document.getElementById("maxTokens").value) || 4000
+          parseInt(document.getElementById("maxTokens").value) || 8000
         );
 
         const model = document.getElementById("model").value || "gpt-5";
-        // ⚠️ AJUSTADO para 3000 tokens (limite: 8192 total - 3000 resposta = 5192 para input)
-        // Isso garante espaço suficiente para PDFs grandes e evita erro de context_length_exceeded
+        // ⚠️ AJUSTADO para 8000 tokens com GPT-5 (maior capacidade de análise)
+        // GPT-5 suporta até 128k tokens, permitindo análises mais detalhadas
         const maxTokens =
-          parseInt(document.getElementById("maxTokens").value) || 3000;
+          parseInt(document.getElementById("maxTokens").value) || 8000;
 
         console.log(
           "📝 Tamanho da mensagem do usuário:",
