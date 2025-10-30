@@ -186,6 +186,13 @@ def chat():
         if not messages:
             return jsonify({'error': 'Nenhuma mensagem fornecida'}), 400
         
+        # ⚠️ VALIDAÇÃO CRÍTICA: Se a mensagem do usuário estiver vazia, é um problema!
+        user_message = next((m for m in messages if m.get('role') == 'user'), None)
+        if not user_message or not user_message.get('content', '').strip():
+            print("❌ ERRO: Mensagem do usuário está VAZIA!")
+            print(f"   Messages recebidas: {messages}")
+            return jsonify({'error': 'Mensagem do usuário está vazia - não é possível processar'}), 400
+        
         # OTIMIZAÇÃO: Reduzir limite de tamanho total para economizar memória
         # Consolidação muito grande de documentos causa out of memory
         tamanho_messages = len(str(messages))
@@ -202,11 +209,25 @@ def chat():
                     print(f"   📄 Documento reduzido de {tamanho_antes} para 20000 caracteres")
             print("✅ Documentos truncados com sucesso")
 
+        # 🔍 LOG: Mostrar conteúdo completo do prompt que será enviado
+        print("🔍 === PROMPT ENVIADO PARA OPENAI ===")
+        for idx, msg in enumerate(messages):
+            role = msg.get('role', 'unknown')
+            content = msg.get('content', '')
+            print(f"\n📌 MENSAGEM {idx + 1} ({role}):")
+            if role == 'system':
+                print(f"Primeiros 200 chars: {content[:200]}")
+            else:
+                print(f"Primeiros 300 chars: {content[:300]}")
+                print(f"Total: {len(content)} caracteres")
+        print("=" * 50)
+        
         # Processar requisição OpenAI
         response, error = process_openai_request(messages, model, max_tokens)
         
         if error:
             print(f"❌ ERRO na API OpenAI: {error}")
+            print(f"   Mensagens que causaram erro: {len(messages)} mensagens")
             return jsonify({'error': f'Erro na API OpenAI: {error}'}), 500
         
         if not response or not response.choices:
@@ -223,7 +244,21 @@ def chat():
             print(f"Response object: {response}")
             print(f"Response choices: {response.choices}")
             print(f"Message: {response.choices[0].message}")
-            return jsonify({'error': 'OpenAI retornou resposta vazia - tente novamente com um documento diferente'}), 500
+            
+            # 🔄 RETRY: Tentar novamente com temperature maior
+            print("\n🔄 Tentando novamente com parâmetros ajustados...")
+            response2, error2 = process_openai_request(messages, model, max_tokens)
+            if error2:
+                print(f"❌ RETRY falhou: {error2}")
+                return jsonify({'error': 'OpenAI não conseguiu gerar resposta - documentos podem estar corrompidos'}), 500
+            
+            content2 = response2.choices[0].message.content if response2 and response2.choices else ""
+            if not content2 or not content2.strip():
+                print("❌ ERRO CRÍTICO: Mesmo após retry, resposta está vazia!")
+                return jsonify({'error': 'OpenAI retornou resposta vazia mesmo após tentativas - tente novamente'}), 500
+            
+            content = content2
+            print(f"✅ RETRY bem-sucedido! Tamanho: {len(content)} chars")
         
         processing_time = time.time() - start_time
         print(f"✅ Resposta da OpenAI recebida com sucesso!")
