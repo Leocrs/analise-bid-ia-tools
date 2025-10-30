@@ -29,7 +29,7 @@ if "%RENDER_SETTINGS_CODE%"=="200" (
 REM Teste 3: Render Backend - Chat
 echo.
 echo [3] Testando Backend Chat (Render)...
-for /f %%i in ('curl -s -w "%%{http_code}" -X POST https://analise-bid-ia-backend.onrender.com/api/chat -H "Content-Type: application/json" -d "{\"model\":\"gpt-5\",\"messages\":[{\"role\":\"user\",\"content\":\"teste\"}],\"max_tokens\":100}"') do set RENDER_CHAT_CODE=%%i
+for /f %%i in ('curl -s -w "%%{http_code}" -X POST https://analise-bid-ia-backend.onrender.com/api/chat -H "Content-Type: application/json" -d "{\"model\":\"gpt-5\",\"messages\":[{\"role\":\"system\",\"content\":\"Responda breve\"},{\"role\":\"user\",\"content\":\"Teste simples\"}],\"max_tokens\":4000}"') do set RENDER_CHAT_CODE=%%i
 if "%RENDER_CHAT_CODE%"=="200" (
     echo [OK] Render /api/chat: HTTP 200
 ) else if "%RENDER_CHAT_CODE%"=="500" (
