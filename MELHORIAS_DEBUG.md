@@ -5,6 +5,7 @@
 ### ✅ Correções Realizadas (3 commits)
 
 #### **Commit 1: Logging Detalhado (62ed878)**
+
 ```
 ✓ Frontend agora registra cada etapa da análise
 ✓ Log de cada análise individual (antes e depois)
@@ -13,11 +14,13 @@
 ```
 
 **O que detecta:**
+
 - Se análises individuais retornam vazio ❌
 - Se consolidacao está vazia ❌
 - Se resultado final está vazio ❌
 
 #### **Commit 2: Validação Rigorosa Backend (6f12387)**
+
 ```
 ✓ Backend agora valida: content.trim() não vazio
 ✓ Log de cada mensagem recebida
@@ -26,11 +29,13 @@
 ```
 
 **O que detecta:**
+
 - Se GPT-5 retorna só espaços em branco
 - Se consolidacao chegou vazia ao backend
 - Se prompt está muito pequeno ou malformado
 
 #### **Commit 3: Correção Crítica (30aba54)**
+
 ```
 ✓ CORREÇÃO: maxTokens fallback de 8000 → 4000
 ✓ Agora frontend e backend usam mesmos limites
@@ -39,6 +44,7 @@
 ```
 
 **Por que era importante:**
+
 - Frontend usava fallback 8000
 - Backend limitava a 4000
 - Inconsistência = comportamento imprevisível
@@ -48,6 +54,7 @@
 ## 🚀 Como Testar Agora
 
 ### Passo 1: Carregar Novo Frontend
+
 ```
 1. Abra: https://analise-bid-ia-tools.vercel.app
 2. Pressione: Ctrl+F5 (hard refresh)
@@ -55,6 +62,7 @@
 ```
 
 ### Passo 2: Abra Console (F12)
+
 ```
 1. Pressione F12 → Console
 2. Deixe aberto enquanto testa
@@ -62,6 +70,7 @@
 ```
 
 ### Passo 3: Teste com Documento Pequeno
+
 ```
 1. Carregue 1 documento (< 5 KB)
 2. Clique "Analisar Documento"
@@ -71,6 +80,7 @@
 ### Passo 4: Verifique os Logs
 
 #### ✅ Cenário de SUCESSO:
+
 ```
 🚀 INICIANDO structuredAnalysis()
 📄 Total de arquivos: 1
@@ -85,11 +95,15 @@
 ```
 
 #### ❌ Cenário de PROBLEMA:
+
 Se ver algo como:
+
 ```
 ❌ ALERTA: Consolidação muito pequena! 50
 ```
+
 ou
+
 ```
 Tamanho resultado: 0 chars
 ❌ ALERTA: Resultado está VAZIO!
@@ -102,11 +116,13 @@ Tamanho resultado: 0 chars
 ## 🔬 Próximas Etapas
 
 ### Se Funcionar ✅
+
 1. Teste com 2-3 documentos reais
 2. Valide se análise comparativa está correta
 3. Verifique tempo de resposta (esperado: 60-90s para 2 docs)
 
 ### Se Não Funcionar ❌
+
 1. Copie TODOS os logs do console (Ctrl+A → Ctrl+C)
 2. Cole em um arquivo `logs_debug.txt`
 3. Compartilhe comigo para análise detalhada
