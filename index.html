@@ -1166,14 +1166,14 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
         );
         console.log(
           "🔢 MaxTokens:",
-          parseInt(document.getElementById("maxTokens").value) || 8000
+          parseInt(document.getElementById("maxTokens").value) || 4000
         );
 
         const model = document.getElementById("model").value || "gpt-5";
-        // ⚠️ AJUSTADO para 8000 tokens com GPT-5 (maior capacidade de análise)
-        // GPT-5 suporta até 128k tokens, permitindo análises mais detalhadas
+        // ⚠️ AJUSTADO para 4000 tokens com GPT-5 (otimizado para evitar out of memory)
+        // GPT-5 suporta até 128k tokens, mas 4000 é melhor para consolidações
         const maxTokens =
-          parseInt(document.getElementById("maxTokens").value) || 8000;
+          parseInt(document.getElementById("maxTokens").value) || 4000;
 
         console.log(
           "📝 Tamanho da mensagem do usuário:",
