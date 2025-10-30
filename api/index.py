@@ -648,6 +648,18 @@ def index():
         print(f"❌ Erro ao servir página principal: {e}")
         return jsonify({'error': 'Página não encontrado'}), 404
 
+# 🔍 ROTA DE DEBUG: Servir página de debug dos logs
+@app.route('/debug-logs')
+@app.route('/debug_logs.html')
+def debug_logs_page():
+    """Serve a página de debug dos logs"""
+    try:
+        app_ia_path = os.path.dirname(os.path.dirname(__file__))
+        return send_file(os.path.join(app_ia_path, 'debug_logs.html'))
+    except Exception as e:
+        log_debug(f"❌ Erro ao servir debug_logs.html: {e}")
+        return jsonify({'error': 'Página de debug não encontrada'}), 404
+
 # 🔍 ROTA DE DEBUG: Acessar logs
 @app.route('/api/debug-logs', methods=['GET'])
 def get_debug_logs():
