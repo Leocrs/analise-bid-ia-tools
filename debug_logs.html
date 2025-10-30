@@ -68,18 +68,22 @@
         margin-bottom: 20px;
         border-radius: 4px;
         font-weight: bold;
+        display: none;
       }
       .status.loading {
         background: #fff3cd;
         color: #856404;
+        display: block;
       }
       .status.success {
         background: #d4edda;
         color: #155724;
+        display: block;
       }
       .status.error {
         background: #f8d7da;
         color: #721c24;
+        display: block;
       }
       .logs-container {
         background: #1e1e1e;
@@ -136,7 +140,7 @@
         <button onclick="copyLogs()">📋 Copiar Logs</button>
       </div>
 
-      <div id="status" class="status" style="display: none"></div>
+      <div id="status" class="status"></div>
 
       <div id="logsContainer" class="logs-container">
         <span class="timestamp">[Clique em "Carregar Logs" para começar]</span>
@@ -162,7 +166,6 @@
           const data = await response.json();
           logsContainer.textContent = data.logs || "Nenhum log disponível";
 
-          // Auto-scroll para baixo
           logsContainer.scrollTop = logsContainer.scrollHeight;
 
           showStatus(
@@ -207,7 +210,7 @@
         } else {
           autoRefreshInterval = setInterval(loadLogs, 3000);
           showStatus("Auto-refresh ativado (a cada 3s)", "success");
-          loadLogs(); // Carregar imediatamente
+          loadLogs();
         }
       }
 
@@ -229,16 +232,14 @@
       function showStatus(message, type) {
         statusDiv.textContent = message;
         statusDiv.className = `status ${type}`;
-        statusDiv.style.display = "block";
 
         if (type === "success") {
           setTimeout(() => {
-            statusDiv.style.display = "none";
+            statusDiv.className = "status";
           }, 3000);
         }
       }
 
-      // Carregar logs ao abrir a página
       window.addEventListener("load", loadLogs);
     </script>
   </body>
