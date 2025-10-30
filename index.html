@@ -796,6 +796,18 @@ Responda APENAS em formato ESTRUTURADO, sem narrativa ou explicações.`,
               `Arquivo: ${file.name}\n\nConteúdo:\n${conteudo}`
             );
 
+            // 🔍 DEBUG: Log resultado da análise individual
+            console.log(
+              `   ✓ Análise de "${file.name}" completada: ${
+                analise ? analise.length : 0
+              } chars`
+            );
+            if (!analise || analise.trim().length === 0) {
+              console.error(
+                `   ❌ ERRO: Análise de "${file.name}" retornou VAZIA!`
+              );
+            }
+
             analisesIndividuais.push({
               arquivo: file.name,
               analise: analise,
@@ -824,10 +836,39 @@ Continuando com a análise do material disponível...`
           }
 
           let consolidacao = "=== ANÁLISE COMPARATIVA CONSOLIDADA ===\n\n";
+
+          // 🔍 DEBUG: Log cada análise antes de consolidar
+          console.log("🔍 ANTES DE CONSOLIDAR:");
+          analisesIndividuais.forEach((item, idx) => {
+            console.log(
+              `   Análise ${idx + 1}: ${item.arquivo} = ${
+                item.analise ? item.analise.length : 0
+              } chars`
+            );
+          });
+
           analisesIndividuais.forEach((item, idx) => {
             consolidacao += `\n📄 ${item.arquivo}:\n${item.analise}\n`;
             consolidacao += "\n" + "=".repeat(60) + "\n";
           });
+
+          // 🔍 DEBUG: Log após consolidar
+          console.log("🔍 APÓS CONSOLIDAR:");
+          console.log("   Tamanho consolidacao:", consolidacao.length);
+          console.log(
+            "   Primeiros 300 chars:",
+            consolidacao.substring(0, 300)
+          );
+
+          if (!consolidacao || consolidacao.length < 100) {
+            console.error(
+              "❌ ALERTA: Consolidação muito pequena!",
+              consolidacao
+            );
+            throw new Error(
+              "Consolidação vazia! As análises não foram processadas corretamente."
+            );
+          }
 
           // RESUMO FINAL (menos memória que análise bruta)
           updateLoadingMessage(
@@ -849,6 +890,17 @@ Seja conciso e direto. Use tabelas e números, não narrativa.`,
           );
 
           console.log("✅ Resultado recebido do backend");
+          console.log(
+            "   Tamanho resultado:",
+            resultado ? resultado.length : 0,
+            "chars"
+          );
+          if (!resultado || resultado.trim().length === 0) {
+            console.error("❌ ALERTA: Resultado está VAZIO!");
+            throw new Error("Backend retornou resposta vazia na consolidação");
+          }
+          console.log("   Primeiros 200 chars:", resultado.substring(0, 200));
+
           updateMessage(loadingId, resultado);
 
           // Salvar análise na base histórica
