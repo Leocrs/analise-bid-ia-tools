@@ -500,6 +500,81 @@ def serve_app_ia_files(filename):
         print(f"❌ Erro ao servir arquivo App-IA {filename}: {e}")
         return jsonify({'error': 'Arquivo não encontrado'}), 404
 
+# 🔍 ENDPOINT DE DIAGNÓSTICO - Testa GPT-5 diretamente
+@app.route('/api/test-gpt5', methods=['POST'])
+def test_gpt5():
+    """
+    Endpoint APENAS PARA DIAGNÓSTICO - Testa GPT-5 com um prompt simples.
+    Útil para verificar se GPT-5 está retornando conteúdo vazio.
+    """
+    start_time = time.time()
+    
+    try:
+        data = request.get_json()
+        test_message = data.get('message', 'Teste simples: responda "OK"')
+        
+        print("\n" + "="*60)
+        print("🔍 DIAGNÓSTICO: Testando GPT-5 diretamente")
+        print(f"   Mensagem de teste: {test_message[:50]}...")
+        print("="*60)
+        
+        # Teste com mensagem simples
+        messages = [
+            {
+                "role": "system",
+                "content": "Você é um assistente de diagnóstico. Responda breve e claramente."
+            },
+            {
+                "role": "user", 
+                "content": test_message
+            }
+        ]
+        
+        # Chamar process_openai_request
+        response, error = process_openai_request(messages, 'gpt-5', 1000)
+        
+        if error:
+            print(f"❌ ERRO: {error}")
+            return jsonify({
+                'status': 'erro',
+                'erro': error,
+                'tempo': round(time.time() - start_time, 2)
+            }), 500
+        
+        if not response or not response.choices:
+            print("❌ Resposta vazia (sem choices)")
+            return jsonify({
+                'status': 'erro',
+                'erro': 'Resposta vazia (sem choices)',
+                'tempo': round(time.time() - start_time, 2)
+            }), 500
+        
+        content = response.choices[0].message.content
+        
+        print(f"\n✅ DIAGNÓSTICO COMPLETADO")
+        print(f"   Content: {repr(content[:100] if content else 'VAZIO')}")
+        print(f"   Tamanho: {len(content) if content else 0} chars")
+        print(f"   Tempo: {time.time() - start_time:.2f}s")
+        print("="*60 + "\n")
+        
+        return jsonify({
+            'status': 'sucesso' if content else 'aviso',
+            'content': content,
+            'tamanho': len(content) if content else 0,
+            'content_is_empty': not content or not content.strip(),
+            'tempo': round(time.time() - start_time, 2)
+        })
+        
+    except Exception as e:
+        print(f"❌ ERRO em /api/test-gpt5: {e}")
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({
+            'status': 'erro',
+            'erro': str(e),
+            'tempo': round(time.time() - start_time, 2)
+        }), 500
+
 # Rota otimizada para a página principal
 @app.route('/')
 def index():
@@ -508,7 +583,7 @@ def index():
         return send_file(os.path.join(app_ia_path, 'index.html'))
     except Exception as e:
         print(f"❌ Erro ao servir página principal: {e}")
-        return jsonify({'error': 'Página não encontrada'}), 404
+        return jsonify({'error': 'Página não encontrado'}), 404
 
 if __name__ == '__main__':
     print("=" * 70)
