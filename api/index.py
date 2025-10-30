@@ -200,10 +200,22 @@ def chat():
             return jsonify({'error': f'Erro na API OpenAI: {error}'}), 500
         
         if not response or not response.choices:
+            print("❌ ERRO: Resposta vazia da OpenAI")
             return jsonify({'error': 'Resposta vazia da OpenAI'}), 500
 
+        # ✅ VALIDAÇÃO CRÍTICA: Verificar se content está vazio
         content = response.choices[0].message.content
+        
+        if not content:
+            print("❌ ERRO CRÍTICO: Content vazio! Resposta da OpenAI não contém texto")
+            print(f"Response object: {response}")
+            print(f"Response choices: {response.choices}")
+            print(f"Message: {response.choices[0].message}")
+            return jsonify({'error': 'OpenAI retornou resposta vazia - tente novamente'}), 500
+        
         processing_time = time.time() - start_time
+        print(f"✅ Resposta da OpenAI recebida com sucesso!")
+        print(f"📄 Tamanho da resposta: {len(content)} caracteres")
         
         # VALIDAÇÃO: Avisar se a análise pode estar incompleta
         if truncado and len(content) < 500:

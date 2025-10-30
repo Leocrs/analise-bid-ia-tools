@@ -1185,10 +1185,30 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
         const data = await response.json();
         console.log("✅ Dados recebidos do backend");
         console.log(
-          "📄 Tamanho da resposta:",
-          data.choices[0].message.content.length
+          "📦 Estrutura completa da resposta:",
+          JSON.stringify(data, null, 2)
         );
-        return data.choices[0].message.content;
+
+        // ✅ VALIDAÇÃO CRÍTICA
+        if (!data.choices || !data.choices[0]) {
+          console.error("❌ ERRO: Resposta não tem structure esperada");
+          console.error("   data:", data);
+          throw new Error("Backend retornou resposta em formato inesperado");
+        }
+
+        const content = data.choices[0].message.content;
+        console.log(
+          "📄 Tamanho da resposta:",
+          content ? content.length : 0,
+          "caracteres"
+        );
+
+        if (!content) {
+          console.error("❌ ERRO: Content está vazio!");
+          throw new Error("Backend retornou resposta vazia");
+        }
+
+        return content;
       }
 
       function addMessage(sender, content) {
