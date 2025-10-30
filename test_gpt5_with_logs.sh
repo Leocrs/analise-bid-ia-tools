@@ -25,8 +25,7 @@ curl -X POST "$DIAGNOSTIC_ENDPOINT" \
   -d '{
     "message": "Teste simples: responda OK"
   }' \
-  -w "\n\n⏱️ Tempo total: %{time_total}s\n" \
-  -v
+  -w "\n\n⏱️ Tempo total: %{time_total}s\n" 
 
 echo ""
 echo "=================================================="
@@ -42,8 +41,7 @@ curl -X POST "$DIAGNOSTIC_ENDPOINT" \
   -d '{
     "message": "Você é um assistente especializado em análise de documentos.\n\nAnalise o seguinte texto:\n\nO documento trata de análise de licitações públicas.\n\nQual é o assunto principal?"
   }' \
-  -w "\n\n⏱️ Tempo total: %{time_total}s\n" \
-  -v
+  -w "\n\n⏱️ Tempo total: %{time_total}s\n"
 
 echo ""
 echo "=================================================="

@@ -570,8 +570,8 @@ def test_gpt5():
             }
         ]
         
-        # Chamar process_openai_request
-        response, error = process_openai_request(messages, 'gpt-5', 1000)
+        # Chamar process_openai_request com 4000 tokens (mesmo que /api/chat)
+        response, error = process_openai_request(messages, 'gpt-5', 4000)
         
         if error:
             print(f"❌ ERRO: {error}")
