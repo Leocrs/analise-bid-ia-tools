@@ -27,7 +27,7 @@ def init_db():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 api_key TEXT UNIQUE,
                 modelo TEXT DEFAULT 'gpt-5',
-                max_tokens INTEGER DEFAULT 8000,
+                max_tokens INTEGER DEFAULT 4000,
                 chunk_size INTEGER DEFAULT 8000,
                 data_atualizacao DATETIME DEFAULT CURRENT_TIMESTAMP
             )
@@ -226,12 +226,12 @@ def chat():
         model = data.get('model', 'gpt-4')
         
         # Determinar max_tokens baseado no modelo
-        # GPT-5 suporta até 128k tokens, mas limitar a 10k para evitar respostas vazias
-        # GPT-4 limitado a 4k (compatibilidade)
+        # GPT-5 suporta até 128k tokens, mas limitar a 4k para evitar respostas vazias (espaço para output)
+        # GPT-4 limitado a 2k (compatibilidade)
         if model == 'gpt-5':
-            max_tokens = min(data.get('max_tokens', 8000), 10000)  # Reduzido de 20k para 10k
+            max_tokens = min(data.get('max_tokens', 4000), 4000)  # Máximo 4000 para deixar espaço
         else:
-            max_tokens = min(data.get('max_tokens', 2000), 4000)
+            max_tokens = min(data.get('max_tokens', 2000), 2000)
         
         print("🚀 === NOVA REQUISIÇÃO DE ANÁLISE ===")
         print(f"📧 Modelo: {model}")
@@ -452,7 +452,7 @@ def get_settings():
             # Retornar valores padrão se não encontrado
             return jsonify({
                 'modelo': 'gpt-5',
-                'max_tokens': 8000,
+                'max_tokens': 4000,
                 'chunk_size': 8000,
                 'cached': True
             })
@@ -460,7 +460,7 @@ def get_settings():
         print(f"❌ Erro ao buscar configurações: {e}")
         return jsonify({
             'modelo': 'gpt-5',
-            'max_tokens': 8000,
+            'max_tokens': 4000,
             'chunk_size': 8000,
             'error': str(e),
             'cached': True
@@ -473,12 +473,12 @@ def save_settings():
         data = request.json
         api_key = data.get('api_key', 'default')
         modelo = data.get('modelo', 'gpt-5')
-        max_tokens = data.get('max_tokens', 8000)
+        max_tokens = data.get('max_tokens', 4000)
         chunk_size = data.get('chunk_size', 8000)
         
         # Validações básicas
-        if max_tokens < 100 or max_tokens > 128000:
-            return jsonify({'error': 'max_tokens deve estar entre 100 e 128000'}), 400
+        if max_tokens < 100 or max_tokens > 8000:
+            return jsonify({'error': 'max_tokens deve estar entre 100 e 8000'}), 400
         
         if chunk_size < 100 or chunk_size > 128000:
             return jsonify({'error': 'chunk_size deve estar entre 100 e 128000'}), 400
