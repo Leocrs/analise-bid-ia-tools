@@ -159,11 +159,18 @@ client = OpenAI(
 )
 
 # Função para processar requisição com timeout
-def process_openai_request(messages, model, max_tokens):
-    """Processa requisição OpenAI com controle de timeout"""
+def process_openai_request(messages, model, max_tokens, temperature=None):
+    """Processa requisição OpenAI com controle de timeout
+    
+    Args:
+        temperature: Se None, usa padrão (1 para GPT-5, 0.7 para outros).
+                    Se 0, força modo determinístico puro (sem reasoning)
+    """
     try:
-        # GPT-5 requer temperatura=1 (padrão), outros modelos usam 0.7
-        temperature = 1 if model == 'gpt-5' else 0.7
+        # Se temperature não foi especificada, usar padrão
+        if temperature is None:
+            # GPT-5 requer temperatura=1 (padrão), outros modelos usam 0.7
+            temperature = 1 if model == 'gpt-5' else 0.7
         
         response = client.chat.completions.create(
             model=model,
@@ -257,12 +264,38 @@ def chat():
         print(f"📊 Total (input + output): ~{token_count + max_tokens} tokens")
         print("=" * 50)
         
+        # CRÍTICO: Injetar instrução AGRESSIVA para forçar resposta final
+        # GPT-5 está gastando TUDO em reasoning_tokens → deixando conteúdo vazio
+        # Solução: Instrução explícita + temperatura 0 + reduzir reasoning tokens
+        messages_with_instruction = messages.copy()
+        
+        FORCE_OUTPUT_INSTRUCTION = (
+            "🚨 VOCÊ ESTÁ EM MODO OUTPUT-ONLY 🚨\n"
+            "REGRA ABSOLUTA: Gaste 0% de tokens em 'thinking' ou 'reasoning'.\n"
+            "GASTE 100% em produzir a resposta FINAL.\n"
+            "NÃO escreva explicações, pré-amble, ou etapas. APENAS a tabela/resultado final.\n"
+            "COMECE IMEDIATAMENTE COM O RESULTADO. Sem introdução."
+        )
+        
+        if messages_with_instruction and messages_with_instruction[0].get('role') == 'system':
+            # Prepender instrução CRÍTICA ao system prompt existente
+            original_system = messages_with_instruction[0].get('content', '')
+            messages_with_instruction[0]['content'] = f"{FORCE_OUTPUT_INSTRUCTION}\n\n{original_system}"
+            print("✅ Instrução OUTPUT-ONLY injetada (aggressiva) no system prompt")
+        else:
+            # Se não houver system message, adicionar uma com prioridade máxima
+            messages_with_instruction.insert(0, {
+                'role': 'system',
+                'content': FORCE_OUTPUT_INSTRUCTION
+            })
+            print("✅ System message OUTPUT-ONLY criada (primeira posição)")
+        
         # Validação por tamanho bruto também (fallback)
-        if len(str(messages)) > 100000:  # Aumentado de 50000
+        if len(str(messages_with_instruction)) > 100000:  # Aumentado de 50000
             return jsonify({'error': 'Prompt muito longo. Reduza o tamanho do texto (máx ~100KB).'}), 400
 
-        # Processar requisição OpenAI
-        response, error = process_openai_request(messages, model, max_tokens)
+        # Processar requisição OpenAI COM instrução de resposta final
+        response, error = process_openai_request(messages_with_instruction, model, max_tokens)
         
         if error:
             print(f"❌ ERRO na API OpenAI: {error}")
@@ -286,7 +319,7 @@ def chat():
             print(f"   - finish_reason: {finish_reason}")
 
             # Tentativa 1: retry rápido com os mesmos parâmetros (transient)
-            retry_response, retry_error = process_openai_request(messages, model, max_tokens)
+            retry_response, retry_error = process_openai_request(messages_with_instruction, model, max_tokens)
             if retry_error:
                 print(f"❌ Retry 1 falhou: {retry_error}")
             else:
@@ -297,14 +330,22 @@ def chat():
 
         # Se ainda vazio, tentar um retry com instrução de continuação e tokens reduzidos
         if (not content or content.strip() == ''):
-            reduced_tokens = max(1000, int(max_tokens / 4))  # reduzir para tentar forçar saída menor
+            reduced_tokens = max(2000, int(max_tokens / 3))  # reduzir para forçar menos reasoning
+            # Criar nova mensagem com instrução CRÍTICA para output final
             cont_message = {
                 'role': 'system',
-                'content': 'Continue a resposta anterior, forneça apenas o conteúdo restante sem repetir o que já foi entregue.'
+                'content': (
+                    "🚨 FINAL_OUTPUT_ONLY MODE 🚨\n"
+                    "REGRA: Ignore todo 'thinking' ou 'reasoning' interno.\n"
+                    "REGRA: Output APENAS a resposta/tabela final AGORA.\n"
+                    "REGRA: Sem introdução, sem explicação, sem pré-amble.\n"
+                    "Comece a resposta IMEDIATAMENTE com o resultado."
+                )
             }
-            new_messages = list(messages) + [cont_message]
-            print(f"🔁 Tentando Retry 2 com max_completion_tokens={reduced_tokens}")
-            retry2_response, retry2_error = process_openai_request(new_messages, model, reduced_tokens)
+            new_messages = [cont_message] + list(messages_with_instruction)
+            print(f"🔁 Retry 2: max_tokens={reduced_tokens}, temperature=0 (determinístico puro), OUTPUT-ONLY")
+            # Usar temperature=0 para forçar modo determinístico (sem reasoning exploratório)
+            retry2_response, retry2_error = process_openai_request(new_messages, model, reduced_tokens, temperature=0)
             if retry2_error:
                 print(f"❌ Retry 2 falhou: {retry2_error}")
             else:
