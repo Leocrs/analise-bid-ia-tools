@@ -162,24 +162,13 @@ client = OpenAI(
 def process_openai_request(messages, model, max_tokens):
     """Processa requisição OpenAI com controle de timeout"""
     try:
-        # GPT-5 e GPT-4o usam 'max_completion_tokens'
-        # Outros modelos usam 'max_tokens'
-        if model in ['gpt-5', 'gpt-4o', 'gpt-4-turbo']:
-            response = client.chat.completions.create(
-                model=model,
-                messages=messages,
-                max_completion_tokens=max_tokens,
-                temperature=0.7,
-                timeout=OPENAI_TIMEOUT
-            )
-        else:
-            response = client.chat.completions.create(
-                model=model,
-                messages=messages,
-                max_tokens=max_tokens,
-                temperature=0.7,
-                timeout=OPENAI_TIMEOUT
-            )
+        response = client.chat.completions.create(
+            model=model,
+            messages=messages,
+            max_tokens=max_tokens,
+            temperature=0.7,
+            timeout=OPENAI_TIMEOUT
+        )
         return response, None
     except Exception as e:
         return None, str(e)
@@ -215,10 +204,10 @@ def chat():
         model = data.get('model', 'gpt-4')
         
         # Determinar max_tokens baseado no modelo
-        # GPT-5 suporta até 128k tokens, permitir até 20k de output
+        # GPT-5 suporta até 128k tokens, permitir até 16k de output (mais seguro com SDK antigo)
         # GPT-4 limitado a 4k (compatibilidade)
         if model == 'gpt-5':
-            max_tokens = min(data.get('max_tokens', 8000), 20000)
+            max_tokens = min(data.get('max_tokens', 8000), 16000)
         else:
             max_tokens = min(data.get('max_tokens', 2000), 4000)
         
