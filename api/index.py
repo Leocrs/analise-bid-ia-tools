@@ -147,20 +147,31 @@ client = OpenAI(
 )
 
 # Função para processar requisição com timeout
-def process_openai_request(messages, model, max_tokens):
+def process_openai_request(messages, model, max_tokens, retry_attempt=1):
     """Processa requisição OpenAI com controle de timeout"""
     try:
-        log_debug(f"\n🤖 === CHAMANDO OPENAI (Tentativa) ===")
+        log_debug(f"\n🤖 === CHAMANDO OPENAI (Tentativa {retry_attempt}) ===")
         log_debug(f"   Model: {model}")
         log_debug(f"   Max Tokens: {max_tokens}")
         log_debug(f"   Temperature: 1 (GPT-5 obrigatório)")
         log_debug(f"   Número de mensagens: {len(messages)}")
         for idx, msg in enumerate(messages):
-            log_debug(f"   • Mensagem {idx+1}: {msg.get('role')} - {len(msg.get('content', ''))} chars")
+            msg_content = msg.get('content', '')
+            msg_role = msg.get('role', 'unknown')
+            content_preview = msg_content[:50] + "..." if len(msg_content) > 50 else msg_content
+            log_debug(f"   • Mensagem {idx+1} ({msg_role}): {len(msg_content)} chars - {repr(content_preview)}")
+        
+        # Validação: mensagens não podem estar vazias
+        for msg in messages:
+            if not msg.get('content') or not msg.get('content').strip():
+                log_debug(f"❌ ERRO: Mensagem de role '{msg.get('role')}' está vazia!")
+                raise ValueError(f"Mensagem de role '{msg.get('role')}' está vazia")
         
         # GPT-5 usa max_completion_tokens em vez de max_tokens
         # GPT-5 requer temperature=1 (não suporta outros valores)
         log_debug("   ⏳ Aguardando resposta da OpenAI...")
+        
+        # Adicionar timeout mais curto para testar
         response = client.chat.completions.create(
             model=model,
             messages=messages,
@@ -321,7 +332,7 @@ def chat():
             return jsonify({'error': 'Resposta vazia da OpenAI'}), 500
 
         # ✅ VALIDAÇÃO CRÍTICA: Verificar se content está vazio
-        content = response.choices[0].message.content
+        content = response.choices[0].message.content if response.choices[0].message else None
         
         # ✅ VALIDAÇÃO RIGOROSA: Content não pode ser None, vazio ou só espaços
         if not content or not content.strip():
@@ -332,31 +343,39 @@ def chat():
             log_debug(f"   Type: {type(content)}")
             log_debug(f"   Len: {len(content) if content else 0}")
             log_debug("="*60)
-            log_debug(f"Response object: {response}")
-            log_debug(f"Response choices: {response.choices}")
-            log_debug(f"Message: {response.choices[0].message}")
             
-            # 🔄 RETRY: Tentar novamente com temperature maior
-            log_debug("\n🔄 🔄 🔄 ACIONANDO RETRY 🔄 🔄 🔄")
-            log_debug(f"   Tentativa 1: Falhou (content vazio)")
-            log_debug(f"   Tentativa 2: Iniciando...")
-            response2, error2 = process_openai_request(messages, model, max_tokens)
-            if error2:
-                log_debug(f"❌ RETRY falhou com erro: {error2}")
-                return jsonify({'error': 'OpenAI não conseguiu gerar resposta - documentos podem estar corrompidos'}), 500
+            # 🔄 RETRY: Tentar novamente
+            retry_count = 0
+            max_retries = 2
+            content = None
             
-            log_debug(f"   Retry: Resposta recebida")
-            content2 = response2.choices[0].message.content if response2 and response2.choices else ""
-            log_debug(f"   Content retry: {repr(content2[:100] if content2 else 'VAZIO')}")
+            while retry_count < max_retries and (not content or not content.strip()):
+                retry_count += 1
+                log_debug(f"\n🔄 🔄 🔄 ACIONANDO RETRY {retry_count} de {max_retries} 🔄 🔄 🔄")
+                
+                # Aguardar um pouco antes de retry
+                time.sleep(2)
+                
+                response2, error2 = process_openai_request(messages, model, max_tokens, retry_attempt=retry_count+1)
+                if error2:
+                    log_debug(f"❌ RETRY {retry_count} falhou com erro: {error2}")
+                    continue
+                
+                log_debug(f"   ✅ Retry {retry_count}: Resposta recebida")
+                content = response2.choices[0].message.content if response2 and response2.choices else None
+                log_debug(f"   Content retry {retry_count}: {repr(content[:100] if content else 'VAZIO')}")
             
-            if not content2 or not content2.strip():
-                log_debug("❌ ERRO CRÍTICO: Mesmo após RETRY, resposta está VAZIA!")
-                log_debug(f"   Tentativa 1: Vazio")
-                log_debug(f"   Tentativa 2: Vazio")
-                log_debug("   ⚠️ GPT-5 está retornando vazio em ambas as tentativas")
-                return jsonify({'error': 'OpenAI retornou resposta vazia mesmo após tentativas - tente novamente'}), 500
+            if not content or not content.strip():
+                log_debug("❌ ERRO CRÍTICO: Todas as tentativas falharam!")
+                log_debug(f"   Total de tentativas: {retry_count + 1}")
+                log_debug("   ⚠️ GPT-5 continua retornando vazio")
+                log_debug("   Possíveis causas: Token limit atingido, API indisponível, ou conteúdo muito longo")
+                
+                # Retornar mensagem mais informativa
+                return jsonify({
+                    'error': 'OpenAI não conseguiu processar sua requisição. Possíveis causas: documentos muito grandes, limite de tokens ou indisponibilidade da API. Tente novamente ou com documentos menores.'
+                }), 500
             
-            content = content2
             log_debug(f"✅ ✅ ✅ RETRY BEM-SUCEDIDO! ✅ ✅ ✅")
             log_debug(f"   Tamanho do conteúdo: {len(content)} chars")
             log_debug(f"   Primeiros 100 chars: {content[:100]}")

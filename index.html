@@ -120,12 +120,28 @@
       }
 
       function carregarBaseHistorica() {
-        const dados = localStorage.getItem("toolsBaseHistorica");
-        if (dados) {
-          baseHistorica = JSON.parse(dados);
-          console.log(
-            `📚 Base histórica carregada: ${baseHistorica.length} registros`
-          );
+        try {
+          const dados = localStorage.getItem("toolsBaseHistorica");
+          if (dados) {
+            // Validar se é uma string JSON válida antes de fazer parse
+            if (typeof dados === "string" && dados.startsWith("[")) {
+              baseHistorica = JSON.parse(dados);
+            } else if (typeof dados === "object") {
+              // Se já é um objeto, usar direto (fallback)
+              baseHistorica = dados;
+            } else {
+              console.warn("⚠️ Dados inválidos no localStorage, limpando...");
+              localStorage.removeItem("toolsBaseHistorica");
+              baseHistorica = [];
+            }
+            console.log(
+              `📚 Base histórica carregada: ${baseHistorica.length} registros`
+            );
+          }
+        } catch (error) {
+          console.error("❌ Erro ao carregar base histórica:", error);
+          localStorage.removeItem("toolsBaseHistorica");
+          baseHistorica = [];
         }
       }
 
@@ -499,10 +515,13 @@
             document.getElementById("chunkSize").value =
               data.chunk_size || 8000;
 
-            // Também salvar no localStorage para rápido acesso
-            localStorage.setItem("openai_model", data.modelo);
-            localStorage.setItem("max_tokens", data.max_tokens);
-            localStorage.setItem("chunk_size", data.chunk_size);
+            // Também salvar no localStorage para rápido acesso (sempre como string)
+            localStorage.setItem(
+              "openai_model",
+              String(data.modelo || "gpt-5")
+            );
+            localStorage.setItem("max_tokens", String(data.max_tokens || 4000));
+            localStorage.setItem("chunk_size", String(data.chunk_size || 8000));
           } else {
             // Fallback: carregar do localStorage
             loadSettingsFromLocalStorage();
@@ -1186,6 +1205,16 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
           "caracteres"
         );
 
+        // ⚠️ VALIDAÇÃO: Certificar que as mensagens não estão vazias
+        if (!systemPrompt || !systemPrompt.trim()) {
+          throw new Error("❌ Erro: System prompt está vazio");
+        }
+        if (!userMessage || !userMessage.trim()) {
+          throw new Error(
+            "❌ Erro: Mensagem do usuário está vazia. Verifique os arquivos enviados."
+          );
+        }
+
         // ⚠️ NÃO TRUNCAR A MENSAGEM DO USUÁRIO - ISSO QUEBRA A ANÁLISE COMPLETA
         // A API pode lidar com mensagens maiores e o modelo GPT-5 tem limite maior que ~8k tokens
         const messages = [
@@ -1229,9 +1258,16 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
         console.log("📡 Status da resposta:", response.status);
 
         if (!response.ok) {
-          const error = await response.json();
-          console.error("❌ Erro da API:", error);
-          throw new Error(error.error || "Erro na API do backend");
+          let errorMessage = "Erro desconhecido";
+          try {
+            const error = await response.json();
+            errorMessage =
+              error.error || error.message || "Erro na API do backend";
+          } catch (e) {
+            errorMessage = `Erro HTTP ${response.status}: ${response.statusText}`;
+          }
+          console.error("❌ Erro da API:", errorMessage);
+          throw new Error(errorMessage);
         }
 
         const data = await response.json();
@@ -1243,17 +1279,24 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
 
         // ✅ VALIDAÇÃO CRÍTICA
         if (!data.choices || !data.choices[0]) {
-          console.error("❌ ERRO: Resposta não tem structure esperada");
-          console.error("   data:", data);
-          throw new Error("Backend retornou resposta em formato inesperado");
+          console.error("❌ ERRO: Resposta não tem estrutura esperada");
+          console.error("   Dados completos:", data);
+          throw new Error(
+            "Backend retornou resposta em formato inesperado: " +
+              JSON.stringify(data)
+          );
         }
 
-        const content = data.choices[0].message.content;
-        console.log(
-          "📄 Tamanho da resposta:",
-          content ? content.length : 0,
-          "caracteres"
-        );
+        const content = data.choices[0].message?.content;
+        if (!content || !content.trim()) {
+          console.error("❌ ERRO: Conteúdo da resposta está vazio ou inválido");
+          console.error("   Content:", content, "Type:", typeof content);
+          throw new Error(
+            "Backend retornou conteúdo vazio. Tente novamente com documentos menores."
+          );
+        }
+
+        console.log("📄 Tamanho da resposta:", content.length, "caracteres");
 
         if (!content) {
           console.error("❌ ERRO: Content está vazio!");
