@@ -1120,34 +1120,63 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
 
       async function callBackend(systemPrompt, userMessage) {
         console.log("🔗 INICIANDO callBackend()");
-        console.log(
-          "🎯 Model:",
-          document.getElementById("model").value || "gpt-5"
-        );
-        console.log(
-          "🔢 MaxTokens:",
-          parseInt(document.getElementById("maxTokens").value) || 8000
-        );
 
         const model = document.getElementById("model").value || "gpt-5";
-        // ⚠️ AJUSTADO para 8000 tokens com GPT-5 (maior capacidade de análise)
-        // GPT-5 suporta até 128k tokens, permitindo análises mais detalhadas
         const maxTokens =
           parseInt(document.getElementById("maxTokens").value) || 8000;
 
+        console.log("🎯 Model:", model);
+        console.log("🔢 MaxTokens:", maxTokens);
+
+        // Nova função: Estimar tokens com precisão
+        function estimateTokens(text, modelType = "gpt-5") {
+          // Aproximação realista:
+          // GPT-5: 1 token ≈ 3.5 caracteres (mais eficiente)
+          // GPT-4: 1 token ≈ 4 caracteres
+          const ratio = modelType === "gpt-5" ? 3.5 : 4;
+          return Math.ceil(text.length / ratio);
+        }
+
+        // Calcular tokens reais
+        const systemTokens = estimateTokens(systemPrompt, model);
+        const userTokens = estimateTokens(userMessage, model);
+        const totalInputTokens = systemTokens + userTokens;
+
+        console.log("📊 ===== ANÁLISE DE TOKENS =====");
         console.log(
           "📝 Tamanho da mensagem do usuário:",
           userMessage.length,
           "caracteres"
         );
+        console.log("🔢 Tokens estimados (user):", userTokens);
         console.log(
           "📋 Tamanho do prompt do sistema:",
           systemPrompt.length,
           "caracteres"
         );
+        console.log("🔢 Tokens estimados (system):", systemTokens);
+        console.log("📊 Total de input tokens:", totalInputTokens);
+        console.log("📊 Max output tokens:", maxTokens);
+        console.log(
+          "📊 Total esperado:",
+          totalInputTokens + maxTokens,
+          "tokens"
+        );
+        console.log("📊 ===============================");
 
-        // ⚠️ NÃO TRUNCAR A MENSAGEM DO USUÁRIO - ISSO QUEBRA A ANÁLISE COMPLETA
-        // A API pode lidar com mensagens maiores e o modelo GPT-5 tem limite maior que ~8k tokens
+        // Validação de contexto
+        const maxContextTokens = model === "gpt-5" ? 128000 : 8000;
+        if (totalInputTokens + maxTokens > maxContextTokens) {
+          const availableTokens = maxContextTokens - totalInputTokens - 2000; // 2k buffer
+          console.warn(
+            `⚠️ AVISO: Tokens insuficientes. ` +
+              `Esperado: ${
+                totalInputTokens + maxTokens
+              }, Limite: ${maxContextTokens}. ` +
+              `Recomendado max_tokens: ${Math.max(100, availableTokens)}`
+          );
+        }
+
         const messages = [
           { role: "system", content: systemPrompt },
           { role: "user", content: userMessage },
@@ -1198,8 +1227,12 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
         console.log("✅ Dados recebidos do backend");
         console.log(
           "📄 Tamanho da resposta:",
-          data.choices[0].message.content.length
+          data.choices[0].message.content.length,
+          "caracteres"
         );
+        if (data.tokens_info) {
+          console.log("📊 Informações de tokens do backend:", data.tokens_info);
+        }
         return data.choices[0].message.content;
       }
 

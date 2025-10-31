@@ -66,11 +66,53 @@ from dotenv import load_dotenv
 
 load_dotenv()
 app = Flask(__name__)
-CORS(app)
+
+# Configurar CORS corretamente para permitir X-API-Key
+CORS(app, 
+     resources={
+         r"/api/*": {
+             "origins": [
+                 "https://analise-bid-ia-tools.vercel.app",
+                 "http://localhost:3000",
+                 "http://localhost:5000"
+             ],
+             "allow_headers": ["Content-Type", "X-API-Key", "Authorization"],
+             "expose_headers": ["Content-Type"],
+             "methods": ["GET", "POST", "OPTIONS"],
+             "supports_credentials": True,
+             "max_age": 3600
+         }
+     }
+)
+print("✅ CORS configurado com X-API-Key permitido")
 
 # Configurações de timeout
 REQUEST_TIMEOUT = 120  # 2 minutos para requisições OpenAI
 OPENAI_TIMEOUT = 90    # 1.5 minutos para OpenAI especificamente
+
+# Função para estimativa de tokens (sem dependências externas)
+def estimate_tokens(text, model="gpt-5"):
+    """Estima número de tokens baseado em caracteres
+    Aproximação: 1 token ≈ 3.5 caracteres para GPT-5, 4 para GPT-4
+    """
+    ratio = 3.5 if model == "gpt-5" else 4
+    return max(1, int(len(text) / ratio))
+
+def validate_message_size(messages, model="gpt-5"):
+    """Valida se o tamanho total de mensagens está dentro dos limites"""
+    total_tokens = 0
+    for msg in messages:
+        content = msg.get('content', '')
+        tokens = estimate_tokens(str(content), model)
+        total_tokens += tokens
+    
+    # GPT-5 suporta até 128k tokens de contexto
+    max_input_tokens = 120000 if model == "gpt-5" else 8000
+    
+    if total_tokens > max_input_tokens:
+        return False, total_tokens, f"Mensagens com {total_tokens} tokens excedem limite de {max_input_tokens}"
+    
+    return True, total_tokens, None
 
 # Middleware de monitoramento
 @app.before_request
@@ -160,20 +202,37 @@ def chat():
         data = request.json
         messages = data.get('messages', [])
         model = data.get('model', 'gpt-4')
-        max_tokens = min(data.get('max_tokens', 2000), 4000)  # Limitar tokens
+        
+        # Determinar max_tokens baseado no modelo
+        # GPT-5 suporta até 128k tokens, permitir até 20k de output
+        # GPT-4 limitado a 4k (compatibilidade)
+        if model == 'gpt-5':
+            max_tokens = min(data.get('max_tokens', 8000), 20000)
+        else:
+            max_tokens = min(data.get('max_tokens', 2000), 4000)
         
         print("🚀 === NOVA REQUISIÇÃO DE ANÁLISE ===")
         print(f"📧 Modelo: {model}")
-        print(f"🔢 Max Tokens: {max_tokens}")
+        print(f"🔢 Max Tokens (output): {max_tokens}")
         print(f"📝 Total de mensagens: {len(messages)}")
-        print("=" * 50)
-
+        
         # Validação básica
         if not messages:
             return jsonify({'error': 'Nenhuma mensagem fornecida'}), 400
         
-        if len(str(messages)) > 50000:  # Limitar tamanho do prompt
-            return jsonify({'error': 'Prompt muito longo. Reduza o tamanho do texto.'}), 400
+        # Validação por tokens
+        is_valid, token_count, error_msg = validate_message_size(messages, model)
+        if not is_valid:
+            print(f"⚠️ VALIDAÇÃO FALHOU: {error_msg}")
+            return jsonify({'error': error_msg}), 400
+        
+        print(f"📊 Tokens de entrada estimados: {token_count}")
+        print(f"📊 Total (input + output): ~{token_count + max_tokens} tokens")
+        print("=" * 50)
+        
+        # Validação por tamanho bruto também (fallback)
+        if len(str(messages)) > 100000:  # Aumentado de 50000
+            return jsonify({'error': 'Prompt muito longo. Reduza o tamanho do texto (máx ~100KB).'}), 400
 
         # Processar requisição OpenAI
         response, error = process_openai_request(messages, model, max_tokens)
@@ -206,7 +265,12 @@ def chat():
                     'content': content
                 }
             }],
-            'processing_time': round(processing_time, 2)
+            'processing_time': round(processing_time, 2),
+            'tokens_info': {
+                'input_estimate': token_count,
+                'output_allowed': max_tokens,
+                'model': model
+            }
         })
         
     except Exception as e:
