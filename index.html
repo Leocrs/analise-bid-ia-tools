@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document AI Analyzer</title>
     <link rel="stylesheet" href="document_ai_styles.css" />
+    <!-- PDF.js scripts carregados dinamicamente no final do body -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
   </head>
   <body>
     <div class="container">
@@ -84,12 +86,54 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
     <script>
       // Sistema de Base Histórica
       let baseHistorica = [];
+      let localStorageAvailable = false;
+
+      // Verificar se localStorage está disponível (pode ser bloqueado por Tracking Prevention)
+      function checkLocalStorageAvailability() {
+        try {
+          const test = "__storage_test__";
+          localStorage.setItem(test, test);
+          localStorage.removeItem(test);
+          localStorageAvailable = true;
+          console.log("✅ localStorage disponível");
+          return true;
+        } catch (e) {
+          console.warn(
+            "⚠️ localStorage bloqueado (Tracking Prevention), usando memória"
+          );
+          localStorageAvailable = false;
+          return false;
+        }
+      }
+
+      // Wrapper para salvar dados (localStorage ou memória)
+      function safeLocalStorageSetItem(key, value) {
+        if (localStorageAvailable) {
+          try {
+            localStorage.setItem(key, value);
+          } catch (e) {
+            console.warn(`⚠️ Erro ao salvar em localStorage: ${e.message}`);
+          }
+        }
+      }
+
+      // Wrapper para carregar dados (localStorage ou memória)
+      function safeLocalStorageGetItem(key) {
+        if (localStorageAvailable) {
+          try {
+            return localStorage.getItem(key);
+          } catch (e) {
+            console.warn(`⚠️ Erro ao carregar de localStorage: ${e.message}`);
+            return null;
+          }
+        }
+        return null;
+      }
 
       async function salvarNaBaseHistorica(analise) {
         const registro = {
@@ -110,8 +154,8 @@
           baseHistorica = baseHistorica.slice(-50);
         }
 
-        // Salvar no localStorage
-        localStorage.setItem(
+        // Tentar salvar no localStorage (com fallback)
+        safeLocalStorageSetItem(
           "toolsBaseHistorica",
           JSON.stringify(baseHistorica)
         );
@@ -120,12 +164,16 @@
       }
 
       function carregarBaseHistorica() {
-        const dados = localStorage.getItem("toolsBaseHistorica");
+        const dados = safeLocalStorageGetItem("toolsBaseHistorica");
         if (dados) {
-          baseHistorica = JSON.parse(dados);
-          console.log(
-            `📚 Base histórica carregada: ${baseHistorica.length} registros`
-          );
+          try {
+            baseHistorica = JSON.parse(dados);
+            console.log(
+              `📚 Base histórica carregada: ${baseHistorica.length} registros`
+            );
+          } catch (e) {
+            console.warn("⚠️ Erro ao parsear base histórica:", e.message);
+          }
         }
       }
 
@@ -404,6 +452,9 @@
 
       // Inicialização completa do sistema
       document.addEventListener("DOMContentLoaded", function () {
+        // Verificar localStorage antes de usar
+        checkLocalStorageAvailability();
+
         carregarBaseHistorica();
 
         // Exibir mensagem de boas-vindas melhorada
@@ -443,10 +494,14 @@
       scriptXLSX.src =
         "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
       document.head.appendChild(scriptXLSX);
-      // jsPDF para PDF
+
+      // jsPDF para PDF - carregar e registrar handler onload
       const scriptPDF = document.createElement("script");
       scriptPDF.src =
         "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+      scriptPDF.onload = function () {
+        console.log("✅ jsPDF carregado com sucesso");
+      };
       document.head.appendChild(scriptPDF);
 
       let currentFiles = [];
@@ -454,8 +509,19 @@
       let processedChunks = new Map(); // Armazena chunks processados por arquivo
       let conversationHistory = [];
 
-      pdfjsLib.GlobalWorkerOptions.workerSrc =
-        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
+      // Configurar PDF.js worker apenas DEPOIS que pdf.min.js tiver carregado
+      if (typeof pdfjsLib !== "undefined") {
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
+        console.log("✅ PDF.js worker configurado");
+      } else {
+        // Se pdfjsLib ainda não tiver carregado, aguardar
+        document.addEventListener("pdfjsloaded", function () {
+          pdfjsLib.GlobalWorkerOptions.workerSrc =
+            "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
+          console.log("✅ PDF.js worker configurado (após carregamento)");
+        });
+      }
 
       document
         .getElementById("fileInput")
@@ -499,10 +565,16 @@
             document.getElementById("chunkSize").value =
               data.chunk_size || 8000;
 
-            // Também salvar no localStorage para rápido acesso
-            localStorage.setItem("openai_model", data.modelo);
-            localStorage.setItem("max_tokens", String(Number(data.max_tokens)));
-            localStorage.setItem("chunk_size", String(Number(data.chunk_size)));
+            // Também salvar no localStorage para rápido acesso (com fallback)
+            safeLocalStorageSetItem("openai_model", data.modelo);
+            safeLocalStorageSetItem(
+              "max_tokens",
+              String(Number(data.max_tokens))
+            );
+            safeLocalStorageSetItem(
+              "chunk_size",
+              String(Number(data.chunk_size))
+            );
           } else {
             // Fallback: carregar do localStorage
             loadSettingsFromLocalStorage();
@@ -517,15 +589,15 @@
       }
 
       function loadSettingsFromLocalStorage() {
-        const model = localStorage.getItem("openai_model") || "gpt-5";
-        const maxTokens = Number(localStorage.getItem("max_tokens")) || 6000;
-        const chunkSize = Number(localStorage.getItem("chunk_size")) || 8000;
+        const model = safeLocalStorageGetItem("openai_model") || "gpt-5";
+        const maxTokens = Number(safeLocalStorageGetItem("max_tokens")) || 6000;
+        const chunkSize = Number(safeLocalStorageGetItem("chunk_size")) || 8000;
 
         document.getElementById("model").value = model;
         document.getElementById("maxTokens").value = maxTokens;
         document.getElementById("chunkSize").value = chunkSize;
 
-        console.log("💾 Configurações carregadas do localStorage");
+        console.log("💾 Configurações carregadas do localStorage/memória");
       }
 
       async function saveSettings() {
@@ -534,10 +606,10 @@
         const chunkSize = document.getElementById("chunkSize").value;
         const apiKey = document.getElementById("apiKey")?.value || "default";
 
-        // Sempre salvar no localStorage (rápido)
-        localStorage.setItem("openai_model", model);
-        localStorage.setItem("max_tokens", String(parseInt(maxTokens)));
-        localStorage.setItem("chunk_size", String(parseInt(chunkSize)));
+        // Sempre salvar no localStorage (rápido, com fallback)
+        safeLocalStorageSetItem("openai_model", model);
+        safeLocalStorageSetItem("max_tokens", String(parseInt(maxTokens)));
+        safeLocalStorageSetItem("chunk_size", String(parseInt(chunkSize)));
 
         // Tentar salvar no backend (assíncrono)
         try {
