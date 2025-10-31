@@ -554,9 +554,9 @@
         const apiKey = document.getElementById("apiKey")?.value || "default";
 
         // Sempre salvar no localStorage (rápido)
-        localStorage.setItem("openai_model", model);
-        localStorage.setItem("max_tokens", maxTokens);
-        localStorage.setItem("chunk_size", chunkSize);
+        localStorage.setItem("openai_model", String(model));
+        localStorage.setItem("max_tokens", String(maxTokens));
+        localStorage.setItem("chunk_size", String(chunkSize));
 
         // Tentar salvar no backend (assíncrono)
         try {
@@ -1243,67 +1243,86 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
           max_tokens: maxTokens,
         });
 
-        const response = await fetch(backendUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: model,
-            messages: messages,
-            max_tokens: maxTokens,
-          }),
-        });
+        // Criar AbortController para timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutos
 
-        console.log("📡 Status da resposta:", response.status);
+        try {
+          const response = await fetch(backendUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: model,
+              messages: messages,
+              max_tokens: maxTokens,
+            }),
+            signal: controller.signal,
+          });
 
-        if (!response.ok) {
-          let errorMessage = "Erro desconhecido";
-          try {
-            const error = await response.json();
-            errorMessage =
-              error.error || error.message || "Erro na API do backend";
-          } catch (e) {
-            errorMessage = `Erro HTTP ${response.status}: ${response.statusText}`;
+          clearTimeout(timeoutId);
+          console.log("📡 Status da resposta:", response.status);
+
+          if (!response.ok) {
+            let errorMessage = "Erro desconhecido";
+            try {
+              const error = await response.json();
+              errorMessage =
+                error.error || error.message || "Erro na API do backend";
+            } catch (e) {
+              errorMessage = `Erro HTTP ${response.status}: ${response.statusText}`;
+            }
+            console.error("❌ Erro da API:", errorMessage);
+            throw new Error(errorMessage);
           }
-          console.error("❌ Erro da API:", errorMessage);
-          throw new Error(errorMessage);
-        }
 
-        const data = await response.json();
-        console.log("✅ Dados recebidos do backend");
-        console.log(
-          "📦 Estrutura completa da resposta:",
-          JSON.stringify(data, null, 2)
-        );
-
-        // ✅ VALIDAÇÃO CRÍTICA
-        if (!data.choices || !data.choices[0]) {
-          console.error("❌ ERRO: Resposta não tem estrutura esperada");
-          console.error("   Dados completos:", data);
-          throw new Error(
-            "Backend retornou resposta em formato inesperado: " +
-              JSON.stringify(data)
+          const data = await response.json();
+          console.log("✅ Dados recebidos do backend");
+          console.log(
+            "📦 Estrutura completa da resposta:",
+            JSON.stringify(data, null, 2)
           );
+
+          // ✅ VALIDAÇÃO CRÍTICA
+          if (!data.choices || !data.choices[0]) {
+            console.error("❌ ERRO: Resposta não tem estrutura esperada");
+            console.error("   Dados completos:", data);
+            throw new Error(
+              "Backend retornou resposta em formato inesperado: " +
+                JSON.stringify(data)
+            );
+          }
+
+          const content = data.choices[0].message?.content;
+          if (!content || !content.trim()) {
+            console.error(
+              "❌ ERRO: Conteúdo da resposta está vazio ou inválido"
+            );
+            console.error("   Content:", content, "Type:", typeof content);
+            throw new Error(
+              "Backend retornou conteúdo vazio. Tente novamente com documentos menores."
+            );
+          }
+
+          console.log("📄 Tamanho da resposta:", content.length, "caracteres");
+
+          if (!content) {
+            console.error("❌ ERRO: Content está vazio!");
+            throw new Error("Backend retornou resposta vazia");
+          }
+
+          return content;
+        } catch (error) {
+          clearTimeout(timeoutId);
+          if (error.name === "AbortError") {
+            console.error("❌ TIMEOUT: Requisição excedeu 2 minutos");
+            throw new Error(
+              "Tempo limite excedido. O servidor demorou muito para responder."
+            );
+          }
+          throw error;
         }
-
-        const content = data.choices[0].message?.content;
-        if (!content || !content.trim()) {
-          console.error("❌ ERRO: Conteúdo da resposta está vazio ou inválido");
-          console.error("   Content:", content, "Type:", typeof content);
-          throw new Error(
-            "Backend retornou conteúdo vazio. Tente novamente com documentos menores."
-          );
-        }
-
-        console.log("📄 Tamanho da resposta:", content.length, "caracteres");
-
-        if (!content) {
-          console.error("❌ ERRO: Content está vazio!");
-          throw new Error("Backend retornou resposta vazia");
-        }
-
-        return content;
       }
 
       function addMessage(sender, content) {
