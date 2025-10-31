@@ -70,6 +70,9 @@
       <div class="config-group">
         <label for="maxTokens">Max Tokens:</label>
         <input type="number" id="maxTokens" value="4000" placeholder="4000" />
+        <small style="color: #666; font-size: 11px"
+          >⚡ 4000 = mais rápido | 8000 = mais completo</small
+        >
       </div>
       <div class="config-group">
         <label for="chunkSize">Tamanho do Chunk (caracteres):</label>
@@ -839,6 +842,17 @@
             );
           }
 
+          // ⚠️ AVISO: PDFs pequenos mas válidos
+          if (documentosUnificados.length < 10000) {
+            console.warn(
+              `⚠️ Payload pequeno: ${documentosUnificados.length} chars (PDFs resumidos)`
+            );
+            updateLoadingMessage(
+              loadingId,
+              `⚠️ Documentos pequenos detectados. Aguarde até 5 minutos (Render cold start)...`
+            );
+          }
+
           if (avisoTruncamento) {
             addMessage(
               "assistant",
@@ -1246,7 +1260,7 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
 
         // Criar AbortController para timeout
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 180000); // 3 minutos (Render cold start + GPT-5)
+        const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutos (Render cold start + GPT-5 é MUITO lento)
 
         try {
           console.log("🌐 FETCH: Iniciando requisição...");
@@ -1333,9 +1347,9 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
           console.error("   Error stack:", error.stack);
 
           if (error.name === "AbortError") {
-            console.error("❌ TIMEOUT: Requisição excedeu 3 minutos");
+            console.error("❌ TIMEOUT: Requisição excedeu 5 minutos");
             throw new Error(
-              "⏱️ TIMEOUT de 3 minutos. Render cold start + GPT-5 está muito lento. Tente novamente (servidor já estará acordado)."
+              "⏱️ TIMEOUT de 5 minutos! Backend Render.com + GPT-5 está EXTREMAMENTE lento. TENTE NOVAMENTE AGORA (servidor já acordou no 1º request)."
             );
           }
 
