@@ -501,8 +501,8 @@
 
             // Também salvar no localStorage para rápido acesso
             localStorage.setItem("openai_model", data.modelo);
-            localStorage.setItem("max_tokens", data.max_tokens);
-            localStorage.setItem("chunk_size", data.chunk_size);
+            localStorage.setItem("max_tokens", String(Number(data.max_tokens)));
+            localStorage.setItem("chunk_size", String(Number(data.chunk_size)));
           } else {
             // Fallback: carregar do localStorage
             loadSettingsFromLocalStorage();
@@ -518,8 +518,8 @@
 
       function loadSettingsFromLocalStorage() {
         const model = localStorage.getItem("openai_model") || "gpt-5";
-        const maxTokens = localStorage.getItem("max_tokens") || 4000;
-        const chunkSize = localStorage.getItem("chunk_size") || 8000;
+        const maxTokens = Number(localStorage.getItem("max_tokens")) || 4000;
+        const chunkSize = Number(localStorage.getItem("chunk_size")) || 8000;
 
         document.getElementById("model").value = model;
         document.getElementById("maxTokens").value = maxTokens;
@@ -536,8 +536,8 @@
 
         // Sempre salvar no localStorage (rápido)
         localStorage.setItem("openai_model", model);
-        localStorage.setItem("max_tokens", maxTokens);
-        localStorage.setItem("chunk_size", chunkSize);
+        localStorage.setItem("max_tokens", String(parseInt(maxTokens)));
+        localStorage.setItem("chunk_size", String(parseInt(chunkSize)));
 
         // Tentar salvar no backend (assíncrono)
         try {

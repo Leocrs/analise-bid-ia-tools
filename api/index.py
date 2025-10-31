@@ -225,13 +225,18 @@ def chat():
         messages = data.get('messages', [])
         model = data.get('model', 'gpt-4')
         
+        # Converter max_tokens para int (pode vir como string do frontend)
+        max_tokens_input = data.get('max_tokens', 4000)
+        if isinstance(max_tokens_input, str):
+            max_tokens_input = int(max_tokens_input)
+        
         # Determinar max_tokens baseado no modelo
         # GPT-5 suporta até 128k tokens, mas limitar a 4k para evitar respostas vazias (espaço para output)
         # GPT-4 limitado a 2k (compatibilidade)
         if model == 'gpt-5':
-            max_tokens = min(data.get('max_tokens', 4000), 4000)  # Máximo 4000 para deixar espaço
+            max_tokens = min(max_tokens_input, 4000)  # Máximo 4000 para deixar espaço
         else:
-            max_tokens = min(data.get('max_tokens', 2000), 2000)
+            max_tokens = min(max_tokens_input, 2000)
         
         print("🚀 === NOVA REQUISIÇÃO DE ANÁLISE ===")
         print(f"📧 Modelo: {model}")
@@ -473,8 +478,15 @@ def save_settings():
         data = request.json
         api_key = data.get('api_key', 'default')
         modelo = data.get('modelo', 'gpt-5')
+        
+        # Converter para int (pode vir como string do frontend)
         max_tokens = data.get('max_tokens', 4000)
+        if isinstance(max_tokens, str):
+            max_tokens = int(max_tokens)
+        
         chunk_size = data.get('chunk_size', 8000)
+        if isinstance(chunk_size, str):
+            chunk_size = int(chunk_size)
         
         # Validações básicas
         if max_tokens < 100 or max_tokens > 8000:
