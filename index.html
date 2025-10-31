@@ -499,8 +499,6 @@
             {
               method: "GET",
               headers: {
-                "X-API-Key":
-                  document.getElementById("apiKey")?.value || "default",
                 "Content-Type": "application/json",
               },
             }
@@ -548,9 +546,11 @@
       }
 
       async function saveSettings() {
-        const model = document.getElementById("model").value;
-        const maxTokens = document.getElementById("maxTokens").value;
-        const chunkSize = document.getElementById("chunkSize").value;
+        const model = document.getElementById("model").value || "gpt-5";
+        const maxTokens =
+          parseInt(document.getElementById("maxTokens").value) || 4000;
+        const chunkSize =
+          parseInt(document.getElementById("chunkSize").value) || 8000;
         const apiKey = document.getElementById("apiKey")?.value || "default";
 
         // Sempre salvar no localStorage (rápido)
@@ -570,8 +570,8 @@
               body: JSON.stringify({
                 api_key: apiKey,
                 modelo: model,
-                max_tokens: parseInt(maxTokens),
-                chunk_size: parseInt(chunkSize),
+                max_tokens: maxTokens,
+                chunk_size: chunkSize,
               }),
             }
           );
