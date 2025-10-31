@@ -91,10 +91,10 @@ from dotenv import load_dotenv
 load_dotenv()
 app = Flask(__name__)
 
-# ✅ CONFIGURAR CORS EXPLICITAMENTE
+# ✅ CONFIGURAR CORS EXPLICITAMENTE (com wildcard temporário para debug)
 CORS(app, 
-     origins=["https://analise-bid-ia-tools.vercel.app", "http://localhost:3000", "http://localhost:5000"],
-     supports_credentials=True,
+     origins=["*"],  # Temporário: aceitar TODAS as origens para debug
+     supports_credentials=False,  # DEVE ser False com origins=*
      allow_headers=["Content-Type", "Authorization"],
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 

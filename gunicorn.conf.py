@@ -9,7 +9,7 @@ worker_class = "sync"
 worker_connections = 100
 
 # Configurações de timeout
-timeout = 180  # 3 minutos para requisições longas da OpenAI
+timeout = 300  # 5 minutos para requisições longas da OpenAI (GPT-5 pode levar 3-4min)
 keepalive = 5
 max_requests = 500  # Reiniciar worker após 500 requests para liberar memória
 max_requests_jitter = 50
