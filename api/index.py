@@ -207,10 +207,10 @@ def chat():
         model = data.get('model', 'gpt-4')
         
         # Determinar max_tokens baseado no modelo
-        # GPT-5 suporta até 128k tokens, permitir até 20k de output
+        # GPT-5 suporta até 128k tokens, mas limitar a 10k para evitar respostas vazias
         # GPT-4 limitado a 4k (compatibilidade)
         if model == 'gpt-5':
-            max_tokens = min(data.get('max_tokens', 8000), 20000)
+            max_tokens = min(data.get('max_tokens', 8000), 10000)  # Reduzido de 20k para 10k
         else:
             max_tokens = min(data.get('max_tokens', 2000), 4000)
         
@@ -245,9 +245,26 @@ def chat():
             return jsonify({'error': f'Erro na API OpenAI: {error}'}), 500
         
         if not response or not response.choices:
+            print(f"❌ ERRO: Resposta inválida - response={response}, choices={response.choices if response else 'N/A'}")
             return jsonify({'error': 'Resposta vazia da OpenAI'}), 500
 
         content = response.choices[0].message.content
+        
+        # DEBUG: Verificar se resposta é vazia
+        if not content or content.strip() == '':
+            print(f"⚠️ AVISO: Resposta vazia recebida do GPT-5!")
+            print(f"   - Response object: {response}")
+            print(f"   - Choices[0]: {response.choices[0]}")
+            print(f"   - Message: {response.choices[0].message}")
+            print(f"   - Content: '{content}'")
+            return jsonify({
+                'error': 'GPT-5 retornou resposta vazia. Tente novamente com um prompt mais específico.',
+                'debug': {
+                    'model': model,
+                    'max_tokens': max_tokens,
+                    'finish_reason': response.choices[0].finish_reason if response.choices[0] else None
+                }
+            }), 500
         processing_time = time.time() - start_time
         
         print("✅ Resposta da OpenAI recebida com sucesso!")
