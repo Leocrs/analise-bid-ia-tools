@@ -27,7 +27,7 @@ def init_db():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 api_key TEXT UNIQUE,
                 modelo TEXT DEFAULT 'gpt-5',
-                max_tokens INTEGER DEFAULT 3000,
+                max_tokens INTEGER DEFAULT 6000,
                 chunk_size INTEGER DEFAULT 8000,
                 data_atualizacao DATETIME DEFAULT CURRENT_TIMESTAMP
             )
@@ -226,17 +226,17 @@ def chat():
         model = data.get('model', 'gpt-4')
         
         # Converter max_tokens para int (pode vir como string do frontend)
-        max_tokens_input = data.get('max_tokens', 3000)
+        max_tokens_input = data.get('max_tokens', 6000)
         if isinstance(max_tokens_input, str):
             max_tokens_input = int(max_tokens_input)
         
         # Determinar max_tokens baseado no modelo
-        # GPT-5 é mais eficiente que GPT-4, 3000 tokens é suficiente
-        # GPT-4 limitado a 3k (compatibilidade)
+        # GPT-5 extended thinking: 6000 tokens garante espaço para reasoning + resposta completa
+        # GPT-4 limitado a 6k (compatibilidade)
         if model == 'gpt-5':
-            max_tokens = min(max_tokens_input, 3000)  # Máximo 3000
+            max_tokens = min(max_tokens_input, 6000)  # Máximo 6000 para garantir resposta + reasoning
         else:
-            max_tokens = min(max_tokens_input, 3000)
+            max_tokens = min(max_tokens_input, 6000)
         
         print("🚀 === NOVA REQUISIÇÃO DE ANÁLISE ===")
         print(f"📧 Modelo: {model}")
@@ -457,7 +457,7 @@ def get_settings():
             # Retornar valores padrão se não encontrado
             return jsonify({
                 'modelo': 'gpt-5',
-                'max_tokens': 3000,
+                'max_tokens': 6000,
                 'chunk_size': 8000,
                 'cached': True
             })
@@ -465,7 +465,7 @@ def get_settings():
         print(f"❌ Erro ao buscar configurações: {e}")
         return jsonify({
             'modelo': 'gpt-5',
-            'max_tokens': 3000,
+            'max_tokens': 6000,
             'chunk_size': 8000,
             'error': str(e),
             'cached': True
@@ -480,7 +480,7 @@ def save_settings():
         modelo = data.get('modelo', 'gpt-5')
         
         # Converter para int (pode vir como string do frontend)
-        max_tokens = data.get('max_tokens', 3000)
+        max_tokens = data.get('max_tokens', 6000)
         if isinstance(max_tokens, str):
             max_tokens = int(max_tokens)
         
