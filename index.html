@@ -69,7 +69,7 @@
       </div>
       <div class="config-group">
         <label for="maxTokens">Max Tokens:</label>
-        <input type="number" id="maxTokens" value="4000" placeholder="4000" />
+        <input type="number" id="maxTokens" value="2000" placeholder="2000" />
       </div>
       <div class="config-group">
         <label for="chunkSize">Tamanho do Chunk (caracteres):</label>
@@ -495,7 +495,7 @@
             console.log("📥 Configurações carregadas do backend:", data);
             document.getElementById("model").value = data.modelo || "gpt-5";
             document.getElementById("maxTokens").value =
-              data.max_tokens || 4000;
+              data.max_tokens || 2000;
             document.getElementById("chunkSize").value =
               data.chunk_size || 8000;
 
@@ -518,7 +518,7 @@
 
       function loadSettingsFromLocalStorage() {
         const model = localStorage.getItem("openai_model") || "gpt-5";
-        const maxTokens = Number(localStorage.getItem("max_tokens")) || 4000;
+        const maxTokens = Number(localStorage.getItem("max_tokens")) || 2000;
         const chunkSize = Number(localStorage.getItem("chunk_size")) || 8000;
 
         document.getElementById("model").value = model;
@@ -1123,7 +1123,7 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
 
         const model = document.getElementById("model").value || "gpt-5";
         const maxTokens =
-          parseInt(document.getElementById("maxTokens").value) || 4000;
+          parseInt(document.getElementById("maxTokens").value) || 2000;
 
         console.log("🎯 Model:", model);
         console.log("🔢 MaxTokens:", maxTokens);
