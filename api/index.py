@@ -162,12 +162,14 @@ client = OpenAI(
 def process_openai_request(messages, model, max_tokens):
     """Processa requisição OpenAI com controle de timeout"""
     try:
-        # A partir do OpenAI SDK 1.50+, todos os modelos usam max_completion_tokens
+        # GPT-5 requer temperatura=1 (padrão), outros modelos usam 0.7
+        temperature = 1 if model == 'gpt-5' else 0.7
+        
         response = client.chat.completions.create(
             model=model,
             messages=messages,
             max_completion_tokens=max_tokens,
-            temperature=0.7,
+            temperature=temperature,
             timeout=OPENAI_TIMEOUT
         )
         return response, None
