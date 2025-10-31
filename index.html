@@ -770,13 +770,45 @@
           // ANTES: 2 arquivos individuais + 1 consolidação = 3 chamadas × 60s = 180s ❌
           // AGORA: 1 chamada unificada = 60s total ✅
 
+          // ✅ VALIDAÇÃO CRÍTICA: Verificar se fileContents foi populado corretamente
+          if (!fileContents || fileContents.length === 0) {
+            throw new Error(
+              "❌ Nenhum arquivo foi processado! fileContents está vazio."
+            );
+          }
+
+          console.log(
+            `🔍 VALIDAÇÃO fileContents: ${fileContents.length} arquivos encontrados`
+          );
+          fileContents.forEach((f, idx) => {
+            const size = f.content ? f.content.length : 0;
+            console.log(`   ${idx + 1}. "${f.name}" = ${size} chars`);
+            if (size === 0) {
+              console.error(
+                `   ❌ ARQUIVO VAZIO: "${f.name}" não foi extraído!`
+              );
+            }
+          });
+
           let documentosUnificados = "";
           let avisoTruncamento = false;
 
           // Preparar todos os documentos em um único payload
           for (let i = 0; i < fileContents.length; i++) {
             const file = fileContents[i];
+
+            // ✅ VALIDAÇÃO: Garantir que content existe
+            if (!file.content || file.content.trim().length === 0) {
+              console.error(`❌ CRÍTICO: "${file.name}" sem conteúdo!`);
+              throw new Error(
+                `Arquivo "${file.name}" está vazio. A extração de PDF/Excel pode ter falhado.`
+              );
+            }
+
             let conteudo = file.content;
+            console.log(
+              `📄 Adicionando "${file.name}": ${conteudo.length} chars`
+            );
 
             // Limitar tamanho por arquivo (15KB)
             if (conteudo.length > 15000) {
@@ -794,8 +826,18 @@
           }
 
           console.log(
-            `📦 Payload unificado: ${documentosUnificados.length} chars para ${fileContents.length} arquivos`
+            `📦 Payload unificado FINAL: ${documentosUnificados.length} chars (esperado >10000 para 2 PDFs)`
           );
+
+          // ✅ VALIDAÇÃO FINAL: Payload muito pequeno indica problema
+          if (documentosUnificados.length < 1000) {
+            console.error(
+              `❌ PAYLOAD MUITO PEQUENO: ${documentosUnificados.length} chars`
+            );
+            throw new Error(
+              `Payload suspeito (${documentosUnificados.length} chars). Arquivos podem não ter sido extraídos corretamente.`
+            );
+          }
 
           if (avisoTruncamento) {
             addMessage(
@@ -876,12 +918,18 @@ CRÍTICO: Use APENAS tabelas HTML, números e valores R$. NÃO faça texto descr
       }
 
       async function extractPDFText(file) {
+        console.log(`📄 Iniciando extração de PDF: "${file.name}"`);
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = async function (e) {
             try {
+              console.log(`   Lendo bytes do arquivo "${file.name}"...`);
               const typedArray = new Uint8Array(e.target.result);
+              console.log(`   Bytes lidos: ${typedArray.length}`);
+
               const pdf = await pdfjsLib.getDocument(typedArray).promise;
+              console.log(`   PDF carregado: ${pdf.numPages} páginas`);
+
               let fullText = "";
               for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
@@ -890,13 +938,26 @@ CRÍTICO: Use APENAS tabelas HTML, números e valores R$. NÃO faça texto descr
                   .map((item) => item.str)
                   .join(" ");
                 fullText += `\n\n--- Página ${i} ---\n${pageText}`;
+                console.log(
+                  `   Página ${i}/${pdf.numPages}: ${pageText.length} chars extraídos`
+                );
               }
+
+              console.log(
+                `✅ PDF "${file.name}" extraído com sucesso: ${
+                  fullText.trim().length
+                } chars TOTAIS`
+              );
               resolve(fullText.trim());
             } catch (error) {
+              console.error(`❌ Erro ao extrair PDF "${file.name}":`, error);
               reject(error);
             }
           };
-          reader.onerror = () => reject(new Error("Erro ao ler arquivo PDF"));
+          reader.onerror = () => {
+            console.error(`❌ Erro ao ler arquivo "${file.name}"`);
+            reject(new Error("Erro ao ler arquivo PDF"));
+          };
           reader.readAsArrayBuffer(file);
         });
       }
@@ -1272,9 +1333,9 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
           console.error("   Error stack:", error.stack);
 
           if (error.name === "AbortError") {
-            console.error("❌ TIMEOUT: Requisição excedeu 2 minutos");
+            console.error("❌ TIMEOUT: Requisição excedeu 3 minutos");
             throw new Error(
-              "Tempo limite excedido. O servidor demorou muito para responder."
+              "⏱️ TIMEOUT de 3 minutos. Render cold start + GPT-5 está muito lento. Tente novamente (servidor já estará acordado)."
             );
           }
 
