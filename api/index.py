@@ -162,13 +162,24 @@ client = OpenAI(
 def process_openai_request(messages, model, max_tokens):
     """Processa requisição OpenAI com controle de timeout"""
     try:
-        response = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            max_tokens=max_tokens,
-            temperature=0.7,
-            timeout=OPENAI_TIMEOUT
-        )
+        # GPT-5 e GPT-4o usam 'max_completion_tokens'
+        # Outros modelos usam 'max_tokens'
+        if model in ['gpt-5', 'gpt-4o', 'gpt-4-turbo']:
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                max_completion_tokens=max_tokens,
+                temperature=0.7,
+                timeout=OPENAI_TIMEOUT
+            )
+        else:
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                max_tokens=max_tokens,
+                temperature=0.7,
+                timeout=OPENAI_TIMEOUT
+            )
         return response, None
     except Exception as e:
         return None, str(e)
