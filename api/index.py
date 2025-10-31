@@ -5,30 +5,6 @@ import sys
 import threading
 import time
 from contextlib import contextmanager
-from datetime import datetime
-
-# 🔧 Função para forçar logs aparecerem em qualquer lugar
-def log_debug(msg):
-    """Force log to appear in Render/console AND file"""
-    timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
-    log_msg = f"[{timestamp}] {msg}"
-    
-    # 1. Console stdout
-    print(log_msg, flush=True)
-    sys.stdout.flush()
-    
-    # 2. Console stderr
-    sys.stderr.write(f"{log_msg}\n")
-    sys.stderr.flush()
-    
-    # 3. File (persists data)
-    try:
-        log_file = os.path.join(os.path.dirname(__file__), 'app_debug.log')
-        with open(log_file, 'a', encoding='utf-8') as f:
-            f.write(f"{log_msg}\n")
-            f.flush()
-    except:
-        pass
 
 # Função para inicializar o banco e criar tabela se não existir
 def init_db():
@@ -90,13 +66,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 app = Flask(__name__)
-
-# ✅ CONFIGURAR CORS EXPLICITAMENTE (com wildcard temporário para debug)
-CORS(app, 
-     origins=["*"],  # Temporário: aceitar TODAS as origens para debug
-     supports_credentials=False,  # DEVE ser False com origins=*
-     allow_headers=["Content-Type", "Authorization"],
-     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+CORS(app)
 
 # Configurações de timeout
 REQUEST_TIMEOUT = 120  # 2 minutos para requisições OpenAI
@@ -147,86 +117,18 @@ client = OpenAI(
 )
 
 # Função para processar requisição com timeout
-def process_openai_request(messages, model, max_tokens, retry_attempt=1):
+def process_openai_request(messages, model, max_tokens):
     """Processa requisição OpenAI com controle de timeout"""
     try:
-        log_debug(f"\n🤖 === CHAMANDO OPENAI (Tentativa {retry_attempt}) ===")
-        log_debug(f"   Model: {model}")
-        log_debug(f"   Max Tokens: {max_tokens}")
-        log_debug(f"   Temperature: 1 (GPT-5 obrigatório)")
-        log_debug(f"   Número de mensagens: {len(messages)}")
-        for idx, msg in enumerate(messages):
-            msg_content = msg.get('content', '')
-            msg_role = msg.get('role', 'unknown')
-            content_preview = msg_content[:50] + "..." if len(msg_content) > 50 else msg_content
-            log_debug(f"   • Mensagem {idx+1} ({msg_role}): {len(msg_content)} chars - {repr(content_preview)}")
-        
-        # Validação: mensagens não podem estar vazias
-        for msg in messages:
-            if not msg.get('content') or not msg.get('content').strip():
-                log_debug(f"❌ ERRO: Mensagem de role '{msg.get('role')}' está vazia!")
-                raise ValueError(f"Mensagem de role '{msg.get('role')}' está vazia")
-        
-        # GPT-5 usa max_completion_tokens em vez de max_tokens
-        # GPT-5 requer temperature=1 (não suporta outros valores)
-        log_debug("   ⏳ Aguardando resposta da OpenAI...")
-        
-        # Adicionar timeout mais curto para testar
         response = client.chat.completions.create(
             model=model,
             messages=messages,
-            max_completion_tokens=max_tokens,  # Corrigido para GPT-5
-            temperature=1,  # GPT-5 só aceita valor padrão (1)
+            max_tokens=max_tokens,
+            temperature=0.7,
             timeout=OPENAI_TIMEOUT
         )
-        log_debug("   ✅ Resposta recebida da OpenAI")
-        
-        # 🔍 LOG DETALHADO DA RESPOSTA
-        log_debug(f"\n🔎 === ANALISANDO RESPOSTA DO OPENAI ===")
-        log_debug(f"   Tipo do response: {type(response).__name__}")
-        log_debug(f"   Has .choices: {hasattr(response, 'choices')}")
-        
-        if not hasattr(response, 'choices'):
-            log_debug("   ❌ Response não tem atributo 'choices'!")
-            return response, None
-            
-        if not response.choices:
-            log_debug("   ❌ response.choices está vazio!")
-            return response, None
-        
-        choice = response.choices[0]
-        log_debug(f"   Número de choices: {len(response.choices)}")
-        log_debug(f"   Choice[0] type: {type(choice).__name__}")
-        log_debug(f"   Has .message: {hasattr(choice, 'message')}")
-        
-        if not hasattr(choice, 'message'):
-            log_debug("   ❌ Choice não tem atributo 'message'!")
-            return response, None
-        
-        msg = choice.message
-        log_debug(f"   Message type: {type(msg).__name__}")
-        log_debug(f"   Has .content: {hasattr(msg, 'content')}")
-        
-        if not hasattr(msg, 'content'):
-            log_debug("   ❌ Message não tem atributo 'content'!")
-            return response, None
-        
-        content = msg.content
-        log_debug(f"   Content type: {type(content).__name__}")
-        log_debug(f"   Content value: {repr(content) if content else 'NULO/VAZIO'}")
-        log_debug(f"   Content length: {len(content) if content else 0}")
-        log_debug(f"   Is None: {content is None}")
-        log_debug(f"   Is empty string: {content == ''}")
-        log_debug(f"   Is whitespace only: {content.isspace() if isinstance(content, str) else 'N/A'}")
-        log_debug("🔎 === FIM DA ANÁLISE ===\n")
-        
         return response, None
     except Exception as e:
-        print(f"\n❌ ERRO ao chamar OpenAI:")
-        print(f"   Tipo do erro: {type(e).__name__}")
-        print(f"   Mensagem: {str(e)}")
-        import traceback
-        print(f"   Traceback: {traceback.format_exc()}")
         return None, str(e)
 
 # Função assíncrona para salvar histórico
@@ -257,141 +159,39 @@ def chat():
     try:
         data = request.json
         messages = data.get('messages', [])
-        model = data.get('model', 'gpt-5')
-        # OTIMIZAÇÃO: Reduzir max_tokens para evitar out of memory
-        # GPT-5 funciona bem com 4000 tokens mantendo qualidade de análise
-        max_tokens = min(data.get('max_tokens', 4000), 32000)
+        model = data.get('model', 'gpt-4')
+        max_tokens = min(data.get('max_tokens', 2000), 4000)  # Limitar tokens
         
-        log_debug("🚀 === NOVA REQUISIÇÃO DE ANÁLISE ===")
-        log_debug(f"📧 Modelo: {model}")
-        log_debug(f"🔢 Max Tokens (otimizado): {max_tokens}")
-        log_debug(f"📝 Total de mensagens: {len(messages)}")
-        
-        # 🔍 DEBUG: Mostrar conteúdo das mensagens para diagnosticar problemas
-        for idx, msg in enumerate(messages):
-            role = msg.get('role', 'unknown')
-            content_size = len(msg.get('content', ''))
-            log_debug(f"   Mensagem {idx + 1} ({role}): {content_size} chars")
-            if role == 'user' and content_size < 200:
-                log_debug(f"      [⚠️ Mensagem do usuário muito pequena!]")
-                log_debug(f"      Conteúdo: {repr(msg.get('content', '')[:100])}")
-        
-        log_debug("=" * 50)
+        print("🚀 === NOVA REQUISIÇÃO DE ANÁLISE ===")
+        print(f"📧 Modelo: {model}")
+        print(f"🔢 Max Tokens: {max_tokens}")
+        print(f"📝 Total de mensagens: {len(messages)}")
+        print("=" * 50)
 
         # Validação básica
         if not messages:
-            log_debug('❌ Nenhuma mensagem fornecida')
             return jsonify({'error': 'Nenhuma mensagem fornecida'}), 400
         
-        # ⚠️ VALIDAÇÃO CRÍTICA: Se a mensagem do usuário estiver vazia, é um problema!
-        user_message = next((m for m in messages if m.get('role') == 'user'), None)
-        if not user_message or not user_message.get('content', '').strip():
-            log_debug("❌ ERRO: Mensagem do usuário está VAZIA!")
-            log_debug(f"   Messages recebidas: {messages}")
-            return jsonify({'error': 'Mensagem do usuário está vazia - não é possível processar'}), 400
-        
-        # OTIMIZAÇÃO: Reduzir limite de tamanho total para economizar memória
-        # Consolidação muito grande de documentos causa out of memory
-        tamanho_messages = len(str(messages))
-        truncado = False
-        
-        if tamanho_messages > 30000:  # Reduzido de 50000 para 30000
-            log_debug(f"⚠️ AVISO: Prompt muito longo ({tamanho_messages} chars), truncando documentos...")
-            truncado = True
-            # Truncar mensagem do usuário se muito grande
-            for msg in messages:
-                if msg.get('role') == 'user' and len(msg.get('content', '')) > 20000:
-                    tamanho_antes = len(msg.get('content', ''))
-                    msg['content'] = msg['content'][:20000] + "\n\n[⚠️ DOCUMENTO TRUNCADO - LIMITE DE MEMÓRIA DO SERVIDOR]"
-                    log_debug(f"   📄 Documento reduzido de {tamanho_antes} para 20000 caracteres")
-            log_debug("✅ Documentos truncados com sucesso")
+        if len(str(messages)) > 50000:  # Limitar tamanho do prompt
+            return jsonify({'error': 'Prompt muito longo. Reduza o tamanho do texto.'}), 400
 
-        # 🔍 LOG: Mostrar conteúdo completo do prompt que será enviado
-        log_debug("🔍 === PROMPT ENVIADO PARA OPENAI ===")
-        for idx, msg in enumerate(messages):
-            role = msg.get('role', 'unknown')
-            content = msg.get('content', '')
-            log_debug(f"\n📌 MENSAGEM {idx + 1} ({role}):")
-            if role == 'system':
-                log_debug(f"Primeiros 200 chars: {content[:200]}")
-            else:
-                log_debug(f"Primeiros 300 chars: {content[:300]}")
-                log_debug(f"Total: {len(content)} caracteres")
-        log_debug("=" * 50)
-        
         # Processar requisição OpenAI
         response, error = process_openai_request(messages, model, max_tokens)
         
         if error:
-            log_debug(f"❌ ERRO na API OpenAI: {error}")
-            log_debug(f"   Mensagens que causaram erro: {len(messages)} mensagens")
+            print(f"❌ ERRO na API OpenAI: {error}")
             return jsonify({'error': f'Erro na API OpenAI: {error}'}), 500
         
         if not response or not response.choices:
-            log_debug("❌ ERRO: Resposta vazia da OpenAI")
             return jsonify({'error': 'Resposta vazia da OpenAI'}), 500
 
-        # ✅ VALIDAÇÃO CRÍTICA: Verificar se content está vazio
-        content = response.choices[0].message.content if response.choices[0].message else None
-        
-        # ✅ VALIDAÇÃO RIGOROSA: Content não pode ser None, vazio ou só espaços
-        if not content or not content.strip():
-            log_debug("\n" + "="*60)
-            log_debug("❌ ERRO CRÍTICO: Content vazio ou só espaços!")
-            log_debug(f"   Content recebido: {repr(content)}")
-            log_debug(f"   Is None: {content is None}")
-            log_debug(f"   Type: {type(content)}")
-            log_debug(f"   Len: {len(content) if content else 0}")
-            log_debug("="*60)
-            
-            # 🔄 RETRY: Tentar novamente
-            retry_count = 0
-            max_retries = 2
-            content = None
-            
-            while retry_count < max_retries and (not content or not content.strip()):
-                retry_count += 1
-                log_debug(f"\n🔄 🔄 🔄 ACIONANDO RETRY {retry_count} de {max_retries} 🔄 🔄 🔄")
-                
-                # Aguardar um pouco antes de retry
-                time.sleep(2)
-                
-                response2, error2 = process_openai_request(messages, model, max_tokens, retry_attempt=retry_count+1)
-                if error2:
-                    log_debug(f"❌ RETRY {retry_count} falhou com erro: {error2}")
-                    continue
-                
-                log_debug(f"   ✅ Retry {retry_count}: Resposta recebida")
-                content = response2.choices[0].message.content if response2 and response2.choices else None
-                log_debug(f"   Content retry {retry_count}: {repr(content[:100] if content else 'VAZIO')}")
-            
-            if not content or not content.strip():
-                log_debug("❌ ERRO CRÍTICO: Todas as tentativas falharam!")
-                log_debug(f"   Total de tentativas: {retry_count + 1}")
-                log_debug("   ⚠️ GPT-5 continua retornando vazio")
-                log_debug("   Possíveis causas: Token limit atingido, API indisponível, ou conteúdo muito longo")
-                
-                # Retornar mensagem mais informativa
-                return jsonify({
-                    'error': 'OpenAI não conseguiu processar sua requisição. Possíveis causas: documentos muito grandes, limite de tokens ou indisponibilidade da API. Tente novamente ou com documentos menores.'
-                }), 500
-            
-            log_debug(f"✅ ✅ ✅ RETRY BEM-SUCEDIDO! ✅ ✅ ✅")
-            log_debug(f"   Tamanho do conteúdo: {len(content)} chars")
-            log_debug(f"   Primeiros 100 chars: {content[:100]}")
-        
+        content = response.choices[0].message.content
         processing_time = time.time() - start_time
-        log_debug(f"✅ Resposta da OpenAI recebida com sucesso!")
-        log_debug(f"📄 Tamanho da resposta: {len(content)} caracteres")
         
-        # VALIDAÇÃO: Avisar se a análise pode estar incompleta
-        if truncado and len(content) < 500:
-            log_debug("⚠️ AVISO: Resposta muito curta - análise pode estar incompleta!")
-            log_debug(f"   Tamanho da resposta: {len(content)} caracteres")
-            content += "\n\n⚠️ **AVISO:** A análise pode estar incompleta devido ao tamanho dos documentos. Para análise completa, envie documentos menores separadamente."
-        
-        log_debug(f"⏱️ Tempo de processamento: {processing_time:.2f}s")
-        log_debug("=" * 50)
+        print("✅ Resposta da OpenAI recebida com sucesso!")
+        print(f"📄 Tamanho da resposta: {len(content)} caracteres")
+        print(f"⏱️ Tempo de processamento: {processing_time:.2f}s")
+        print("=" * 50)
 
         # Salvar histórico de forma assíncrona
         save_to_history_async(
@@ -582,81 +382,6 @@ def serve_app_ia_files(filename):
         print(f"❌ Erro ao servir arquivo App-IA {filename}: {e}")
         return jsonify({'error': 'Arquivo não encontrado'}), 404
 
-# 🔍 ENDPOINT DE DIAGNÓSTICO - Testa GPT-5 diretamente
-@app.route('/api/test-gpt5', methods=['POST'])
-def test_gpt5():
-    """
-    Endpoint APENAS PARA DIAGNÓSTICO - Testa GPT-5 com um prompt simples.
-    Útil para verificar se GPT-5 está retornando conteúdo vazio.
-    """
-    start_time = time.time()
-    
-    try:
-        data = request.get_json()
-        test_message = data.get('message', 'Teste simples: responda "OK"')
-        
-        print("\n" + "="*60)
-        print("🔍 DIAGNÓSTICO: Testando GPT-5 diretamente")
-        print(f"   Mensagem de teste: {test_message[:50]}...")
-        print("="*60)
-        
-        # Teste com mensagem simples
-        messages = [
-            {
-                "role": "system",
-                "content": "Você é um assistente de diagnóstico. Responda breve e claramente."
-            },
-            {
-                "role": "user", 
-                "content": test_message
-            }
-        ]
-        
-        # Chamar process_openai_request com 4000 tokens (mesmo que /api/chat)
-        response, error = process_openai_request(messages, 'gpt-5', 4000)
-        
-        if error:
-            print(f"❌ ERRO: {error}")
-            return jsonify({
-                'status': 'erro',
-                'erro': error,
-                'tempo': round(time.time() - start_time, 2)
-            }), 500
-        
-        if not response or not response.choices:
-            print("❌ Resposta vazia (sem choices)")
-            return jsonify({
-                'status': 'erro',
-                'erro': 'Resposta vazia (sem choices)',
-                'tempo': round(time.time() - start_time, 2)
-            }), 500
-        
-        content = response.choices[0].message.content
-        
-        print(f"\n✅ DIAGNÓSTICO COMPLETADO")
-        print(f"   Content: {repr(content[:100] if content else 'VAZIO')}")
-        print(f"   Tamanho: {len(content) if content else 0} chars")
-        print(f"   Tempo: {time.time() - start_time:.2f}s")
-        print("="*60 + "\n")
-        
-        return jsonify({
-            'status': 'sucesso' if content else 'aviso',
-            'content': content,
-            'tamanho': len(content) if content else 0,
-            'content_is_empty': not content or not content.strip(),
-            'tempo': round(time.time() - start_time, 2)
-        })
-        
-    except Exception as e:
-        print(f"❌ ERRO em /api/test-gpt5: {e}")
-        import traceback
-        print(traceback.format_exc())
-        return jsonify({
-            'status': 'erro',
-            'erro': str(e),
-            'tempo': round(time.time() - start_time, 2)
-        }), 500
-
 # Rota otimizada para a página principal
 @app.route('/')
 def index():
@@ -665,55 +390,7 @@ def index():
         return send_file(os.path.join(app_ia_path, 'index.html'))
     except Exception as e:
         print(f"❌ Erro ao servir página principal: {e}")
-        return jsonify({'error': 'Página não encontrado'}), 404
-
-# 🔍 ROTA DE DEBUG: Servir página de debug dos logs
-@app.route('/debug-logs')
-@app.route('/debug_logs.html')
-def debug_logs_page():
-    """Serve a página de debug dos logs"""
-    try:
-        app_ia_path = os.path.dirname(os.path.dirname(__file__))
-        return send_file(os.path.join(app_ia_path, 'debug_logs.html'))
-    except Exception as e:
-        log_debug(f"❌ Erro ao servir debug_logs.html: {e}")
-        return jsonify({'error': 'Página de debug não encontrada'}), 404
-
-# 🔍 ROTA DE DEBUG: Acessar logs
-@app.route('/api/debug-logs', methods=['GET'])
-def get_debug_logs():
-    """Retorna os últimos 100 logs do arquivo app_debug.log"""
-    try:
-        log_file = os.path.join(os.path.dirname(__file__), 'app_debug.log')
-        if not os.path.exists(log_file):
-            return jsonify({'logs': 'Nenhum log disponível ainda'}), 200
-        
-        with open(log_file, 'r', encoding='utf-8') as f:
-            lines = f.readlines()
-        
-        # Retorna os últimos 200 logs
-        recent_logs = ''.join(lines[-200:])
-        
-        return jsonify({
-            'logs': recent_logs,
-            'total_lines': len(lines),
-            'last_updated': datetime.now().isoformat()
-        }), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# 🔍 ROTA DE DEBUG: Limpar logs
-@app.route('/api/clear-logs', methods=['POST'])
-def clear_logs():
-    """Limpa o arquivo de log"""
-    try:
-        log_file = os.path.join(os.path.dirname(__file__), 'app_debug.log')
-        if os.path.exists(log_file):
-            open(log_file, 'w').close()
-            return jsonify({'status': 'Logs limpos com sucesso'}), 200
-        return jsonify({'status': 'Arquivo de log não existe'}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Página não encontrada'}), 404
 
 if __name__ == '__main__':
     print("=" * 70)
