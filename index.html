@@ -766,146 +766,86 @@
         console.log("📄 Total de arquivos:", fileContents.length);
 
         try {
-          // ✅ GARANTIA DE COMPLETUDE:
-          // Processar cada arquivo SEPARADAMENTE garante que NENHUMA informação é perdida
-          // Cada arquivo é analisado com seus próprios tokens e contexto
-          let analisesIndividuais = [];
+          // 🚀 OTIMIZAÇÃO CRÍTICA: UMA ÚNICA CHAMADA AO GPT-5
+          // ANTES: 2 arquivos individuais + 1 consolidação = 3 chamadas × 60s = 180s ❌
+          // AGORA: 1 chamada unificada = 60s total ✅
+
+          let documentosUnificados = "";
           let avisoTruncamento = false;
 
+          // Preparar todos os documentos em um único payload
           for (let i = 0; i < fileContents.length; i++) {
             const file = fileContents[i];
-            updateLoadingMessage(
-              loadingId,
-              `📄 Analisando arquivo ${i + 1}/${fileContents.length}: ${
-                file.name
-              } (${file.content.length} chars)...`
-            );
-
-            // ✅ VERIFICAÇÃO: Se arquivo > 15KB, avisar e sugerir análise separada
             let conteudo = file.content;
+
+            // Limitar tamanho por arquivo (15KB)
             if (conteudo.length > 15000) {
               avisoTruncamento = true;
               console.warn(
-                `⚠️ Arquivo "${file.name}" é muito grande (${conteudo.length} chars).`
+                `⚠️ Arquivo "${file.name}" truncado de ${conteudo.length} para 15000 chars`
               );
-              console.warn(
-                `   Sugestão: Divida este arquivo em partes menores para análise mais completa.`
-              );
-              // TRUNCAR apenas o QUE EXCEDER, mantendo máximo extraível
-              conteudo =
-                conteudo.substring(0, 15000) +
-                "\n\n[⚠️ ARQUIVO TRUNCADO - Envie este documento separadamente para análise completa]";
+              conteudo = conteudo.substring(0, 15000) + "\n[...TRUNCADO...]";
             }
 
-            const analise = await callBackend(
-              `Você é especialista em análise comparativa de orçamentos e propostas comerciais.
-              
-EXTRAIA COMPLETAMENTE TODOS os dados estruturados do documento fornecido:
-✓ Nome da empresa/fornecedor
-✓ CNPJ e dados legais (se houver)
-✓ TODOS os contatos (email, telefone, endereço)
-✓ LISTA COMPLETA de itens com preços (formato: ITEM | Qtd | R$ VALOR)
-✓ Valor total geral
-✓ TODAS as condições comerciais (desconto, prazo, garantia, pagamento, frete)
-✓ Responsável técnico / Assinante
-
-SE DOCUMENTO TRUNCADO: Avise ao final com "⚠️ DOCUMENTO TRUNCADO"
-
-Responda APENAS em formato ESTRUTURADO, sem narrativa ou explicações.`,
-              `Arquivo: ${file.name}\n\nConteúdo:\n${conteudo}`
-            );
-
-            // 🔍 DEBUG: Log resultado da análise individual
-            console.log(
-              `   ✓ Análise de "${file.name}" completada: ${
-                analise ? analise.length : 0
-              } chars`
-            );
-            if (!analise || analise.trim().length === 0) {
-              console.error(
-                `   ❌ ERRO: Análise de "${file.name}" retornou VAZIA!`
-              );
-            }
-
-            analisesIndividuais.push({
-              arquivo: file.name,
-              analise: analise,
-              truncado: conteudo.includes("ARQUIVO TRUNCADO"),
-            });
-
-            // Pausa entre requisições para não sobrecarregar
-            await new Promise((resolve) => setTimeout(resolve, 500));
+            documentosUnificados += `\n${"=".repeat(70)}\n`;
+            documentosUnificados += `📄 DOCUMENTO ${i + 1}: ${file.name}\n`;
+            documentosUnificados += `${"=".repeat(70)}\n`;
+            documentosUnificados += conteudo + "\n\n";
           }
 
-          // CONSOLIDAR análises individuais (muito menor em tamanho)
-          updateLoadingMessage(loadingId, "📊 Consolidando análises...");
+          console.log(
+            `📦 Payload unificado: ${documentosUnificados.length} chars para ${fileContents.length} arquivos`
+          );
 
-          // ✅ AVISO DE INTEGRIDADE
           if (avisoTruncamento) {
             addMessage(
               "assistant",
-              `⚠️ <strong>AVISO DE INTEGRIDADE DE ANÁLISE:</strong><br><br>
-Um ou mais documentos foram muito grandes e precisaram ser truncados.<br><br>
-<strong>Sugestões para garantir completude:</strong><br>
-• Divida documentos grandes em múltiplos arquivos menores<br>
-• Faça análises separadas: primeiro Doc A, depois Doc B<br>
-• Consolide os resultados manualmente<br><br>
-Continuando com a análise do material disponível...`
+              `⚠️ Um ou mais documentos foram truncados (>15KB). Para análise completa, envie arquivos grandes separadamente.`
             );
           }
 
-          let consolidacao = "=== ANÁLISE COMPARATIVA CONSOLIDADA ===\n\n";
-
-          // 🔍 DEBUG: Log cada análise antes de consolidar
-          console.log("🔍 ANTES DE CONSOLIDAR:");
-          analisesIndividuais.forEach((item, idx) => {
-            console.log(
-              `   Análise ${idx + 1}: ${item.arquivo} = ${
-                item.analise ? item.analise.length : 0
-              } chars`
-            );
-          });
-
-          analisesIndividuais.forEach((item, idx) => {
-            consolidacao += `\n📄 ${item.arquivo}:\n${item.analise}\n`;
-            consolidacao += "\n" + "=".repeat(60) + "\n";
-          });
-
-          // 🔍 DEBUG: Log após consolidar
-          console.log("🔍 APÓS CONSOLIDAR:");
-          console.log("   Tamanho consolidacao:", consolidacao.length);
-          console.log(
-            "   Primeiros 300 chars:",
-            consolidacao.substring(0, 300)
-          );
-
-          if (!consolidacao || consolidacao.length < 100) {
-            console.error(
-              "❌ ALERTA: Consolidação muito pequena!",
-              consolidacao
-            );
-            throw new Error(
-              "Consolidação vazia! As análises não foram processadas corretamente."
-            );
-          }
-
-          // RESUMO FINAL (menos memória que análise bruta)
+          // 🚀 UMA ÚNICA CHAMADA COM ANÁLISE COMPLETA E COMPARAÇÃO
           updateLoadingMessage(
             loadingId,
-            "� Gerando relatório comparativo final..."
+            "🔍 Analisando e comparando todos os documentos (30-60s)..."
           );
 
           const resultado = await callBackend(
-            `Com base nas análises extraídas dos documentos fornecidos, crie um RELATÓRIO COMPARATIVO FINAL.
+            `Você é especialista em análise comparativa de propostas comerciais e orçamentos.
 
-ESTRUTURA OBRIGATÓRIA:
-1. TABELA COMPARATIVA (HTML com cores: verde=melhor, vermelho=pior)
-2. RANKING DE FORNECEDORES
-3. ECONOMIA POTENCIAL
-4. RECOMENDAÇÃO FINAL
+TAREFA: Analisar TODOS os documentos fornecidos e criar RELATÓRIO COMPARATIVO COMPLETO em UMA RESPOSTA.
 
-Seja conciso e direto. Use tabelas e números, não narrativa.`,
-            `Análises consolidadas:\n\n${consolidacao}`
+PASSO 1 - EXTRAÇÃO (para cada documento):
+✓ Nome da empresa/fornecedor
+✓ CNPJ e contatos
+✓ TODOS os itens com preços (formato: ITEM | Qtd | R$ VALOR)
+✓ Valor total
+✓ Condições comerciais (prazo, garantia, pagamento)
+
+PASSO 2 - TABELA COMPARATIVA (OBRIGATÓRIO):
+<table border='1' style='border-collapse:collapse;width:100%;font-size:13px'>
+<tr style='background:#0e938f;color:white'>
+<th>ITEM</th><th>QTD</th><th>EMPRESA A</th><th>EMPRESA B</th><th>MELHOR</th><th>ECONOMIA</th>
+</tr>
+<tr>
+<td>Nome do item</td><td>X</td>
+<td style='background:#fecaca'>R$ XXXX</td>
+<td style='background:#dcfce7'>R$ YYYY</td>
+<td>Empresa B</td><td>R$ ZZZ (X%)</td>
+</tr>
+</table>
+
+CORES OBRIGATÓRIAS:
+• Verde (#dcfce7) = menor preço
+• Vermelho (#fecaca) = maior preço
+
+PASSO 3 - RESUMO EXECUTIVO:
+🏆 RANKING: 1º, 2º, 3º colocado por valor total
+💰 ECONOMIA: Valor total economizado com melhor escolha
+📊 RECOMENDAÇÃO: Estratégia de contratação
+
+CRÍTICO: Use APENAS tabelas HTML, números e valores R$. NÃO faça texto descritivo!`,
+            `Documentos para análise:\n\n${documentosUnificados}`
           );
 
           console.log("✅ Resultado recebido do backend");
@@ -916,7 +856,7 @@ Seja conciso e direto. Use tabelas e números, não narrativa.`,
           );
           if (!resultado || resultado.trim().length === 0) {
             console.error("❌ ALERTA: Resultado está VAZIO!");
-            throw new Error("Backend retornou resposta vazia na consolidação");
+            throw new Error("Backend retornou resposta vazia");
           }
           console.log("   Primeiros 200 chars:", resultado.substring(0, 200));
 
@@ -1245,7 +1185,7 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
 
         // Criar AbortController para timeout
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutos
+        const timeoutId = setTimeout(() => controller.abort(), 180000); // 3 minutos (Render cold start + GPT-5)
 
         try {
           console.log("🌐 FETCH: Iniciando requisição...");
