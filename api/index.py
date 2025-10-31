@@ -176,6 +176,25 @@ def process_openai_request(messages, model, max_tokens):
     except Exception as e:
         return None, str(e)
 
+
+def _extract_choice_content(resp):
+    """Extrai conteúdo seguro do objeto de resposta do client.chat.completions.create.
+    Retorna string (pode ser '') se não houver conteúdo.
+    """
+    try:
+        if not resp or not getattr(resp, 'choices', None):
+            return ''
+        choice = resp.choices[0]
+        # Em algumas versões do SDK o conteúdo pode estar em choice.message.content
+        msg = getattr(choice, 'message', None)
+        if msg is None:
+            # fallback para dict-like
+            return str(choice.get('message', {}).get('content', '')) if hasattr(choice, 'get') else ''
+        content = getattr(msg, 'content', None)
+        return content or ''
+    except Exception:
+        return ''
+
 # Função assíncrona para salvar histórico
 def save_to_history_async(usuario, prompt, resposta):
     """Salva histórico de forma assíncrona para não bloquear resposta"""
@@ -248,23 +267,58 @@ def chat():
             print(f"❌ ERRO: Resposta inválida - response={response}, choices={response.choices if response else 'N/A'}")
             return jsonify({'error': 'Resposta vazia da OpenAI'}), 500
 
-        content = response.choices[0].message.content
-        
-        # DEBUG: Verificar se resposta é vazia
+        # Extrair conteúdo de forma segura
+        content = _extract_choice_content(response)
+
+        # Se vazio, tentar retries controlados para diagnóstico/recuperação
         if not content or content.strip() == '':
-            print(f"⚠️ AVISO: Resposta vazia recebida do GPT-5!")
+            print(f"⚠️ AVISO: Resposta vazia recebida do {model}!")
             print(f"   - Response object: {response}")
-            print(f"   - Choices[0]: {response.choices[0]}")
-            print(f"   - Message: {response.choices[0].message}")
-            print(f"   - Content: '{content}'")
-            return jsonify({
-                'error': 'GPT-5 retornou resposta vazia. Tente novamente com um prompt mais específico.',
-                'debug': {
-                    'model': model,
-                    'max_tokens': max_tokens,
-                    'finish_reason': response.choices[0].finish_reason if response.choices[0] else None
-                }
-            }), 500
+            try:
+                finish_reason = response.choices[0].finish_reason
+            except Exception:
+                finish_reason = None
+            print(f"   - finish_reason: {finish_reason}")
+
+            # Tentativa 1: retry rápido com os mesmos parâmetros (transient)
+            retry_response, retry_error = process_openai_request(messages, model, max_tokens)
+            if retry_error:
+                print(f"❌ Retry 1 falhou: {retry_error}")
+            else:
+                content = _extract_choice_content(retry_response)
+                if content and content.strip() != '':
+                    response = retry_response
+                    print("✅ Retry 1 obteve conteúdo não-vazio")
+
+        # Se ainda vazio, tentar um retry com instrução de continuação e tokens reduzidos
+        if (not content or content.strip() == ''):
+            reduced_tokens = max(1000, int(max_tokens / 4))  # reduzir para tentar forçar saída menor
+            cont_message = {
+                'role': 'system',
+                'content': 'Continue a resposta anterior, forneça apenas o conteúdo restante sem repetir o que já foi entregue.'
+            }
+            new_messages = list(messages) + [cont_message]
+            print(f"🔁 Tentando Retry 2 com max_completion_tokens={reduced_tokens}")
+            retry2_response, retry2_error = process_openai_request(new_messages, model, reduced_tokens)
+            if retry2_error:
+                print(f"❌ Retry 2 falhou: {retry2_error}")
+            else:
+                content = _extract_choice_content(retry2_response)
+                if content and content.strip() != '':
+                    response = retry2_response
+                    max_tokens = reduced_tokens
+                    print("✅ Retry 2 obteve conteúdo não-vazio")
+
+        # Após retries, se ainda vazio, retornar erro com debug
+        if not content or content.strip() == '':
+            print(f"⚠️ Resposta definitivamente vazia após retries - abortando")
+            debug_info = {
+                'model': model,
+                'max_tokens_requested': max_tokens,
+                'finish_reason': getattr(response.choices[0], 'finish_reason', None) if response and getattr(response, 'choices', None) else None,
+                'response_repr': str(response)
+            }
+            return jsonify({'error': 'GPT-5 retornou resposta vazia. Tente novamente com um prompt mais específico.', 'debug': debug_info}), 500
         processing_time = time.time() - start_time
         
         print("✅ Resposta da OpenAI recebida com sucesso!")
