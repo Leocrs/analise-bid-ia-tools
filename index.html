@@ -1327,7 +1327,7 @@ REGRAS:
                 "🚀 <strong>Iniciando Análise Comparativa Automática...</strong><br>📊 Múltiplas propostas detectadas. Executando análise comparativa direta."
               );
             }
-            await structuredAnalysis();
+            await sendMessage();
           } else if (fileContents.length === 1) {
             // Apenas mensagem simples para arquivo único, SEM exibir o prompt detalhado
             addMessage(
