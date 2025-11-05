@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document AI Analyzer</title>
+    <link rel="stylesheet" href="document_ai_styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <img src="logo-verde.png" alt="Logo Tools" class="logo-header-tools" />
+        <h1>Análise de Propostas e Mapa de Concorrência</h1>
+      </div>
+
+      <div class="chat-container" id="chatContainer">
+        <!-- Mensagem inicial será adicionada dinamicamente -->
+      </div>
+
+      <div class="input-container">
+        <div class="input-wrapper">
+          <label
+            for="fileInput"
+            class="file-input-label"
+            title="Anexar arquivo"
+          >
+            📎
+          </label>
+          <input
+            type="file"
+            id="fileInput"
+            class="file-input"
+            accept=".pdf,.xlsx,.xls"
+            multiple
+          />
+          <textarea
+            id="messageInput"
+            class="message-input"
+            placeholder="Digite sua mensagem..."
+            rows="1"
+          ></textarea>
+          <button id="sendButton" class="send-button">
+            <span id="sendIcon" class="send-icon">➤</span>
+          </button>
+          <!-- Botão de análise com IA removido, pois análise inicial já é automática -->
+          <button id="exportExcel" class="export-button">Exportar Excel</button>
+          <button id="exportPDF" class="export-button">Exportar PDF</button>
+          <button id="consultarHistorico" class="export-button">
+            📚 Base Histórica
+          </button>
+        </div>
+        <div id="filePreview" class="file-preview">
+          <div class="file-info">
+            <span id="fileName"></span>
+            <button id="removeFile" class="remove-file">✕</button>
+          </div>
+          <div id="processingStatus" class="processing-status"></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="config-toggle" onclick="toggleConfig()">⚙️</button>
+
+    <div id="configPanel" class="config-panel">
+      <h3>Configurações</h3>
+      <div class="config-group">
+        <label for="model">Modelo:</label>
+        <input type="text" id="model" value="gpt-4" placeholder="gpt-4" />
+      </div>
+      <div class="config-group">
+        <label for="maxTokens">Max Tokens:</label>
+        <input type="number" id="maxTokens" value="3000" placeholder="3000" />
+      </div>
+      <div class="config-group">
+        <label for="chunkSize">Tamanho do Chunk (caracteres):</label>
+        <input type="number" id="chunkSize" value="3000" placeholder="3000" />
+      </div>
+      <div class="config-group">
+        <span class="protected-key"
+          >🔒 Sua chave está protegida no servidor!</span
+        >
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+
+    <script>
+      // Sistema de Base Histórica
+      let baseHistorica = [];
+
+      async function salvarNaBaseHistorica(analise) {
+        const registro = {
+          id: Date.now(),
+          data: new Date().toLocaleDateString("pt-BR"),
+          hora: new Date().toLocaleTimeString("pt-BR"),
+          arquivos: currentFiles.map((f) => f.name),
+          analise: analise,
+          fornecedores: extrairFornecedores(analise),
+          itens: extrairItens(analise),
+          valorTotal: extrairValores(analise),
+        };
+
+        baseHistorica.push(registro);
+
+        // Manter apenas os últimos 50 registros
+        if (baseHistorica.length > 50) {
+          baseHistorica = baseHistorica.slice(-50);
+        }
+
+        // Salvar no localStorage
+        localStorage.setItem(
+          "toolsBaseHistorica",
+          JSON.stringify(baseHistorica)
+        );
+
+        console.log("✅ Análise salva na base histórica:", registro.id);
+      }
+
+      function carregarBaseHistorica() {
+        const dados = localStorage.getItem("toolsBaseHistorica");
+        if (dados) {
+          baseHistorica = JSON.parse(dados);
+          console.log(
+            `📚 Base histórica carregada: ${baseHistorica.length} registros`
+          );
+        }
+      }
+
+      function extrairFornecedores(analise) {
+        const regex = /empresa\s+[a-z]/gi;
+        const matches = analise.match(regex) || [];
+        return [...new Set(matches)];
+      }
+
+      function extrairItens(analise) {
+        const regex = /<tr>.*?<\/tr>/gi;
+        const matches = analise.match(regex) || [];
+        return matches.length;
+      }
+
+      function extrairValores(analise) {
+        const regex = /R\$\s*[\d.,]+/gi;
+        const matches = analise.match(regex) || [];
+        return matches;
+      }
+
+      async function consultarBaseHistorica() {
+        if (baseHistorica.length === 0) {
+          addMessage(
+            "assistant",
+            "📚 <strong>Base Histórica Vazia</strong><br>Ainda não há análises anteriores registradas. Realize algumas análises para construir a base histórica."
+          );
+          return;
+        }
+
+        const resumo = `📚 <strong>CONSULTA À BASE HISTÓRICA - TOOLS ENGENHARIA</strong><br><br>
+
+      <strong>📊 Estatísticas Gerais:</strong><br>
+      • Total de análises realizadas: <strong>${
+        baseHistorica.length
+      }</strong><br>
+      • Período: ${baseHistorica[0]?.data} até ${
+          baseHistorica[baseHistorica.length - 1]?.data
+        }<br>
+      • Última análise: ${baseHistorica[baseHistorica.length - 1]?.data} às ${
+          baseHistorica[baseHistorica.length - 1]?.hora
+        }<br><br>
+
+      <strong>🏢 Análises Recentes:</strong><br>
+      ${baseHistorica
+        .slice(-5)
+        .reverse()
+        .map(
+          (reg) =>
+            `• <strong>${reg.data}</strong> - ${reg.arquivos.join(", ")} (${
+              reg.fornecedores.length
+            } fornecedores, ${reg.itens} itens)`
+        )
+        .join("<br>")}<br><br>
+
+      <strong>💡 Comandos Disponíveis:</strong><br>
+      • Digite <strong>"histórico completo"</strong> - Ver todas as análises<br>
+      • Digite <strong>"histórico [palavra-chave]"</strong> - Buscar por item específico<br>
+      • Digite <strong>"comparar preços [item]"</strong> - Comparar preços históricos<br>
+      • Digite <strong>"fornecedores histórico"</strong> - Ver fornecedores já analisados`;
+
+        addMessage("assistant", resumo);
+      }
+
+      async function consultarHistoricoEspecifico(consulta) {
+        const consultaLower = consulta.toLowerCase();
+
+        if (
+          consultaLower.includes("histórico completo") ||
+          consultaLower.includes("historico completo")
+        ) {
+          return gerarRelatorioCompletoHistorico();
+        }
+
+        if (consultaLower.includes("fornecedores")) {
+          return gerarRelatorioFornecedores();
+        }
+
+        if (
+          consultaLower.includes("comparar preços") ||
+          consultaLower.includes("comparar precos")
+        ) {
+          const item = extrairItemConsulta(consulta);
+          return compararPrecosHistoricos(item);
+        }
+
+        // Busca geral por palavra-chave
+        const palavraChave = extrairPalavraChave(consulta);
+        return buscarPorPalavraChave(palavraChave);
+      }
+
+      function gerarRelatorioCompletoHistorico() {
+        let relatorio = `📚 <strong>RELATÓRIO COMPLETO DA BASE HISTÓRICA</strong><br><br>`;
+
+        baseHistorica.forEach((reg, index) => {
+          relatorio += `<div style="border:1px solid #e5e7eb; padding:15px; margin:10px 0; border-radius:8px;">
+                  <strong>📄 Análise #${
+                    baseHistorica.length - index
+                  }</strong><br>
+                  <strong>Data:</strong> ${reg.data} às ${reg.hora}<br>
+                  <strong>Arquivos:</strong> ${reg.arquivos.join(", ")}<br>
+                  <strong>Fornecedores:</strong> ${
+                    reg.fornecedores.length
+                  } empresas<br>
+                  <strong>Itens:</strong> ${reg.itens} produtos/serviços<br>
+                  <strong>Valores:</strong> ${
+                    reg.valorTotal.length
+                  } preços identificados<br>
+                </div>`;
+        });
+
+        return relatorio;
+      }
+
+      function gerarRelatorioFornecedores() {
+        const todosFornecedores = baseHistorica.flatMap(
+          (reg) => reg.fornecedores
+        );
+        const fornecedoresUnicos = [...new Set(todosFornecedores)];
+
+        let relatorio = `🏢 <strong>FORNECEDORES NA BASE HISTÓRICA</strong><br><br>`;
+        relatorio += `<strong>Total de fornecedores únicos:</strong> ${fornecedoresUnicos.length}<br><br>`;
+
+        fornecedoresUnicos.forEach((fornecedor) => {
+          const ocorrencias = todosFornecedores.filter(
+            (f) => f === fornecedor
+          ).length;
+          relatorio += `• <strong>${fornecedor}</strong> - ${ocorrencias} análise(s)<br>`;
+        });
+
+        return relatorio;
+      }
+
+      function extrairItemConsulta(consulta) {
+        const match =
+          consulta.match(/comparar preços? (.+)/i) ||
+          consulta.match(/comparar precos? (.+)/i);
+        return match ? match[1].trim() : "item não especificado";
+      }
+
+      function extrairPalavraChave(consulta) {
+        const palavras = consulta.split(" ");
+        const palavrasRelevantes = palavras.filter(
+          (p) =>
+            p.length > 3 &&
+            !["histórico", "historico", "base", "consultar", "buscar"].includes(
+              p.toLowerCase()
+            )
+        );
+        return palavrasRelevantes[0] || "busca geral";
+      }
+
+      function buscarPorPalavraChave(palavra) {
+        const resultados = baseHistorica.filter(
+          (reg) =>
+            reg.analise.toLowerCase().includes(palavra.toLowerCase()) ||
+            reg.arquivos.some((arquivo) =>
+              arquivo.toLowerCase().includes(palavra.toLowerCase())
+            )
+        );
+
+        if (resultados.length === 0) {
+          return `🔍 <strong>Busca por "${palavra}"</strong><br><br>Nenhum resultado encontrado na base histórica.`;
+        }
+
+        let relatorio = `🔍 <strong>Resultados para "${palavra}"</strong><br><br>`;
+        relatorio += `<strong>Encontrado em ${resultados.length} análise(s):</strong><br><br>`;
+
+        resultados.forEach((reg) => {
+          relatorio += `• <strong>${reg.data}</strong> - ${reg.arquivos.join(
+            ", "
+          )}<br>`;
+        });
+
+        return relatorio;
+      }
+
+      // Função para exportar análise para Excel (melhorada)
+      document.getElementById("exportExcel").onclick = function () {
+        const chatContainer = document.getElementById("chatContainer");
+        const wb = XLSX.utils.book_new();
+
+        // Extrair APENAS a última mensagem de análise (relatório completo)
+        const messages = chatContainer.querySelectorAll(".message.assistant");
+        if (messages.length > 0) {
+          const ultimaMensagem = messages[messages.length - 1];
+          const conteudoDiv = ultimaMensagem.querySelector(".message-content");
+
+          // Tentar extrair tabelas primeiro
+          const tables = conteudoDiv.querySelectorAll("table");
+          if (tables.length > 0) {
+            // Se tem tabelas, criar abas por seção
+            tables.forEach((table, index) => {
+              const ws = XLSX.utils.table_to_sheet(table);
+              XLSX.utils.book_append_sheet(wb, ws, `Análise_${index + 1}`);
+            });
+          } else {
+            // Se não tem tabelas, exportar o texto completo
+            const texto = conteudoDiv.innerText;
+            const linhas = texto.split("\n").map((linha) => [linha]);
+            const ws = XLSX.utils.aoa_to_sheet([
+              ["TOOLS ENGENHARIA - ANÁLISE DE PROPOSTAS"],
+              [`Data: ${new Date().toLocaleDateString("pt-BR")}`],
+              [""],
+              ...linhas,
+            ]);
+            XLSX.utils.book_append_sheet(wb, ws, "Relatório");
+          }
+        }
+
+        const filename = `analise_propostas_${new Date()
+          .toISOString()
+          .slice(0, 10)}.xlsx`;
+        XLSX.writeFile(wb, filename);
+      };
+
+      // Função para exportar análise para PDF (melhorada)
+      document.getElementById("exportPDF").onclick = function () {
+        const chatContainer = document.getElementById("chatContainer");
+        const jsPDF = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
+        const doc = new jsPDF();
+
+        // Cabeçalho
+        doc.setFontSize(16);
+        doc.text("TOOLS ENGENHARIA - Análise de Propostas", 10, 20);
+        doc.setFontSize(10);
+        doc.text(`Data: ${new Date().toLocaleDateString("pt-BR")}`, 10, 30);
+
+        // Extrair APENAS a última mensagem de análise
+        const messages = chatContainer.querySelectorAll(".message.assistant");
+        let conteudo = "";
+        if (messages.length > 0) {
+          const ultimaMensagem = messages[messages.length - 1];
+          const conteudoDiv = ultimaMensagem.querySelector(".message-content");
+          conteudo = conteudoDiv.innerText;
+        } else {
+          conteudo = chatContainer.innerText;
+        }
+
+        // Remover APENAS emojis, preservar tudo mais (acentos, quebras de linha, espaços)
+        conteudo = conteudo.replace(/[\u{1F300}-\u{1F9FF}]/gu, ""); // Remove emojis Unicode
+
+        // Dividir por quebras de linha para preservar formatação
+        const paragrafs = conteudo.split("\n");
+
+        doc.setFontSize(11);
+        let yPosition = 40;
+
+        paragrafs.forEach((paragrafo) => {
+          if (paragrafo.trim() === "") {
+            // Linha vazia = adicionar espaço
+            yPosition += 3;
+          } else {
+            // Dividir cada parágrafo em linhas que cabem na página
+            const linhas = doc.splitTextToSize(paragrafo, 190);
+            linhas.forEach((linha) => {
+              if (yPosition > 280) {
+                doc.addPage();
+                yPosition = 20;
+              }
+              doc.text(linha, 10, yPosition);
+              yPosition += 5;
+            });
+          }
+        });
+
+        const filename = `analise_propostas_${new Date()
+          .toISOString()
+          .slice(0, 10)}.pdf`;
+        doc.save(filename);
+      };
+
+      // Event listener para consultar base histórica
+      document.getElementById("consultarHistorico").onclick =
+        consultarBaseHistorica;
+
+      // Inicialização completa do sistema
+      document.addEventListener("DOMContentLoaded", function () {
+        carregarBaseHistorica();
+
+        // Exibir mensagem de boas-vindas melhorada
+        setTimeout(() => {
+          const welcomeMessage = `🎯 <strong>SISTEMA AVANÇADO DE ANÁLISE DE BID</strong><br><br>
+
+      ✅ <strong>Sistema Carregado:</strong><br>
+      • Base histórica: <strong>${baseHistorica.length} análises</strong> registradas<br>
+      • Análise comparativa: <strong>Ativada</strong><br>
+      • Exportação Excel/PDF: <strong>Disponível</strong><br>
+      • Tabelas visuais: <strong>Habilitada</strong><br><br>
+
+      🚀 <strong>Recursos Disponíveis:</strong><br>
+      • Upload simultâneo de múltiplos arquivos<br>
+      • Comparação automática item por item<br>
+      • Destaque visual de melhores/piores preços<br>
+      • Ranking automático de fornecedores<br>
+      • Consulta à base histórica<br>
+      • Recomendações estratégicas<br><br>
+
+      📋 <strong>Para começar:</strong> Anexe o mapa de concorrência e as propostas comerciais.<br><br>
+
+      💡 <strong>Exemplo do resultado esperado:</strong><br>
+      <table border='1' style='border-collapse:collapse;font-size:12px;margin:10px 0'>
+      <tr style='background:#0e938f;color:white'><th>Item</th><th>Empresa A</th><th>Empresa B</th><th>Melhor</th></tr>
+      <tr><td>Ar Condicionado</td><td style='background:#fecaca'>R$ 50.000</td><td style='background:#dcfce7'>R$ 45.000</td><td>Empresa B</td></tr>
+      <tr><td>Instalação</td><td style='background:#dcfce7'>R$ 10.000</td><td style='background:#fecaca'>R$ 12.000</td><td>Empresa A</td></tr>
+      </table>`;
+
+          addMessage("assistant", welcomeMessage);
+        }, 1000);
+      });
+
+      // Adiciona as bibliotecas necessárias
+      // SheetJS para Excel
+      const scriptXLSX = document.createElement("script");
+      scriptXLSX.src =
+        "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
+      document.head.appendChild(scriptXLSX);
+      // jsPDF para PDF
+      const scriptPDF = document.createElement("script");
+      scriptPDF.src =
+        "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+      document.head.appendChild(scriptPDF);
+
+      let currentFiles = [];
+      let fileContents = [];
+      let processedChunks = new Map(); // Armazena chunks processados por arquivo
+      let conversationHistory = [];
+
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
+
+      document
+        .getElementById("fileInput")
+        .addEventListener("change", handleFileSelect);
+      document
+        .getElementById("removeFile")
+        .addEventListener("click", removeFile);
+      document
+        .getElementById("sendButton")
+        .addEventListener("click", sendMessage);
+      document
+        .getElementById("messageInput")
+        .addEventListener("keydown", handleKeyDown);
+      document
+        .getElementById("messageInput")
+        .addEventListener("input", adjustTextareaHeight);
+
+      loadSettings();
+
+      function loadSettings() {
+        const model = localStorage.getItem("openai_model");
+        const maxTokens = localStorage.getItem("max_tokens");
+        const chunkSize = localStorage.getItem("chunk_size");
+        if (model) document.getElementById("model").value = model;
+        if (maxTokens) document.getElementById("maxTokens").value = maxTokens;
+        if (chunkSize) document.getElementById("chunkSize").value = chunkSize;
+      }
+
+      function saveSettings() {
+        localStorage.setItem(
+          "openai_model",
+          document.getElementById("model").value
+        );
+        localStorage.setItem(
+          "max_tokens",
+          document.getElementById("maxTokens").value
+        );
+        localStorage.setItem(
+          "chunk_size",
+          document.getElementById("chunkSize").value
+        );
+      }
+
+      function toggleConfig() {
+        const panel = document.getElementById("configPanel");
+        panel.classList.toggle("open");
+        saveSettings();
+      }
+
+      function adjustTextareaHeight() {
+        const textarea = document.getElementById("messageInput");
+        textarea.style.height = "auto";
+        textarea.style.height = textarea.scrollHeight + "px";
+      }
+
+      function handleKeyDown(e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      }
+
+      // Função para dividir texto em chunks (otimizada)
+      function createChunks(text, chunkSize) {
+        // Truncar se muito grande para evitar overflow
+        const maxContentSize = 12000;
+        let processedText = text;
+
+        if (text.length > maxContentSize) {
+          const start = text.substring(0, maxContentSize / 2);
+          const end = text.substring(text.length - maxContentSize / 2);
+          processedText = start + "\n\n[...TRUNCADO...]\n\n" + end;
+        }
+
+        const chunks = [];
+        const sentences = processedText.split(/[.!?]\s+/);
+        let currentChunk = "";
+
+        for (const sentence of sentences) {
+          if ((currentChunk + sentence).length > chunkSize && currentChunk) {
+            chunks.push(currentChunk.trim());
+            currentChunk = sentence;
+          } else {
+            currentChunk += (currentChunk ? ". " : "") + sentence;
+          }
+        }
+
+        if (currentChunk) {
+          chunks.push(currentChunk.trim());
+        }
+
+        return chunks.filter(
+          (chunk) => chunk.length > 0 && chunk.length < chunkSize * 1.2
+        );
+      }
+
+      // Função para estimar tokens aproximadamente (1 token ≈ 4 caracteres)
+      function estimateTokens(text) {
+        return Math.ceil(text.length / 4);
+      }
+
+      function updateProcessingStatus(message) {
+        const statusDiv = document.getElementById("processingStatus");
+        statusDiv.textContent = message;
+        statusDiv.style.display = message ? "block" : "none";
+      }
+
+      function showStructuredPrompt() {
+        const prompt = `🎯 <strong>SISTEMA DE ANÁLISE AVANÇADA DE BID - TOOLS ENGENHARIA</strong><br><br>
+
+      📥 <strong>ETAPA 1: RECEBIMENTO E VALIDAÇÃO</strong><br>
+      • <strong>Mapa de Concorrência:</strong> Obrigatório (Excel/PDF)<br>
+      • <strong>Propostas Comerciais:</strong> Todas as empresas participantes<br>
+      • <strong>Validação Automática:</strong> Conferir se o mapa contém todos os itens, quantidades e valores unitários<br>
+      • <strong>Status:</strong> ✅ Arquivos validados → Prosseguir | ❌ Arquivos faltantes → Solicitar<br><br>
+
+      🔍 <strong>ETAPA 2: ANÁLISE TÉCNICA DETALHADA</strong><br>
+      • <strong>Extração de Dados:</strong> Criar tabela comparativa com TODOS os itens e valores<br>
+      • <strong>Comparação Item por Item:</strong> Identificar menor, médio e maior preço para cada item<br>
+      • <strong>Aderência ao Escopo:</strong> Verificar se propostas atendem 100% do solicitado<br>
+      • <strong>Divergências:</strong> Listar itens faltantes, excedentes ou com especificações diferentes<br>
+      • <strong>Formato Obrigatório:</strong> Tabela HTML com colunas: Item | Qtd | Empresa A | Empresa B | Empresa C | Menor Preço | Variação %<br><br>
+
+      📊 <strong>ETAPA 3: RELATÓRIO COMPARATIVO VISUAL</strong><br>
+      • <strong>Tabela Principal:</strong> Todos os itens lado a lado com destaque em cores<br>
+      • <strong>🟢 Verde:</strong> Melhor preço de cada item<br>
+      • <strong>🔴 Vermelho:</strong> Pior preço de cada item<br>
+      • <strong>🟡 Amarelo:</strong> Preços intermediários<br>
+      • <strong>Ranking por Item:</strong> 1º, 2º, 3º lugar em cada linha<br>
+      • <strong>Totais:</strong> Valor global por fornecedor e economia potencial<br><br>
+
+      🏆 <strong>ETAPA 4: RECOMENDAÇÕES ESTRATÉGICAS</strong><br>
+      • <strong>Mix de Fornecedores:</strong> Melhor combinação para economia máxima<br>
+      • <strong>Fornecedor Único:</strong> Análise de viabilidade e negociação<br>
+      • <strong>Itens Críticos:</strong> Destacar produtos com maior variação de preço<br>
+      • <strong>Oportunidades:</strong> Onde negociar e potencial de economia<br>
+      • <strong>Alertas:</strong> Preços muito baixos (suspeitos) ou muito altos<br><br>
+
+      📈 <strong>RESUMO EXECUTIVO FINAL</strong><br>
+      • <strong>Ranking Geral:</strong> 1º, 2º, 3º colocado por valor total<br>
+      • <strong>Economia Potencial:</strong> Valor em R$ e % de economia com mix ideal<br>
+      • <strong>Recomendação Principal:</strong> Melhor estratégia de contratação<br>
+      • <strong>Próximos Passos:</strong> Ações recomendadas para negociação<br><br>
+
+      ⚠️ <strong>CRÍTICO:</strong> NÃO fazer análise descritiva! APENAS tabela comparativa com preços lado a lado, destacando em VERDE o menor preço e VERMELHO o maior preço de cada item. OBRIGATÓRIO extrair todos os valores R$ encontrados.<br><br>
+      
+      <div style="text-align: center; margin: 20px 0;">
+        <button onclick="setupAnalysisButton()" style="
+          background: linear-gradient(135deg, #0e938f, #1fb5b1);
+          color: white;
+          border: none;
+          padding: 15px 30px;
+          font-size: 16px;
+          font-weight: bold;
+          border-radius: 25px;
+          cursor: pointer;
+          box-shadow: 0 4px 15px rgba(14, 147, 143, 0.3);
+          transition: all 0.3s ease;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(14, 147, 143, 0.4)'" 
+           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(14, 147, 143, 0.3)'">
+          🚀 EXECUTAR ANÁLISE COMPLETA
+        </button>
+      </div>`;
+        addMessage("assistant", prompt);
+      }
+
+      // Função de análise estruturada (chamada automaticamente ao anexar arquivos)
+      async function setupAnalysisButton() {
+        // Verifica se está processando arquivos
+        const preview = document.getElementById("processingStatus");
+        if (preview && preview.textContent.includes("Processando")) {
+          showError(
+            "Aguarde o processamento dos arquivos antes de iniciar a análise."
+          );
+          return;
+        }
+        if (fileContents.length === 0) {
+          showError("Por favor, anexe arquivos para análise.");
+          return;
+        }
+        // Verifica se tem mapa de concorrência
+        const hasMapa =
+          currentFiles &&
+          currentFiles.some(
+            (f) =>
+              f &&
+              f.name &&
+              (f.name.toLowerCase().includes("mapa") ||
+                f.name.toLowerCase().includes("concorrencia"))
+          );
+
+        // Chama análise estruturada (com ou sem mapa)
+        if (hasMapa) {
+          addMessage(
+            "assistant",
+            "🎯 <strong>Mapa de concorrência detectado!</strong> Executando análise completa com referencial."
+          );
+        } else {
+          addMessage(
+            "assistant",
+            "📊 <strong>Análise direta entre propostas</strong> - Comparando documentos anexados diretamente."
+          );
+        }
+        await structuredAnalysis();
+      }
+
+      async function structuredAnalysis() {
+        console.log("🚀 INICIANDO structuredAnalysis()");
+        const loadingId = addMessage("assistant", "");
+        showLoading(loadingId);
+
+        updateLoadingMessage(
+          loadingId,
+          "🔍 Consolidando todos os documentos..."
+        );
+        console.log("📄 Total de arquivos:", fileContents.length);
+
+        // Consolidar conteúdo de todos os arquivos - SEM TRUNCAR para garantir análise completa
+        let todosOsDocumentos = "";
+        fileContents.forEach((file, index) => {
+          todosOsDocumentos += `\n\n=== DOCUMENTO ${
+            index + 1
+          }: ${file.name.toUpperCase()} ===\n`;
+          // Incluir conteúdo COMPLETO para análise precisa de TODOS os fornecedores
+          todosOsDocumentos += file.content;
+        });
+
+        console.log(
+          "📊 TOTAL DE DOCUMENTOS PARA ANÁLISE:",
+          fileContents.length
+        );
+        console.log(
+          "📏 Tamanho total consolidado:",
+          todosOsDocumentos.length,
+          "caracteres"
+        );
+
+        // Detecta se há mapa de concorrência para adaptar o prompt
+        const hasMapa = fileContents.some(
+          (file) =>
+            file.name.toLowerCase().includes("mapa") ||
+            file.name.toLowerCase().includes("concorrencia")
+        );
+
+        // Prompt COMPACTO para análise consolidada (otimizado para tokens)
+        const promptConsolidado = `ANÁLISE CONSOLIDADA - TOOLS ENGENHARIA
+
+SEÇÃO 1️⃣: FORNECEDORES
+Para cada documento, extraia e consolide:
+📋 Forn. 1: [Nome] | CNPJ: [CNPJ] | Tel: [TODOS tel] | Email: [TODOS emails] | End: [Endereço] | Contato: [Nome-Cargo]
+
+📋 Forn. 2: [Nome] | CNPJ: [CNPJ] | Tel: [TODOS tel] | Email: [TODOS emails] | End: [Endereço] | Contato: [Nome-Cargo]
+
+${
+  fileContents.length > 2
+    ? "📋 Forn. 3: [Nome] | CNPJ: [CNPJ] | Tel: [TODOS tel] | Email: [TODOS emails] | End: [Endereço] | Contato: [Nome-Cargo]"
+    : ""
+}
+
+SEÇÃO 2️⃣: ITENS E PREÇOS
+GERE TABELA HTML EXATAMENTE COMO O MODELO (SEM LINHAS VAZIAS):
+<table border='1' style='border-collapse:collapse;width:100%;font-size:13px'>
+<tr style='background:#0e938f;color:white'><th>Item</th><th>Marvidros</th><th>Vidraçaria Mac Vidros</th><th>Melhor</th><th>Economia</th></tr>
+<tr><td>Ar Condicionado</td><td style='background:#dcfce7'>R$ 50.000</td><td style='background:#fecaca'>R$ 45.000</td><td>Vidraçaria</td><td>R$ 5.000</td></tr>
+<tr><td>Instalação</td><td style='background:#dcfce7'>R$ 10.000</td><td style='background:#fecaca'>R$ 12.000</td><td>Marvidros</td><td>R$ 2.000</td></tr>
+<tr style='background:#f3f4f6;font-weight:bold'><td>TOTAL</td><td>R$ 60.000</td><td>R$ 57.000</td><td>Vidraçaria</td><td>R$ 3.000</td></tr>
+</table>
+REGRAS OBRIGATÓRIAS (NENHUMA EXCEÇÃO):
+1. COMECE direto com <table - SEM espaços em branco antes
+2. Cabeçalho: background #0e938f + color white
+3. Para CADA item - alternando cores:
+   - Coloque style='background:#dcfce7' (verde) NO MELHOR PREÇO
+   - Coloque style='background:#fecaca' (vermelho) NO PIOR PREÇO
+4. Linha TOTAL: background #f3f4f6 + font-weight:bold
+5. TERMINE com </table> - SEM espaços em branco depois
+6. TODOS os itens encontrados nos documentos
+7. NOMES REAIS das empresas
+8. Calcule a economia (diferença entre maior e menor)
+SEM NENHUMA LINHA VAZIA ANTES OU DEPOIS DA TABELA
+
+SEÇÃO 3️⃣: MIX DE PREÇO
+Se há possibilidade de combinar fornecedores para economia:
+• Empresa A: Itens [Lista] = R$ [subtotal]
+• Empresa B: Itens [Lista] = R$ [subtotal]
+• Total com MIX: R$ [valor] | Economia: R$ [diferença]
+
+Se não há possibilidade (todos itens de uma empresa): Responda "Não aplicável - todos itens de mesma empresa"
+
+SEÇÃO 4️⃣: COMERCIAL - Descontos, Pagamento, Garantia, Prazos (por fornecedor)
+Liste para CADA fornecedor:
+- Desconto oferecido
+- Forma de pagamento
+- Garantia (se informado)
+- Prazo de entrega
+
+SEÇÃO 5️⃣: RANKING - 1º, 2º, 3º lugar com valores e economia
+1º - [Empresa] | Valor Total: R$ [XXX] | Economia: R$ [XXX]
+2º - [Empresa] | Valor Total: R$ [XXX] | Economia: R$ [XXX]
+
+SEÇÃO 6️⃣: RECOMENDAÇÃO
+• CONTRATAR: [Empresa] (melhor custo-benefício)
+• ECONOMIA: R$ [valor]
+• ITENS IGUAIS?: Sim ou Não - explicar brevemente
+• MIX SUGERIDO: Sim (com detalhes) ou Não
+• NEGOCIAR: [Itens específicos com maior variação]
+• DIFERENCIAIS: [Descontos, garantias, prazos]
+
+Instruções críticas:
+- Extraia TODOS os itens, sem exceção
+- Se múltiplos tel/email: liste TODOS
+- Se não encontrar: "Não encontrado"
+- Verde para melhor, vermelho para pior
+- NOMES REAIS das empresas em SEÇÃO 2, não "Forn.1"
+- Mantenha consistência de nomes em todas as seções
+- MIX DE PREÇO: mostre qual combinação economiza mais
+- ITENS IGUAIS: responda se todos fornecedores orçaram os mesmos itens`;
+
+        try {
+          updateLoadingMessage(
+            loadingId,
+            "🚀 Executando análise comparativa consolidada..."
+          );
+          console.log("📊 Preparando prompt consolidado...");
+          console.log("📏 Tamanho do prompt:", promptConsolidado.length);
+          console.log("📄 Tamanho dos documentos:", todosOsDocumentos.length);
+
+          const resultado = await callBackend(
+            promptConsolidado,
+            `ANÁLISE TODOS OS DOCUMENTOS SIMULTANEAMENTE:\n\n${todosOsDocumentos}`
+          );
+          console.log("✅ Resultado recebido do backend");
+
+          updateMessage(loadingId, resultado);
+
+          // Salvar análise na base histórica
+          console.log("💾 Salvando na base histórica...");
+          await salvarNaBaseHistorica(resultado);
+          console.log("✅ structuredAnalysis() CONCLUÍDA COM SUCESSO");
+        } catch (error) {
+          console.error("❌ ERRO em structuredAnalysis():", error);
+          updateMessage(
+            loadingId,
+            `❌ <span style='color:red;'>Erro na análise consolidada: ${error.message}</span>`
+          );
+        }
+      }
+
+      async function extractPDFText(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = async function (e) {
+            try {
+              const typedArray = new Uint8Array(e.target.result);
+              const pdf = await pdfjsLib.getDocument(typedArray).promise;
+              let fullText = "";
+              for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items
+                  .map((item) => item.str)
+                  .join(" ");
+                fullText += `\n\n--- Página ${i} ---\n${pageText}`;
+              }
+              resolve(fullText.trim());
+            } catch (error) {
+              reject(error);
+            }
+          };
+          reader.onerror = () => reject(new Error("Erro ao ler arquivo PDF"));
+          reader.readAsArrayBuffer(file);
+        });
+      }
+
+      async function extractExcelData(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            try {
+              const data = new Uint8Array(e.target.result);
+              const workbook = XLSX.read(data, { type: "array" });
+              let allData = "";
+              workbook.SheetNames.forEach((sheetName) => {
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+                  header: 1,
+                });
+                allData += `\n\n--- Planilha: ${sheetName} ---\n`;
+                jsonData.forEach((row, index) => {
+                  if (row.length > 0) {
+                    allData += `Linha ${index + 1}: ${row.join(" | ")}\n`;
+                  }
+                });
+              });
+              resolve(allData.trim());
+            } catch (error) {
+              reject(error);
+            }
+          };
+          reader.onerror = () => reject(new Error("Erro ao ler arquivo Excel"));
+          reader.readAsArrayBuffer(file);
+        });
+      }
+
+      function removeFile() {
+        // Limpa os arrays e variáveis
+        currentFiles = [];
+        fileContents = [];
+        processedChunks.clear();
+
+        const fileInput = document.getElementById("fileInput");
+        if (fileInput) fileInput.value = "";
+
+        const preview = document.getElementById("filePreview");
+        if (preview) {
+          preview.classList.remove("show");
+          preview.style.display = "none";
+        }
+
+        const fileName = document.getElementById("fileName");
+        if (fileName) fileName.textContent = "";
+
+        updateProcessingStatus("");
+      }
+
+      async function sendMessage() {
+        const input = document.getElementById("messageInput");
+        const message = input ? input.value.trim() : "";
+
+        // Verifica se há conteúdo para enviar
+        if (!message && (!fileContents || fileContents.length === 0)) return;
+
+        // Adiciona input do usuário ao histórico se houver mensagem
+        if (message) {
+          addMessage("user", message);
+          conversationHistory.push({ role: "user", content: message });
+        }
+
+        // Limpa input apenas se existe
+        if (input) {
+          input.value = "";
+          adjustTextareaHeight();
+        }
+
+        const loadingId = addMessage("assistant", "");
+        showLoading(loadingId);
+
+        try {
+          let response = "";
+
+          if (fileContents && fileContents.length > 0) {
+            // Processar arquivos chunk por chunk
+            for (const file of fileContents) {
+              if (file.chunks && file.chunks.length > 1) {
+                // Arquivo grande - processar em chunks
+                updateLoadingMessage(
+                  loadingId,
+                  `Analisando ${file.name} (${file.chunks.length} partes)...`
+                );
+
+                let fileAnalysis = `\n\n=== ANÁLISE DE ${file.name.toUpperCase()} ===\n`;
+
+                for (let i = 0; i < file.chunks.length; i++) {
+                  const chunk = file.chunks[i];
+                  const chunkMessage = `Analise esta parte ${i + 1} de ${
+                    file.chunks.length
+                  } do arquivo "${file.name}":\n\n${chunk}`;
+
+                  updateLoadingMessage(
+                    loadingId,
+                    `Analisando ${file.name} - Parte ${i + 1}/${
+                      file.chunks.length
+                    }...`
+                  );
+
+                  const chunkResponse = await callBackend(
+                    `STOP! NÃO FAÇA ANÁLISE DESCRITIVA!
+
+OBRIGATÓRIO: APENAS TABELA COMPARATIVA + NÚMEROS
+
+PASSO 1: EXTRAIR VALORES
+- Encontrar TODOS os preços em R$
+- Identificar empresas/fornecedores
+- Listar itens/serviços cotados
+
+PASSO 2: CRIAR TABELA HTML (OBRIGATÓRIO)
+<table border='1' style='border-collapse:collapse;width:100%;font-size:14px'>
+<tr style='background:#0e938f;color:white'>
+<th>ITEM/SERVIÇO</th><th>FORNECEDOR</th><th>PREÇO</th><th>OBSERVAÇÕES</th>
+</tr>
+<tr>
+<td>[ITEM]</td><td>[EMPRESA]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td>[OBS]</td>
+</tr>
+</table>
+
+NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
+                    chunkMessage
+                  );
+
+                  fileAnalysis += `\n--- Parte ${
+                    i + 1
+                  } ---\n${chunkResponse}\n`;
+
+                  // Pequena pausa entre chunks
+                  await new Promise((resolve) => setTimeout(resolve, 500));
+                }
+
+                response += fileAnalysis;
+              } else {
+                // Arquivo pequeno - processar normalmente
+                updateLoadingMessage(loadingId, `Analisando ${file.name}...`);
+                const fileResponse = await callBackend(
+                  `STOP! NÃO FAÇA ANÁLISE DESCRITIVA!
+
+OBRIGATÓRIO: APENAS TABELA COMPARATIVA + NÚMEROS
+
+PASSO 1: EXTRAIR VALORES
+- Encontrar TODOS os preços em R$
+- Identificar empresas/fornecedores
+- Listar itens/serviços cotados
+
+PASSO 2: CRIAR TABELA HTML (OBRIGATÓRIO)
+<table border='1' style='border-collapse:collapse;width:100%;font-size:14px'>
+<tr style='background:#0e938f;color:white'>
+<th>ITEM/SERVIÇO</th><th>FORNECEDOR</th><th>PREÇO</th><th>OBSERVAÇÕES</th>
+</tr>
+<tr>
+<td>[ITEM]</td><td>[EMPRESA]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td>[OBS]</td>
+</tr>
+</table>
+
+PASSO 3: TOTAIS POR FORNECEDOR
+• [EMPRESA]: R$ [TOTAL]
+
+NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
+                  `Analise o seguinte documento "${file.name}":\n\n${file.content}`
+                );
+                response += `\n\n=== ANÁLISE DE ${file.name.toUpperCase()} ===\n${fileResponse}\n`;
+              }
+            }
+
+            // Se havia uma mensagem do usuário junto, processar também
+            if (message) {
+              updateLoadingMessage(loadingId, "Processando sua pergunta...");
+              const messageResponse = await callBackend(
+                "Você é um assistente especializado em análise de documentos. Com base nas análises dos documentos fornecidos anteriormente, responda à pergunta do usuário. Responda em português.",
+                `Com base nas análises dos documentos, responda: ${message}`
+              );
+              response += `\n\n=== RESPOSTA À SUA PERGUNTA ===\n${messageResponse}`;
+            }
+          } else {
+            // Apenas mensagem sem arquivos - verificar se é consulta histórica
+            if (
+              message.toLowerCase().includes("histórico") ||
+              message.toLowerCase().includes("historico") ||
+              message.toLowerCase().includes("comparar preços") ||
+              message.toLowerCase().includes("comparar precos") ||
+              message.toLowerCase().includes("fornecedores histórico")
+            ) {
+              response = await consultarHistoricoEspecifico(message);
+            } else {
+              response = await callBackend(
+                `Você é um assistente especializado em análise de documentos da Tools Engenharia. Responda em português e seja detalhado em suas análises.
+
+      INFORMAÇÃO IMPORTANTE: Temos ${baseHistorica.length} análises na base histórica. Se o usuário mencionar histórico ou quiser comparar com análises anteriores, oriente-o a usar comandos específicos como "histórico completo" ou o botão "Base Histórica".`,
+                message
+              );
+            }
+          }
+
+          updateMessage(loadingId, response);
+          conversationHistory.push({ role: "assistant", content: response });
+
+          // Não remover os arquivos automaticamente após análise
+        } catch (error) {
+          updateMessage(loadingId, `Erro: ${error.message}`);
+        }
+      }
+
+      function updateLoadingMessage(messageId, text) {
+        const messageDiv = document.getElementById(messageId);
+        const contentDiv = messageDiv.querySelector(".message-content");
+        contentDiv.innerHTML = `
+                              <div class="loading">
+                                  <div class="spinner"></div>
+                                  ${text}
+                              </div>
+                          `;
+      }
+
+      async function callBackend(systemPrompt, userMessage) {
+        console.log("🔗 INICIANDO callBackend()");
+        console.log(
+          "🎯 Model:",
+          document.getElementById("model").value || "gpt-4"
+        );
+        console.log(
+          "🔢 MaxTokens:",
+          parseInt(document.getElementById("maxTokens").value) || 4000
+        );
+
+        const model = document.getElementById("model").value || "gpt-4";
+        // ⚠️ AJUSTADO para 3000 tokens (limite: 8192 total - 3000 resposta = 5192 para input)
+        // Isso garante espaço suficiente para PDFs grandes e evita erro de context_length_exceeded
+        const maxTokens =
+          parseInt(document.getElementById("maxTokens").value) || 3000;
+
+        console.log(
+          "📝 Tamanho da mensagem do usuário:",
+          userMessage.length,
+          "caracteres"
+        );
+        console.log(
+          "📋 Tamanho do prompt do sistema:",
+          systemPrompt.length,
+          "caracteres"
+        );
+
+        // ⚠️ NÃO TRUNCAR A MENSAGEM DO USUÁRIO - ISSO QUEBRA A ANÁLISE COMPLETA
+        // A API pode lidar com mensagens maiores e o modelo GPT-4 tem limite de ~8k tokens
+        const messages = [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userMessage },
+        ];
+
+        console.log("📦 Mensagens a enviar:", messages.length, "mensagens");
+        console.log(
+          "📌 Primeira mensagem (system) size:",
+          systemPrompt.length,
+          "chars"
+        );
+        console.log(
+          "📌 Segunda mensagem (user) size:",
+          userMessage.length,
+          "chars"
+        );
+
+        const backendUrl =
+          "https://analise-bid-ia-backend.onrender.com/api/chat";
+        console.log("🌐 Fazendo requisição para:", backendUrl);
+        console.log("📦 Payload:", {
+          model,
+          messages: messages.length + " mensagens",
+          max_tokens: maxTokens,
+        });
+
+        const response = await fetch(backendUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: model,
+            messages: messages,
+            max_tokens: maxTokens,
+          }),
+        });
+
+        console.log("📡 Status da resposta:", response.status);
+
+        if (!response.ok) {
+          const error = await response.json();
+          console.error("❌ Erro da API:", error);
+          throw new Error(error.error || "Erro na API do backend");
+        }
+
+        const data = await response.json();
+        console.log("✅ Dados recebidos do backend");
+        console.log(
+          "📄 Tamanho da resposta:",
+          data.choices[0].message.content.length
+        );
+        return data.choices[0].message.content;
+      }
+
+      function addMessage(sender, content) {
+        const chatContainer = document.getElementById("chatContainer");
+        const messageDiv = document.createElement("div");
+        messageDiv.className = `message ${sender}`;
+        const messageId = "msg_" + Date.now();
+        messageDiv.id = messageId;
+        messageDiv.innerHTML = `
+                  <div class="avatar ${sender}">${
+          sender === "user"
+            ? "<img src='tools-avatar-sem-fundo.png' alt='Logo Tools' class='logo-tools-avatar'/>"
+            : "<span class='robot-emoji'>🤖</span>"
+        }</div>
+                  <div class="message-content">${content}</div>
+                    `;
+        chatContainer.appendChild(messageDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        return messageId;
+      }
+
+      function showLoading(messageId) {
+        const messageDiv = document.getElementById(messageId);
+        const contentDiv = messageDiv.querySelector(".message-content");
+        contentDiv.innerHTML = `
+                              <div class="loading">
+                                  <div class="spinner"></div>
+                                  Analisando...
+                              </div>
+                          `;
+      }
+
+      function updateMessage(messageId, content) {
+        const messageDiv = document.getElementById(messageId);
+        const contentDiv = messageDiv.querySelector(".message-content");
+        // Remover quebras de linha duplicadas (mais de 2 seguidas) para limpeza visual
+        const cleanedContent = content.replace(/\n{3,}/g, "\n\n");
+        contentDiv.innerHTML = cleanedContent.replace(/\n/g, "<br>");
+      }
+
+      function showError(message) {
+        const chatContainer = document.getElementById("chatContainer");
+        const errorDiv = document.createElement("div");
+        errorDiv.className = "error";
+        errorDiv.textContent = message;
+        chatContainer.appendChild(errorDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        setTimeout(() => {
+          errorDiv.remove();
+        }, 5000);
+      }
+
+      ["model", "maxTokens", "chunkSize"].forEach((id) => {
+        document.getElementById(id).addEventListener("input", saveSettings);
+      });
+
+      function handleFileSelect(e) {
+        const preview = document.getElementById("filePreview");
+        const files = Array.from(e.target.files);
+        // Acumula arquivos, evitando duplicados pelo nome
+        const fileNames = currentFiles.map((f) => f.name);
+        files.forEach((f) => {
+          if (!fileNames.includes(f.name)) {
+            currentFiles.push(f);
+          }
+        });
+        // Acumula fileContents sem sobrescrever
+        const processedNames = fileContents.map((f) => f.name);
+        processedChunks.clear();
+        if (currentFiles.length === 0) {
+          document.getElementById("fileName").textContent = "";
+          preview.classList.remove("show");
+          preview.style.display = "none";
+          return;
+        }
+        document.getElementById("fileName").textContent = currentFiles
+          .map((f) => f.name)
+          .join(", ");
+        preview.classList.add("show");
+        preview.style.display = "block";
+        // Limpa o input para permitir anexar novamente
+        document.getElementById("fileInput").value = "";
+
+        // Leitura e processamento dos arquivos selecionados
+        Promise.all(
+          files.map(async (file) => {
+            let content = "";
+            try {
+              if (file.name.toLowerCase().endsWith(".pdf")) {
+                content = await extractPDFText(file);
+              } else if (
+                file.name.toLowerCase().endsWith(".xlsx") ||
+                file.name.toLowerCase().endsWith(".xls")
+              ) {
+                content = await extractExcelData(file);
+              }
+              if (!processedNames.includes(file.name)) {
+                fileContents.push({ name: file.name, content: content });
+              }
+            } catch (error) {
+              showError(`Erro ao processar ${file.name}: ${error.message}`);
+            }
+          })
+        ).then(async () => {
+          // Atualiza a exibição após o processamento dos arquivos
+          updateFilePreview();
+
+          // Verifica se tem mapa de concorrência
+          const hasMapa = currentFiles.some(
+            (f) =>
+              f.name.toLowerCase().includes("mapa") ||
+              f.name.toLowerCase().includes("concorrencia")
+          );
+
+          if (fileContents.length >= 2) {
+            // Executa análise estruturada automaticamente
+            if (hasMapa) {
+              addMessage(
+                "assistant",
+                "🚀 <strong>Iniciando Análise Comparativa Automática...</strong><br>🎯 Detectado mapa de concorrência + propostas. Executando análise estruturada completa."
+              );
+            } else {
+              addMessage(
+                "assistant",
+                "🚀 <strong>Iniciando Análise Comparativa Automática...</strong><br>📊 Múltiplas propostas detectadas. Executando análise comparativa direta."
+              );
+            }
+            await structuredAnalysis();
+          } else if (fileContents.length === 1) {
+            // Apenas mensagem simples para arquivo único, SEM exibir o prompt detalhado
+            addMessage(
+              "assistant",
+              "📄 <strong>Arquivo único anexado.</strong> Para análise comparativa automática, anexe pelo menos 2 propostas ou documentos."
+            );
+          }
+        });
+      }
+
+      function updateFilePreview() {
+        const preview = document.getElementById("filePreview");
+        const fileName = document.getElementById("fileName");
+        const processingStatus = document.getElementById("processingStatus");
+
+        if (fileContents.length > 0) {
+          fileName.textContent = fileContents
+            .map((file) => file.name)
+            .join(", ");
+          processingStatus.textContent = `${fileContents.length} arquivo(s) adicionado(s)`;
+          preview.classList.add("show");
+          preview.style.display = "block";
+        } else {
+          preview.classList.remove("show");
+          preview.style.display = "none";
+        }
+      }
+    </script>
+  </body>
+</html>

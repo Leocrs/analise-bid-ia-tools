@@ -1,0 +1,407 @@
+/* Botões de exportação pequenos, arredondados e cinza quase branco */
+.export-button {
+  background: #f8fafc;
+  color: #374151;
+  border: none;
+  border-radius: 18px;
+  padding: 4px 10px;
+  font-size: 0.95em;
+  margin-left: 6px;
+  box-shadow: 0 2px 8px rgba(55, 65, 81, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.export-button:hover {
+  background: #e5e7eb;
+  color: #222;
+  box-shadow: 0 4px 16px rgba(55, 65, 81, 0.16);
+}
+
+/* Botão específico para base histórica */
+#consultarHistorico {
+  background: #10b981 !important;
+  color: white !important;
+}
+
+#consultarHistorico:hover {
+  background: #059669 !important;
+  color: white !important;
+}
+
+/* Estilos para tabelas comparativas */
+.message-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.message-content table th {
+  background: #0e938f;
+  color: white;
+  padding: 12px 8px;
+  text-align: center;
+  font-weight: 600;
+  border: none;
+}
+
+.message-content table td {
+  padding: 10px 8px;
+  border: 1px solid #e5e7eb;
+  text-align: center;
+}
+
+.message-content table tr:nth-child(even) {
+  background: #f9fafb;
+}
+
+.message-content table tr:hover {
+  background: #f3f4f6;
+}
+
+/* Destaque para valores na tabela */
+.message-content table .melhor-preco {
+  background: #dcfce7 !important;
+  color: #166534;
+  font-weight: bold;
+}
+
+.message-content table .pior-preco {
+  background: #fecaca !important;
+  color: #991b1b;
+  font-weight: bold;
+}
+
+.message-content table .preco-medio {
+  background: #fef3c7 !important;
+  color: #92400e;
+}
+.analyze-ia-button {
+  background: #0e938f !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 8px 16px !important;
+  cursor: pointer !important;
+  font-size: 1.2em !important;
+  margin: 0 !important;
+}
+
+.analyze-ia-button:hover {
+  background: #0b7a77 !important;
+}
+
+.send-button {
+  background: #0e938f;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 1em;
+}
+
+.send-button:hover {
+  background: #0b7a77;
+}
+.logo-header-tools {
+  display: block;
+  margin-left: 0;
+  margin-bottom: 8px;
+  width: 140px;
+  height: auto;
+  border-radius: 0;
+}
+body {
+  font-family: Arial, sans-serif;
+  background: #f6f8fa;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 1000px;
+  margin: 20px auto;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  padding: 32px;
+}
+
+.header h1 {
+  font-size: 1.2em; /* Altere este valor para o tamanho desejado */
+  margin-bottom: 8px;
+}
+
+.chat-container {
+  min-height: 600px;
+  margin-bottom: 16px;
+  max-height: 1200px;
+  overflow-y: auto;
+}
+
+.message {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.avatar {
+  width: 42px;
+  height: 42px;
+  background: #10b981;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-right: 10px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.message-content {
+  background: #f1f5f9;
+  padding: 10px 14px;
+  border-radius: 6px;
+  max-width: 80%;
+  line-height: 1.4;
+}
+
+.input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.file-input-label {
+  background: #f3f4f6;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid #d1d5db;
+  font-size: 1.2em;
+}
+
+.file-input {
+  display: none;
+}
+
+.message-input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  resize: none;
+  font-family: inherit;
+}
+
+.send-button {
+  background: #0e938f;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 1.1em;
+}
+/* Ícone do botão de envio */
+.send-icon {
+  font-size: 0.9em;
+}
+
+.send-button:hover {
+  background: #0b7a77;
+}
+
+.file-preview {
+  margin-top: 8px;
+  display: none;
+}
+
+.file-preview.show {
+  display: block;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f1f5f9;
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+}
+
+.processing-status {
+  font-size: 0.9em;
+  color: #6b7280;
+  padding: 4px 10px;
+  background: #fef3c7;
+  border-radius: 4px;
+  display: none;
+}
+
+.remove-file {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 1.2em;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.remove-file:hover {
+  background: #fee2e2;
+  border-radius: 4px;
+}
+
+.config-toggle {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  background: #10b981;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.5em;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.config-toggle:hover {
+  background: #059669;
+}
+
+.config-panel {
+  position: fixed;
+  top: 70px;
+  right: 24px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+  padding: 20px;
+  width: 260px;
+  display: none;
+  z-index: 20;
+}
+
+.config-panel.open {
+  display: block;
+}
+
+.config-group {
+  margin-bottom: 16px;
+}
+
+.config-group label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.config-group input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+}
+
+.protected-key {
+  color: #10b981;
+  font-weight: bold;
+  font-size: 0.9em;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6b7280;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 3px solid #e5e7eb;
+  border-top: 3px solid #10b981;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error {
+  color: #ef4444;
+  margin: 8px 0;
+  font-weight: bold;
+  padding: 8px;
+  background: #fee2e2;
+  border-radius: 4px;
+}
+
+.logo-tools-avatar {
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  object-fit: cover;
+  aspect-ratio: 1/1;
+}
+
+/* Classe específica para emoji do robô no avatar */
+.robot-emoji {
+  font-size: 2.2em;
+  display: block;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  line-height: 42px;
+}
+
+/* Normalizar fonte para spans de arquivos */
+.file-info span {
+  font-size: 0.95em;
+  font-weight: normal;
+  line-height: 1.4;
+  display: inline;
+  width: auto;
+  height: auto;
+  text-align: left;
+}
+
+/* Normalizar fonte para nomes de arquivos */
+#fileName {
+  font-size: 0.95em !important;
+  font-weight: normal !important;
+  line-height: 1.4 !important;
+  display: inline !important;
+  width: auto !important;
+  height: auto !important;
+  text-align: left !important;
+}
