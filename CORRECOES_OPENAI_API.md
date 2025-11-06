@@ -415,7 +415,84 @@ Fonte: https://platform.openai.com/docs/guides/reasoning/using-gpt-5
 
 ---
 
-## � LIÇÕES APRENDIDAS
+## 🚨 ERRO 3: System Prompt Ignorado na Responses API (GPT-5)
+
+### ❌ Problema
+
+```
+Saída com formatação inconsistente - não seguia template de 6 seções
+- Esperado: SEÇÃO 1️⃣ (FORNECEDORES), SEÇÃO 2️⃣ (TABELA), ... SEÇÃO 6️⃣ (RECOMENDAÇÃO)
+- Resultado: 4 seções desordenadas, sem estrutura do prompt
+- Root cause: System prompt NÃO estava chegando ao modelo
+```
+
+### 📊 Root Cause
+
+Na implementação inicial da **Responses API para GPT-5**, o código extraía apenas a mensagem do usuário:
+
+```python
+# ❌ ERRADO - ignora system prompt
+user_message = ""
+for msg in messages:
+    if msg.get("role") == "user":
+        user_message = msg.get("content", "")
+        break
+
+response = client.responses.create(
+    model=model,
+    input=user_message,  # ← Apenas user, system foi descartado!
+    max_output_tokens=max_tokens,
+    reasoning={"effort": "low"},
+    text={"verbosity": "high"}
+)
+```
+
+**Diferença crítica:** Responses API NÃO aceita `messages` com roles separadas. Requer um único campo `input`. O prompt do sistema precisa ser **concatenado manualmente**.
+
+### ✅ Solução Implementada
+
+**Arquivo:** `api/index.py`, função `process_openai_request()` (linhas 136-154)
+
+**Commit:** fafb3bd
+
+```python
+# ✅ CORRETO - concatena system + user
+if model.startswith('gpt-5'):
+    print("🔄 Usando Responses API para GPT-5...")
+    
+    # Extrair AMBOS os prompts
+    system_content = ""
+    user_message = ""
+    for msg in messages:
+        if msg.get("role") == "system":
+            system_content = msg.get("content", "")
+        elif msg.get("role") == "user":
+            user_message = msg.get("content", "")
+    
+    # Concatenar para Responses API ← CHAVE
+    combined_input = f"INSTRUÇÕES:\n{system_content}\n\nCONTEÚDO:\n{user_message}"
+    
+    response = client.responses.create(
+        model=model,
+        input=combined_input,  # ← Agora contém AMBOS
+        max_output_tokens=max_tokens,
+        reasoning={"effort": "low"},
+        text={"verbosity": "high"}
+    )
+```
+
+### 🎯 Impacto
+
+| Antes | Depois |
+| --- | --- |
+| ❌ System prompt descartado | ✅ System prompt + User concatenados |
+| ❌ 4 seções | ✅ 6 seções estruturadas |
+| ❌ ~2000 chars | ✅ 6203+ caracteres |
+| ❌ Sem template | ✅ Segue template exatamente |
+
+---
+
+## 📚 LIÇÕES APRENDIDAS
 
 ### O que causou o atraso de ~1 semana:
 
