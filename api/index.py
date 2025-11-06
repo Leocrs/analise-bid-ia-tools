@@ -120,24 +120,28 @@ client = OpenAI(
 def process_openai_request(messages, model, max_tokens):
     """Processa requisição OpenAI com controle de timeout"""
     try:
-        # 🔧 CORREÇÃO: max_completion_tokens para modelos GPT-4o e posteriores
-        api_params = {
-            'model': model,
-            'messages': messages,
-            'temperature': 0.7,
-            'timeout': OPENAI_TIMEOUT
-        }
-        
-        # Usar parâmetro correto baseado no modelo
-        if model in ['gpt-5', 'gpt-4o', 'gpt-4o-mini'] or 'gpt-4o' in model:
-            api_params['max_completion_tokens'] = max_tokens
+        # 🔧 COMPATIBILIDADE: Tenta max_completion_tokens primeiro (novo), depois max_tokens (antigo)
+        try:
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                max_completion_tokens=max_tokens,
+                temperature=0.7,
+                timeout=OPENAI_TIMEOUT
+            )
             print(f"✅ Usando max_completion_tokens: {max_tokens}")
-        else:
-            api_params['max_tokens'] = max_tokens
-            print(f"✅ Usando max_tokens: {max_tokens}")
-        
-        response = client.chat.completions.create(**api_params)
-        return response, None
+            return response, None
+        except TypeError:
+            # Fallback para versão antiga do SDK
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                max_tokens=max_tokens,
+                temperature=0.7,
+                timeout=OPENAI_TIMEOUT
+            )
+            print(f"✅ Usando max_tokens (compatibilidade): {max_tokens}")
+            return response, None
     except Exception as e:
         return None, str(e)
 
