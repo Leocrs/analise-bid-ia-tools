@@ -126,18 +126,28 @@ def process_openai_request(messages, model, max_tokens):
         
         # ⚠️ GPT-5 usa Responses API, não Chat Completions!
         if model.startswith('gpt-5'):
-            print("� Usando Responses API para GPT-5...")
+            print("🔄 Usando Responses API para GPT-5...")
             
             # Combinar mensagens para input único (Responses API requer input, não messages)
+            # ⭐ CORREÇÃO: Incluir SYSTEM PROMPT + USER MESSAGE no campo input
+            system_content = ""
             user_message = ""
             for msg in messages:
-                if msg.get("role") == "user":
+                if msg.get("role") == "system":
+                    system_content = msg.get("content", "")
+                elif msg.get("role") == "user":
                     user_message = msg.get("content", "")
-                    break
+            
+            # Concatenar system prompt com user message para Responses API
+            combined_input = f"INSTRUÇÕES:\n{system_content}\n\nCONTEÚDO:\n{user_message}"
+            
+            print(f"📝 System prompt length: {len(system_content)} chars")
+            print(f"📝 User message length: {len(user_message)} chars")
+            print(f"📝 Combined input length: {len(combined_input)} chars")
             
             response = client.responses.create(
                 model=model,
-                input=user_message,
+                input=combined_input,
                 max_output_tokens=max_tokens,
                 reasoning={"effort": "low"},  # Baixo esforço para velocidade
                 text={"verbosity": "high"}  # Alta verbosidade para análise completa
@@ -221,7 +231,12 @@ def chat():
         data = request.json
         messages = data.get('messages', [])
         model = data.get('model', 'gpt-4')
-        max_tokens = min(data.get('max_tokens', 2000), 4000)  # Limitar tokens
+        
+        # Limites por modelo: GPT-5 permite mais tokens
+        if model.startswith('gpt-5'):
+            max_tokens = min(data.get('max_tokens', 6000), 12000)  # GPT-5: até 12k tokens
+        else:
+            max_tokens = min(data.get('max_tokens', 2000), 4000)   # Outros: até 4k tokens
         
         print("🚀 === NOVA REQUISIÇÃO DE ANÁLISE ===")
         print(f"📧 Modelo: {model}")

@@ -677,11 +677,13 @@
       function extractEssentialContent(text) {
         // Padrões para extrair dados estruturados
         const patterns = {
-          // Procura por CNPJ (XX.XXX.XXX/XXXX-XX ou 14 dígitos contínuos)
-          cnpj: /\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b|\b\d{14}\b/g,
-          // Procura por telefones ((XX) XXXXX-XXXX ou +55)
+          // Procura por CNPJ - múltiplas variações:
+          // XX.XXX.XXX/XXXX-XX, XX.XXX.XXX/XXXX-XX (espaços), 14 dígitos, XX XXX XXX XXXX XX
+          cnpj: /\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b|\b\d{14}\b|\b\d{2}\s\d{3}\s\d{3}\s\d{4}\s\d{2}\b/g,
+          // Procura por telefones - múltiplas variações:
+          // (XX) XXXXX-XXXX, XX XXXXX-XXXX, +55 XX XXXXX-XXXX, etc
           telefone:
-            /(\(?\d{2}\)?[\s-]?\d{4,5}[\s-]?\d{4}|\+55\s?\d{2}\s?\d{4,5}\s?\d{4})/g,
+            /(\+?55)?\s*\(?(\d{2})\)?\s*(\d{4,5})[-\s]?(\d{4})|\b\d{2}\s\d{4,5}[-\s]\d{4}\b/g,
           // Procura por emails
           email: /[\w\.-]+@[\w\.-]+\.\w{2,}/g,
           // Procura por valores monetários (R$ XXX ou R$ XXX.XXX,XX)
@@ -766,12 +768,25 @@
           const trimmedLine = line.trim();
 
           // Mantém linhas que têm:
-          // - Dados estruturados (email, telefone, valor, CNPJ com/sem pontuação)
+          // - Dados estruturados: CNPJ, email, telefone, valor R$, percentual
           // - Palavras-chave importantes
-          // - Números (preços, quantidades)
-          // - Nomes de fornecedores/empresas (3+ palavras maiúsculas, ou padrão de razão social)
+          // - Números (preços, quantidades, datas)
+          // - Nomes de fornecedores/empresas
+
+          // ⭐ CRÍTICO: Não descartar linhas com dados estruturados
+          const hasCNPJ =
+            /\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b|\b\d{14}\b|\d{2}\s\d{3}\s\d{3}\s\d{4}\s\d{2}/.test(
+              line
+            );
+          const hasEmail = /[\w\.-]+@[\w\.-]+\.\w{2,}/.test(line);
+          const hasPhone = /\(?(\d{2})\)?\s*(\d{4,5})[-\s]?(\d{4})|\+55/.test(
+            line
+          );
+          const hasValue = /R\$\s*[\d.,]+/.test(line);
+          const hasPercentage = /\d+\s*%/.test(line);
+
           const hasStructuredData =
-            /[\d\(\)@\-.]/.test(line) && line.length > 5;
+            hasCNPJ || hasEmail || hasPhone || hasValue || hasPercentage;
           const hasKeyword = importantKeywords.some((kw) =>
             lowerLine.includes(kw)
           );
@@ -779,10 +794,11 @@
 
           // Detectar nomes de empresas: linhas com 2+ palavras em maiúscula (EMPRESA LTDA)
           const hasCompanyName =
-            /^[A-Z][A-Z\s&.,]*[A-Z]$/.test(trimmedLine) &&
+            /^[A-Z][A-Z\s&.,'-]*[A-Z]$/.test(trimmedLine) &&
             trimmedLine.length > 5 &&
             trimmedLine.split(" ").length >= 2;
 
+          // ⭐ Se tem dados estruturados, SEMPRE manter
           if (hasStructuredData || hasKeyword || hasNumber || hasCompanyName) {
             finalLines.push(line);
           }
@@ -956,14 +972,14 @@
 
 Você receberá conteúdo de múltiplos orçamentos. Gere:
 
-SEÇÃO 1️⃣: FORNECEDORES (lista simples)
-Para cada: [Nome] | CNPJ: [XX] | Tel: [todos] | Email: [todos] | End: [Endereço] | Contato: [Nome-Cargo]
+SEÇÃO 1️⃣: FORNECEDORES (lista simples com NOMES REAIS)
+Para cada: [Nome Real da Empresa] | CNPJ: [XX.XXX.XXX/XXXX-XX ou Não informado] | Tel: [todos os telefones] | Email: [todos os emails] | End: [Endereço Completo] | Contato: [Nome-Cargo]
 
-SEÇÃO 2️⃣: TABELA COMPARATIVA HTML
+SEÇÃO 2️⃣: TABELA COMPARATIVA HTML (use NOMES REAIS das empresas, NUNCA "Fornecedor A/B")
 <table border='1' style='border-collapse:collapse;width:100%;font-size:13px'>
-<tr style='background:#0e938f;color:white'><th>Item</th><th>Fornecedor A</th><th>Fornecedor B</th><th>Melhor</th><th>Economia</th></tr>
-<tr><td>[item]</td><td style='background:#dcfce7'>R$ X</td><td style='background:#fecaca'>R$ Y</td><td>A</td><td>R$ Z</td></tr>
-<tr style='background:#f3f4f6;font-weight:bold'><td>TOTAL</td><td>R$ XX</td><td>R$ YY</td><td>A</td><td>R$ ZZ</td></tr>
+<tr style='background:#0e938f;color:white'><th>Item</th><th>[Nome Real Empresa 1]</th><th>[Nome Real Empresa 2]</th><th>Melhor</th><th>Economia</th></tr>
+<tr><td>[item]</td><td style='background:#dcfce7'>R$ X</td><td style='background:#fecaca'>R$ Y</td><td>[Nome ou sigla]</td><td>R$ Z</td></tr>
+<tr style='background:#f3f4f6;font-weight:bold'><td>TOTAL</td><td>R$ XX</td><td>R$ YY</td><td>[Nome ou sigla]</td><td>R$ ZZ</td></tr>
 </table>
 
 SEÇÃO 3️⃣: MIX DE PREÇO
@@ -976,12 +992,22 @@ SEÇÃO 5️⃣: RANKING (1º, 2º lugar com valores e economia)
 
 SEÇÃO 6️⃣: RECOMENDAÇÃO (Qual contratar e por quê)
 
-REGRAS:
+REGRAS CRÍTICAS:
 - Verde (#dcfce7) = MELHOR preço | Vermelho (#fecaca) = PIOR preço
-- Nomes reais das empresas, não "Forn.1"
+- SEMPRE usar NOMES REAIS das empresas, NUNCA abreviações como "Forn.1", "Fornecedor A", "Fornecedor B", "A", "B"
 - Extrai TODOS os itens encontrados
-- Se não encontrar: "Não informado"
-- Sem linhas vazias antes/depois da tabela`;
+- Se não encontrar dados: escrever exatamente "Não informado" (nunca deixar em branco)
+- Sem linhas vazias antes/depois da tabela
+- Inclua símbolo correto das empresas (se disponível) ou nome completo
+
+APÓS A ANÁLISE:
+Ao final, adicione a seguinte seção:
+
+CONCLUSÃO RESUMIDA PARA CLIENTE:
+[1-2 parágrafos resumindo a melhor opção, economia e próximos passos]
+
+PERGUNTA FINAL:
+"Deseja que eu elabore um e-mail para a construtora com as recomendações desta análise?"`;
 
           if (fileContents && fileContents.length > 0) {
             // Processar TODOS os arquivos em UMA ÚNICA requisição (não arquivo por arquivo)
@@ -1078,10 +1104,116 @@ REGRAS:
           updateMessage(loadingId, response);
           conversationHistory.push({ role: "assistant", content: response });
 
+          // Adicionar botão para gerar email se houver análise com recomendações
+          if (
+            response.includes("SEÇÃO 6") ||
+            response.includes("RECOMENDAÇÃO")
+          ) {
+            const messageDiv = document.getElementById(loadingId);
+            const contentDiv = messageDiv.querySelector(".message-content");
+            const currentHTML = contentDiv.innerHTML;
+
+            contentDiv.innerHTML =
+              currentHTML +
+              `
+            <br><br>
+            <div style='background:#f0f0f0;padding:12px;border-radius:5px;margin-top:10px'>
+              <strong>📧 Quer gerar email para a construtora?</strong><br>
+              <button style='background:#0e938f;color:white;border:none;padding:8px 15px;border-radius:4px;cursor:pointer;margin-top:8px' onclick='generateEmailFromAnalysis()'>
+                Gerar E-mail com Recomendações
+              </button>
+            </div>`;
+          }
+
           // Não remover os arquivos automaticamente após análise
         } catch (error) {
           updateMessage(loadingId, `Erro: ${error.message}`);
         }
+      }
+
+      async function generateEmailFromAnalysis() {
+        const chatContainer = document.getElementById("chatContainer");
+        const messages = chatContainer.querySelectorAll(".message.assistant");
+
+        if (messages.length === 0) {
+          alert("Nenhuma análise disponível para gerar email.");
+          return;
+        }
+
+        const ultimaMensagem = messages[messages.length - 1];
+        const analiseContent =
+          ultimaMensagem.querySelector(".message-content").innerText;
+
+        const loadingId = addMessage("assistant", "");
+        showLoading(loadingId);
+        updateLoadingMessage(loadingId, "Gerando e-mail para construtora...");
+
+        try {
+          const emailPrompt = `Com base na seguinte análise de propostas de orçamento, gere um e-mail profissional e direto para enviar à construtora/cliente.
+
+O e-mail deve:
+1. Ser conciso (máximo 3 parágrafos)
+2. Destacar a recomendação principal
+3. Indicar economia estimada
+4. Listar os próximos passos (ajustes solicitados, confirmações necessárias)
+5. Manter tom profissional e amigável
+6. Incluir assinatura genérica "Tools Engenharia - Equipe de Gestão"
+
+ANÁLISE:
+${analiseContent}
+
+Gere apenas o corpo do e-mail, pronto para copiar e colar (sem cabeçalhos de "De:", "Para:", "Assunto:")`;
+
+          const emailResponse = await callBackend(
+            "Você é especialista em comunicação comercial. Gere um e-mail profissional resumido.",
+            emailPrompt
+          );
+
+          const emailMessage = `📧 <strong>E-MAIL GERADO PARA CONSTRUTORA</strong><br><br>${emailResponse}`;
+          updateMessage(loadingId, emailMessage);
+          conversationHistory.push({
+            role: "assistant",
+            content: emailResponse,
+          });
+
+          // Adicionar botão para copiar
+          const messageDiv = document.getElementById(loadingId);
+          const contentDiv = messageDiv.querySelector(".message-content");
+          const currentHTML = contentDiv.innerHTML;
+
+          contentDiv.innerHTML =
+            currentHTML +
+            `
+          <br><br>
+          <button style='background:#4CAF50;color:white;border:none;padding:8px 15px;border-radius:4px;cursor:pointer' onclick='copyToClipboard(this)'>
+            📋 Copiar E-mail
+          </button>`;
+        } catch (error) {
+          updateMessage(loadingId, `Erro ao gerar e-mail: ${error.message}`);
+        }
+      }
+
+      function copyToClipboard(button) {
+        const messageDiv = button.closest(".message");
+        const textContent =
+          messageDiv.querySelector(".message-content").innerText;
+
+        // Remover linha de título
+        const emailBody = textContent
+          .replace("📧 E-MAIL GERADO PARA CONSTRUTORA", "")
+          .trim();
+
+        navigator.clipboard
+          .writeText(emailBody)
+          .then(() => {
+            button.textContent = "✅ Copiado!";
+            setTimeout(() => {
+              button.textContent = "📋 Copiar E-mail";
+            }, 2000);
+          })
+          .catch((err) => {
+            alert("Erro ao copiar: " + err);
+          });
       }
 
       function updateLoadingMessage(messageId, text) {
