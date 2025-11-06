@@ -459,7 +459,7 @@ response = client.responses.create(
 # ✅ CORRETO - concatena system + user
 if model.startswith('gpt-5'):
     print("🔄 Usando Responses API para GPT-5...")
-    
+
     # Extrair AMBOS os prompts
     system_content = ""
     user_message = ""
@@ -468,10 +468,10 @@ if model.startswith('gpt-5'):
             system_content = msg.get("content", "")
         elif msg.get("role") == "user":
             user_message = msg.get("content", "")
-    
+
     # Concatenar para Responses API ← CHAVE
     combined_input = f"INSTRUÇÕES:\n{system_content}\n\nCONTEÚDO:\n{user_message}"
-    
+
     response = client.responses.create(
         model=model,
         input=combined_input,  # ← Agora contém AMBOS
@@ -483,12 +483,12 @@ if model.startswith('gpt-5'):
 
 ### 🎯 Impacto
 
-| Antes | Depois |
-| --- | --- |
+| Antes                       | Depois                               |
+| --------------------------- | ------------------------------------ |
 | ❌ System prompt descartado | ✅ System prompt + User concatenados |
-| ❌ 4 seções | ✅ 6 seções estruturadas |
-| ❌ ~2000 chars | ✅ 6203+ caracteres |
-| ❌ Sem template | ✅ Segue template exatamente |
+| ❌ 4 seções                 | ✅ 6 seções estruturadas             |
+| ❌ ~2000 chars              | ✅ 6203+ caracteres                  |
+| ❌ Sem template             | ✅ Segue template exatamente         |
 
 ---
 
