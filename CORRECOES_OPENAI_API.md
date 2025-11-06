@@ -450,3 +450,11 @@ Para otimizações futuras:
 **Última atualização:** Após validação com Responses API  
 **Status:** ✅ Pronto para produção  
 **Criado por:** GitHub Copilot + Diagnóstico do Usuário
+
+---
+
+✅ O que foi corrigido:
+Problema: Estava usando Chat Completions API para GPT-5
+Solução: Agora usa Responses API corretamente para GPT-5
+
+---
