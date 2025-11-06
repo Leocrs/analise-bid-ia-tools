@@ -677,8 +677,8 @@
       function extractEssentialContent(text) {
         // Padrões para extrair dados estruturados
         const patterns = {
-          // Procura por CNPJ (XX.XXX.XXX/XXXX-XX)
-          cnpj: /\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b/g,
+          // Procura por CNPJ (XX.XXX.XXX/XXXX-XX ou 14 dígitos contínuos)
+          cnpj: /\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b|\b\d{14}\b/g,
           // Procura por telefones ((XX) XXXXX-XXXX ou +55)
           telefone:
             /(\(?\d{2}\)?[\s-]?\d{4,5}[\s-]?\d{4}|\+55\s?\d{2}\s?\d{4,5}\s?\d{4})/g,
@@ -726,9 +726,10 @@
         }
         essentialContent = condensedLines.join("\n");
 
-        // 4. MANTER apenas as linhas que contêm dados estruturados
+        // 4. MANTER linhas que contêm dados estruturados OU nomes de fornecedores/empresas
         // Linhas com: CNPJ, email, telefone, valor, percentual, data
         // Ou linhas com palavras-chave importantes
+        // OU linhas que parecem ser nomes de empresas (texto em maiúscula ou formato de nome)
         const importantKeywords = [
           "fornecedor",
           "cnpj",
@@ -753,15 +754,22 @@
           "subtotal",
           "frete",
           "instalação",
+          "empresa",
+          "razão social",
+          "razão",
+          "social",
         ];
 
         const finalLines = [];
         for (const line of essentialContent.split("\n")) {
           const lowerLine = line.toLowerCase();
+          const trimmedLine = line.trim();
+
           // Mantém linhas que têm:
-          // - Dados estruturados (email, telefone, valor)
+          // - Dados estruturados (email, telefone, valor, CNPJ com/sem pontuação)
           // - Palavras-chave importantes
           // - Números (preços, quantidades)
+          // - Nomes de fornecedores/empresas (3+ palavras maiúsculas, ou padrão de razão social)
           const hasStructuredData =
             /[\d\(\)@\-.]/.test(line) && line.length > 5;
           const hasKeyword = importantKeywords.some((kw) =>
@@ -769,16 +777,22 @@
           );
           const hasNumber = /\d+/.test(line);
 
-          if (hasStructuredData || hasKeyword || hasNumber) {
+          // Detectar nomes de empresas: linhas com 2+ palavras em maiúscula (EMPRESA LTDA)
+          const hasCompanyName =
+            /^[A-Z][A-Z\s&.,]*[A-Z]$/.test(trimmedLine) &&
+            trimmedLine.length > 5 &&
+            trimmedLine.split(" ").length >= 2;
+
+          if (hasStructuredData || hasKeyword || hasNumber || hasCompanyName) {
             finalLines.push(line);
           }
         }
 
         essentialContent = finalLines.join("\n");
 
-        // 5. LIMITAR tamanho final (máximo 6000 caracteres por arquivo)
-        if (essentialContent.length > 6000) {
-          essentialContent = essentialContent.substring(0, 6000);
+        // 5. LIMITAR tamanho final (máximo 8000 caracteres por arquivo para GPT-5)
+        if (essentialContent.length > 8000) {
+          essentialContent = essentialContent.substring(0, 8000);
           essentialContent += "\n\n[... conteúdo editado para espaço]";
         }
 
@@ -1085,11 +1099,15 @@ REGRAS:
         console.log("🔗 INICIANDO callBackend()");
 
         const model = document.getElementById("model").value || "gpt-5";
-        // Reduzir max_tokens para evitar respostas gigantes e lentidão
-        const maxTokens = Math.min(
-          parseInt(document.getElementById("maxTokens").value) || 4000,
-          4000
-        );
+        // Limites por modelo: GPT-5 permite mais tokens
+        const inputMaxTokens =
+          parseInt(document.getElementById("maxTokens").value) || 6000;
+        let maxTokens;
+        if (model === "gpt-5") {
+          maxTokens = Math.min(inputMaxTokens, 12000); // GPT-5: até 12k tokens
+        } else {
+          maxTokens = Math.min(inputMaxTokens, 4000); // Outros modelos: até 4k tokens
+        }
 
         console.log("🎯 Model:", model);
         console.log("🔢 MaxTokens:", maxTokens);
