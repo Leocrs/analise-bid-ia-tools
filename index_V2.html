@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document AI Analyzer</title>
     <link rel="stylesheet" href="document_ai_styles.css" />
+    <!-- PDF.js scripts carregados dinamicamente no final do body -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
   </head>
   <body>
     <div class="container">
@@ -65,15 +67,15 @@
       <h3>Configurações</h3>
       <div class="config-group">
         <label for="model">Modelo:</label>
-        <input type="text" id="model" value="gpt-4" placeholder="gpt-4" />
+        <input type="text" id="model" value="gpt-5" placeholder="gpt-5" />
       </div>
       <div class="config-group">
         <label for="maxTokens">Max Tokens:</label>
-        <input type="number" id="maxTokens" value="3000" placeholder="3000" />
+        <input type="number" id="maxTokens" value="4000" placeholder="4000" />
       </div>
       <div class="config-group">
         <label for="chunkSize">Tamanho do Chunk (caracteres):</label>
-        <input type="number" id="chunkSize" value="3000" placeholder="3000" />
+        <input type="number" id="chunkSize" value="4000" placeholder="4000" />
       </div>
       <div class="config-group">
         <span class="protected-key"
@@ -84,12 +86,54 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
     <script>
       // Sistema de Base Histórica
       let baseHistorica = [];
+      let localStorageAvailable = false;
+
+      // Verificar se localStorage está disponível (pode ser bloqueado por Tracking Prevention)
+      function checkLocalStorageAvailability() {
+        try {
+          const test = "__storage_test__";
+          localStorage.setItem(test, test);
+          localStorage.removeItem(test);
+          localStorageAvailable = true;
+          console.log("✅ localStorage disponível");
+          return true;
+        } catch (e) {
+          console.warn(
+            "⚠️ localStorage bloqueado (Tracking Prevention), usando memória"
+          );
+          localStorageAvailable = false;
+          return false;
+        }
+      }
+
+      // Wrapper para salvar dados (localStorage ou memória)
+      function safeLocalStorageSetItem(key, value) {
+        if (localStorageAvailable) {
+          try {
+            localStorage.setItem(key, value);
+          } catch (e) {
+            console.warn(`⚠️ Erro ao salvar em localStorage: ${e.message}`);
+          }
+        }
+      }
+
+      // Wrapper para carregar dados (localStorage ou memória)
+      function safeLocalStorageGetItem(key) {
+        if (localStorageAvailable) {
+          try {
+            return localStorage.getItem(key);
+          } catch (e) {
+            console.warn(`⚠️ Erro ao carregar de localStorage: ${e.message}`);
+            return null;
+          }
+        }
+        return null;
+      }
 
       async function salvarNaBaseHistorica(analise) {
         const registro = {
@@ -110,8 +154,8 @@
           baseHistorica = baseHistorica.slice(-50);
         }
 
-        // Salvar no localStorage
-        localStorage.setItem(
+        // Tentar salvar no localStorage (com fallback)
+        safeLocalStorageSetItem(
           "toolsBaseHistorica",
           JSON.stringify(baseHistorica)
         );
@@ -120,12 +164,16 @@
       }
 
       function carregarBaseHistorica() {
-        const dados = localStorage.getItem("toolsBaseHistorica");
+        const dados = safeLocalStorageGetItem("toolsBaseHistorica");
         if (dados) {
-          baseHistorica = JSON.parse(dados);
-          console.log(
-            `📚 Base histórica carregada: ${baseHistorica.length} registros`
-          );
+          try {
+            baseHistorica = JSON.parse(dados);
+            console.log(
+              `📚 Base histórica carregada: ${baseHistorica.length} registros`
+            );
+          } catch (e) {
+            console.warn("⚠️ Erro ao parsear base histórica:", e.message);
+          }
         }
       }
 
@@ -404,34 +452,45 @@
 
       // Inicialização completa do sistema
       document.addEventListener("DOMContentLoaded", function () {
+        // Verificar localStorage antes de usar
+        checkLocalStorageAvailability();
+
         carregarBaseHistorica();
 
         // Exibir mensagem de boas-vindas melhorada
         setTimeout(() => {
-          const welcomeMessage = `🎯 <strong>SISTEMA AVANÇADO DE ANÁLISE DE BID</strong><br><br>
+          const welcomeMessage = `🎯 <strong>BEM-VINDO AO SISTEMA DE ANÁLISE DE PROPOSTAS E MAPA DE CONCORRÊNCIA</strong><br><br>
 
-      ✅ <strong>Sistema Carregado:</strong><br>
-      • Base histórica: <strong>${baseHistorica.length} análises</strong> registradas<br>
-      • Análise comparativa: <strong>Ativada</strong><br>
-      • Exportação Excel/PDF: <strong>Disponível</strong><br>
-      • Tabelas visuais: <strong>Habilitada</strong><br><br>
+      👋 Olá! Estou pronto para analisar suas propostas comerciais e gerar um mapa comparativo.<br><br>
 
-      🚀 <strong>Recursos Disponíveis:</strong><br>
-      • Upload simultâneo de múltiplos arquivos<br>
-      • Comparação automática item por item<br>
-      • Destaque visual de melhores/piores preços<br>
-      • Ranking automático de fornecedores<br>
-      • Consulta à base histórica<br>
-      • Recomendações estratégicas<br><br>
+      ✨ <strong>O que posso fazer:</strong><br>
+      • Comparar preços item por item entre fornecedores<br>
+      • Calcular economias e identificar os melhores preços<br>
+      • Analisar condições comerciais (pagamento, entrega, garantia, etc)<br>
+      • Gerar ranking de fornecedores com justificativas<br>
+      • Exportar análise em Excel ou PDF<br>
+      • Consultar histórico de análises anteriores<br><br>
 
-      📋 <strong>Para começar:</strong> Anexe o mapa de concorrência e as propostas comerciais.<br><br>
+      � <strong>Como começar:</strong><br>
+      <strong style='color: #e74c3c; font-size: 16px'>👉 Anexe pelo menos 2 documentos</strong> (PDFs ou planilhas Excel com os orçamentos dos fornecedores):<br><br>
+      <table border='1' style='border-collapse:collapse;font-size:13px;margin:10px 0;width:100%'>
+      <tr style='background:#0e938f;color:white'><th>Clique em 📎</th><th>Selecione os arquivos</th><th>Envie sua mensagem</th></tr>
+      <tr style='background:#f8f9fa'><td style='text-align:center'>Anexar</td><td>Seus PDFs/XLS com propostas</td><td>Depois digite "Analisar" ou só pressione ➤</td></tr>
+      </table><br>
 
-      💡 <strong>Exemplo do resultado esperado:</strong><br>
-      <table border='1' style='border-collapse:collapse;font-size:12px;margin:10px 0'>
-      <tr style='background:#0e938f;color:white'><th>Item</th><th>Empresa A</th><th>Empresa B</th><th>Melhor</th></tr>
-      <tr><td>Ar Condicionado</td><td style='background:#fecaca'>R$ 50.000</td><td style='background:#dcfce7'>R$ 45.000</td><td>Empresa B</td></tr>
-      <tr><td>Instalação</td><td style='background:#dcfce7'>R$ 10.000</td><td style='background:#fecaca'>R$ 12.000</td><td>Empresa A</td></tr>
-      </table>`;
+      💡 <strong>Exemplo do que você receberá:</strong><br>
+      <table border='1' style='border-collapse:collapse;font-size:12px;margin:10px 0;width:100%'>
+      <tr style='background:#0e938f;color:white'><th>Item</th><th>Fornecedor A</th><th>Fornecedor B</th><th>Melhor Preço</th></tr>
+      <tr><td>Ar Condicionado</td><td style='background:#ffcccc'>R$ 50.000</td><td style='background:#ccffcc'><strong>R$ 45.000</strong></td><td>B (10% economia)</td></tr>
+      <tr><td>Instalação</td><td style='background:#ccffcc'><strong>R$ 10.000</strong></td><td style='background:#ffcccc'>R$ 12.000</td><td>A (17% economia)</td></tr>
+      <tr style='background:#f0f0f0'><td><strong>TOTAL</strong></td><td style='background:#ffe6e6'><strong>R$ 60.000</strong></td><td style='background:#e6ffe6'><strong>R$ 57.000</strong></td><td>B (5% economia)</td></tr>
+      </table><br>
+
+      🚀 <strong>Status:</strong><br>
+      • Banco de histórico: <strong>${baseHistorica.length} análises</strong> salvas<br>
+      • Sistema: <strong>✅ Operacional</strong><br><br>
+
+      ⏱️ Começamos? Anexe seus documentos agora!`;
 
           addMessage("assistant", welcomeMessage);
         }, 1000);
@@ -443,10 +502,14 @@
       scriptXLSX.src =
         "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
       document.head.appendChild(scriptXLSX);
-      // jsPDF para PDF
+
+      // jsPDF para PDF - carregar e registrar handler onload
       const scriptPDF = document.createElement("script");
       scriptPDF.src =
         "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+      scriptPDF.onload = function () {
+        console.log("✅ jsPDF carregado com sucesso");
+      };
       document.head.appendChild(scriptPDF);
 
       let currentFiles = [];
@@ -454,8 +517,19 @@
       let processedChunks = new Map(); // Armazena chunks processados por arquivo
       let conversationHistory = [];
 
-      pdfjsLib.GlobalWorkerOptions.workerSrc =
-        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
+      // Configurar PDF.js worker apenas DEPOIS que pdf.min.js tiver carregado
+      if (typeof pdfjsLib !== "undefined") {
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
+        console.log("✅ PDF.js worker configurado");
+      } else {
+        // Se pdfjsLib ainda não tiver carregado, aguardar
+        document.addEventListener("pdfjsloaded", function () {
+          pdfjsLib.GlobalWorkerOptions.workerSrc =
+            "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
+          console.log("✅ PDF.js worker configurado (após carregamento)");
+        });
+      }
 
       document
         .getElementById("fileInput")
@@ -475,28 +549,105 @@
 
       loadSettings();
 
-      function loadSettings() {
-        const model = localStorage.getItem("openai_model");
-        const maxTokens = localStorage.getItem("max_tokens");
-        const chunkSize = localStorage.getItem("chunk_size");
-        if (model) document.getElementById("model").value = model;
-        if (maxTokens) document.getElementById("maxTokens").value = maxTokens;
-        if (chunkSize) document.getElementById("chunkSize").value = chunkSize;
+      async function loadSettings() {
+        try {
+          // Tentar carregar do backend primeiro
+          const response = await fetch(
+            "https://analise-bid-ia-backend.onrender.com/api/settings",
+            {
+              method: "GET",
+              headers: {
+                "X-API-Key":
+                  document.getElementById("apiKey")?.value || "default",
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log("📥 Configurações carregadas do backend:", data);
+            document.getElementById("model").value = data.modelo || "gpt-5";
+            document.getElementById("maxTokens").value =
+              data.max_tokens || 6000;
+            document.getElementById("chunkSize").value =
+              data.chunk_size || 4000;
+
+            // Também salvar no localStorage para rápido acesso (com fallback)
+            safeLocalStorageSetItem("openai_model", data.modelo);
+            safeLocalStorageSetItem(
+              "max_tokens",
+              String(Number(data.max_tokens))
+            );
+            safeLocalStorageSetItem(
+              "chunk_size",
+              String(Number(data.chunk_size))
+            );
+          } else {
+            // Fallback: carregar do localStorage
+            loadSettingsFromLocalStorage();
+          }
+        } catch (error) {
+          console.warn(
+            "⚠️ Erro ao carregar do backend, usando localStorage:",
+            error
+          );
+          loadSettingsFromLocalStorage();
+        }
       }
 
-      function saveSettings() {
-        localStorage.setItem(
-          "openai_model",
-          document.getElementById("model").value
-        );
-        localStorage.setItem(
-          "max_tokens",
-          document.getElementById("maxTokens").value
-        );
-        localStorage.setItem(
-          "chunk_size",
-          document.getElementById("chunkSize").value
-        );
+      function loadSettingsFromLocalStorage() {
+        const model = safeLocalStorageGetItem("openai_model") || "gpt-5";
+        const maxTokens = Number(safeLocalStorageGetItem("max_tokens")) || 6000;
+        const chunkSize = Number(safeLocalStorageGetItem("chunk_size")) || 4000;
+
+        document.getElementById("model").value = model;
+        document.getElementById("maxTokens").value = maxTokens;
+        document.getElementById("chunkSize").value = chunkSize;
+
+        console.log("💾 Configurações carregadas do localStorage/memória");
+      }
+
+      async function saveSettings() {
+        const model = document.getElementById("model").value;
+        const maxTokens = document.getElementById("maxTokens").value;
+        const chunkSize = document.getElementById("chunkSize").value;
+        const apiKey = document.getElementById("apiKey")?.value || "default";
+
+        // Sempre salvar no localStorage (rápido, com fallback)
+        safeLocalStorageSetItem("openai_model", model);
+        safeLocalStorageSetItem("max_tokens", String(parseInt(maxTokens)));
+        safeLocalStorageSetItem("chunk_size", String(parseInt(chunkSize)));
+
+        // Tentar salvar no backend (assíncrono)
+        try {
+          const response = await fetch(
+            "https://analise-bid-ia-backend.onrender.com/api/settings",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                api_key: apiKey,
+                modelo: model,
+                max_tokens: parseInt(maxTokens),
+                chunk_size: parseInt(chunkSize),
+              }),
+            }
+          );
+
+          if (response.ok) {
+            console.log("✅ Configurações salvas no backend");
+          } else {
+            console.warn(
+              "⚠️ Erro ao salvar no backend, mas localStorage foi atualizado"
+            );
+          }
+        } catch (error) {
+          console.warn("⚠️ Erro ao sincronizar com backend:", error);
+          console.log("💾 Configurações salvas apenas no localStorage");
+        }
       }
 
       function toggleConfig() {
@@ -516,6 +667,122 @@
           e.preventDefault();
           sendMessage();
         }
+      }
+
+      // ⭐ FUNÇÃO CRÍTICA: Extrai apenas conteúdo ESSENCIAL (sem decoração de chunks)
+      // Baseado em análise dos logs de OpenAI - ele busca:
+      // 1. Fornecedores: CNPJ, Nome, Tel, Email, Endereço
+      // 2. Itens: Descrição, Quantidade, Medidas, Preço
+      // 3. Condições: Desconto, Pagamento, Prazo, Garantia
+      function extractEssentialContent(text) {
+        // Padrões para extrair dados estruturados
+        const patterns = {
+          // Procura por CNPJ (XX.XXX.XXX/XXXX-XX)
+          cnpj: /\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b/g,
+          // Procura por telefones ((XX) XXXXX-XXXX ou +55)
+          telefone:
+            /(\(?\d{2}\)?[\s-]?\d{4,5}[\s-]?\d{4}|\+55\s?\d{2}\s?\d{4,5}\s?\d{4})/g,
+          // Procura por emails
+          email: /[\w\.-]+@[\w\.-]+\.\w{2,}/g,
+          // Procura por valores monetários (R$ XXX ou R$ XXX.XXX,XX)
+          valor: /R\$\s*[\d.,]+/g,
+          // Procura por percentuais
+          percentual: /\d+\s*%/g,
+          // Procura por datas
+          data: /\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/g,
+        };
+
+        let essentialContent = text;
+
+        // 1. LIMPAR linhas vazias múltiplas (deixar no máximo 1)
+        essentialContent = essentialContent.replace(/\n{3,}/g, "\n\n");
+
+        // 2. REMOVER padrões decorativos que não adicionam valor
+        // Remove marcadores de página (--- Página X ---)
+        essentialContent = essentialContent.replace(
+          /---\s*Página\s*\d+\s*---/gi,
+          ""
+        );
+        // Remove marcadores de planilha (--- Planilha: X ---)
+        essentialContent = essentialContent.replace(
+          /---\s*Planilha:\s*[^\n]+---/gi,
+          ""
+        );
+        // Remove linhas que são só caracteres de preenchimento
+        essentialContent = essentialContent.replace(/^[\s\-=*_]{10,}$/gm, "");
+
+        // 3. CONDENSAR linhas que parecem ser cabeçalhos/títulos repetidos
+        // (mantém apenas primeira ocorrência de linhas idênticas próximas)
+        const lines = essentialContent.split("\n");
+        const condensedLines = [];
+        let lastLine = "";
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          // Se a linha é diferente da anterior OU tem informação importante (tem número/email/cnpj)
+          if (trimmedLine !== lastLine || /[\d\(\)@\-.]/.test(trimmedLine)) {
+            condensedLines.push(line);
+            lastLine = trimmedLine;
+          }
+        }
+        essentialContent = condensedLines.join("\n");
+
+        // 4. MANTER apenas as linhas que contêm dados estruturados
+        // Linhas com: CNPJ, email, telefone, valor, percentual, data
+        // Ou linhas com palavras-chave importantes
+        const importantKeywords = [
+          "fornecedor",
+          "cnpj",
+          "telefone",
+          "email",
+          "endereço",
+          "contato",
+          "cargo",
+          "item",
+          "descrição",
+          "quantidade",
+          "medida",
+          "preço",
+          "valor",
+          "desconto",
+          "pagamento",
+          "entrega",
+          "garantia",
+          "validade",
+          "proposta",
+          "total",
+          "subtotal",
+          "frete",
+          "instalação",
+        ];
+
+        const finalLines = [];
+        for (const line of essentialContent.split("\n")) {
+          const lowerLine = line.toLowerCase();
+          // Mantém linhas que têm:
+          // - Dados estruturados (email, telefone, valor)
+          // - Palavras-chave importantes
+          // - Números (preços, quantidades)
+          const hasStructuredData =
+            /[\d\(\)@\-.]/.test(line) && line.length > 5;
+          const hasKeyword = importantKeywords.some((kw) =>
+            lowerLine.includes(kw)
+          );
+          const hasNumber = /\d+/.test(line);
+
+          if (hasStructuredData || hasKeyword || hasNumber) {
+            finalLines.push(line);
+          }
+        }
+
+        essentialContent = finalLines.join("\n");
+
+        // 5. LIMITAR tamanho final (máximo 6000 caracteres por arquivo)
+        if (essentialContent.length > 6000) {
+          essentialContent = essentialContent.substring(0, 6000);
+          essentialContent += "\n\n[... conteúdo editado para espaço]";
+        }
+
+        return essentialContent;
       }
 
       // Função para dividir texto em chunks (otimizada)
@@ -563,247 +830,10 @@
         statusDiv.style.display = message ? "block" : "none";
       }
 
-      function showStructuredPrompt() {
-        const prompt = `🎯 <strong>SISTEMA DE ANÁLISE AVANÇADA DE BID - TOOLS ENGENHARIA</strong><br><br>
+      // FUNÇÃO REMOVIDA - showStructuredPrompt() - O prompt agora é unificado na função sendMessage
+      // Função de análise estruturada não é mais necessária
 
-      📥 <strong>ETAPA 1: RECEBIMENTO E VALIDAÇÃO</strong><br>
-      • <strong>Mapa de Concorrência:</strong> Obrigatório (Excel/PDF)<br>
-      • <strong>Propostas Comerciais:</strong> Todas as empresas participantes<br>
-      • <strong>Validação Automática:</strong> Conferir se o mapa contém todos os itens, quantidades e valores unitários<br>
-      • <strong>Status:</strong> ✅ Arquivos validados → Prosseguir | ❌ Arquivos faltantes → Solicitar<br><br>
-
-      🔍 <strong>ETAPA 2: ANÁLISE TÉCNICA DETALHADA</strong><br>
-      • <strong>Extração de Dados:</strong> Criar tabela comparativa com TODOS os itens e valores<br>
-      • <strong>Comparação Item por Item:</strong> Identificar menor, médio e maior preço para cada item<br>
-      • <strong>Aderência ao Escopo:</strong> Verificar se propostas atendem 100% do solicitado<br>
-      • <strong>Divergências:</strong> Listar itens faltantes, excedentes ou com especificações diferentes<br>
-      • <strong>Formato Obrigatório:</strong> Tabela HTML com colunas: Item | Qtd | Empresa A | Empresa B | Empresa C | Menor Preço | Variação %<br><br>
-
-      📊 <strong>ETAPA 3: RELATÓRIO COMPARATIVO VISUAL</strong><br>
-      • <strong>Tabela Principal:</strong> Todos os itens lado a lado com destaque em cores<br>
-      • <strong>🟢 Verde:</strong> Melhor preço de cada item<br>
-      • <strong>🔴 Vermelho:</strong> Pior preço de cada item<br>
-      • <strong>🟡 Amarelo:</strong> Preços intermediários<br>
-      • <strong>Ranking por Item:</strong> 1º, 2º, 3º lugar em cada linha<br>
-      • <strong>Totais:</strong> Valor global por fornecedor e economia potencial<br><br>
-
-      🏆 <strong>ETAPA 4: RECOMENDAÇÕES ESTRATÉGICAS</strong><br>
-      • <strong>Mix de Fornecedores:</strong> Melhor combinação para economia máxima<br>
-      • <strong>Fornecedor Único:</strong> Análise de viabilidade e negociação<br>
-      • <strong>Itens Críticos:</strong> Destacar produtos com maior variação de preço<br>
-      • <strong>Oportunidades:</strong> Onde negociar e potencial de economia<br>
-      • <strong>Alertas:</strong> Preços muito baixos (suspeitos) ou muito altos<br><br>
-
-      📈 <strong>RESUMO EXECUTIVO FINAL</strong><br>
-      • <strong>Ranking Geral:</strong> 1º, 2º, 3º colocado por valor total<br>
-      • <strong>Economia Potencial:</strong> Valor em R$ e % de economia com mix ideal<br>
-      • <strong>Recomendação Principal:</strong> Melhor estratégia de contratação<br>
-      • <strong>Próximos Passos:</strong> Ações recomendadas para negociação<br><br>
-
-      ⚠️ <strong>CRÍTICO:</strong> NÃO fazer análise descritiva! APENAS tabela comparativa com preços lado a lado, destacando em VERDE o menor preço e VERMELHO o maior preço de cada item. OBRIGATÓRIO extrair todos os valores R$ encontrados.<br><br>
-      
-      <div style="text-align: center; margin: 20px 0;">
-        <button onclick="setupAnalysisButton()" style="
-          background: linear-gradient(135deg, #0e938f, #1fb5b1);
-          color: white;
-          border: none;
-          padding: 15px 30px;
-          font-size: 16px;
-          font-weight: bold;
-          border-radius: 25px;
-          cursor: pointer;
-          box-shadow: 0 4px 15px rgba(14, 147, 143, 0.3);
-          transition: all 0.3s ease;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(14, 147, 143, 0.4)'" 
-           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(14, 147, 143, 0.3)'">
-          🚀 EXECUTAR ANÁLISE COMPLETA
-        </button>
-      </div>`;
-        addMessage("assistant", prompt);
-      }
-
-      // Função de análise estruturada (chamada automaticamente ao anexar arquivos)
-      async function setupAnalysisButton() {
-        // Verifica se está processando arquivos
-        const preview = document.getElementById("processingStatus");
-        if (preview && preview.textContent.includes("Processando")) {
-          showError(
-            "Aguarde o processamento dos arquivos antes de iniciar a análise."
-          );
-          return;
-        }
-        if (fileContents.length === 0) {
-          showError("Por favor, anexe arquivos para análise.");
-          return;
-        }
-        // Verifica se tem mapa de concorrência
-        const hasMapa =
-          currentFiles &&
-          currentFiles.some(
-            (f) =>
-              f &&
-              f.name &&
-              (f.name.toLowerCase().includes("mapa") ||
-                f.name.toLowerCase().includes("concorrencia"))
-          );
-
-        // Chama análise estruturada (com ou sem mapa)
-        if (hasMapa) {
-          addMessage(
-            "assistant",
-            "🎯 <strong>Mapa de concorrência detectado!</strong> Executando análise completa com referencial."
-          );
-        } else {
-          addMessage(
-            "assistant",
-            "📊 <strong>Análise direta entre propostas</strong> - Comparando documentos anexados diretamente."
-          );
-        }
-        await structuredAnalysis();
-      }
-
-      async function structuredAnalysis() {
-        console.log("🚀 INICIANDO structuredAnalysis()");
-        const loadingId = addMessage("assistant", "");
-        showLoading(loadingId);
-
-        updateLoadingMessage(
-          loadingId,
-          "🔍 Consolidando todos os documentos..."
-        );
-        console.log("📄 Total de arquivos:", fileContents.length);
-
-        // Consolidar conteúdo de todos os arquivos - SEM TRUNCAR para garantir análise completa
-        let todosOsDocumentos = "";
-        fileContents.forEach((file, index) => {
-          todosOsDocumentos += `\n\n=== DOCUMENTO ${
-            index + 1
-          }: ${file.name.toUpperCase()} ===\n`;
-          // Incluir conteúdo COMPLETO para análise precisa de TODOS os fornecedores
-          todosOsDocumentos += file.content;
-        });
-
-        console.log(
-          "📊 TOTAL DE DOCUMENTOS PARA ANÁLISE:",
-          fileContents.length
-        );
-        console.log(
-          "📏 Tamanho total consolidado:",
-          todosOsDocumentos.length,
-          "caracteres"
-        );
-
-        // Detecta se há mapa de concorrência para adaptar o prompt
-        const hasMapa = fileContents.some(
-          (file) =>
-            file.name.toLowerCase().includes("mapa") ||
-            file.name.toLowerCase().includes("concorrencia")
-        );
-
-        // Prompt COMPACTO para análise consolidada (otimizado para tokens)
-        const promptConsolidado = `ANÁLISE CONSOLIDADA - TOOLS ENGENHARIA
-
-SEÇÃO 1️⃣: FORNECEDORES
-Para cada documento, extraia e consolide:
-📋 Forn. 1: [Nome] | CNPJ: [CNPJ] | Tel: [TODOS tel] | Email: [TODOS emails] | End: [Endereço] | Contato: [Nome-Cargo]
-
-📋 Forn. 2: [Nome] | CNPJ: [CNPJ] | Tel: [TODOS tel] | Email: [TODOS emails] | End: [Endereço] | Contato: [Nome-Cargo]
-
-${
-  fileContents.length > 2
-    ? "📋 Forn. 3: [Nome] | CNPJ: [CNPJ] | Tel: [TODOS tel] | Email: [TODOS emails] | End: [Endereço] | Contato: [Nome-Cargo]"
-    : ""
-}
-
-SEÇÃO 2️⃣: ITENS E PREÇOS
-GERE TABELA HTML EXATAMENTE COMO O MODELO (SEM LINHAS VAZIAS):
-<table border='1' style='border-collapse:collapse;width:100%;font-size:13px'>
-<tr style='background:#0e938f;color:white'><th>Item</th><th>Marvidros</th><th>Vidraçaria Mac Vidros</th><th>Melhor</th><th>Economia</th></tr>
-<tr><td>Ar Condicionado</td><td style='background:#dcfce7'>R$ 50.000</td><td style='background:#fecaca'>R$ 45.000</td><td>Vidraçaria</td><td>R$ 5.000</td></tr>
-<tr><td>Instalação</td><td style='background:#dcfce7'>R$ 10.000</td><td style='background:#fecaca'>R$ 12.000</td><td>Marvidros</td><td>R$ 2.000</td></tr>
-<tr style='background:#f3f4f6;font-weight:bold'><td>TOTAL</td><td>R$ 60.000</td><td>R$ 57.000</td><td>Vidraçaria</td><td>R$ 3.000</td></tr>
-</table>
-REGRAS OBRIGATÓRIAS (NENHUMA EXCEÇÃO):
-1. COMECE direto com <table - SEM espaços em branco antes
-2. Cabeçalho: background #0e938f + color white
-3. Para CADA item - alternando cores:
-   - Coloque style='background:#dcfce7' (verde) NO MELHOR PREÇO
-   - Coloque style='background:#fecaca' (vermelho) NO PIOR PREÇO
-4. Linha TOTAL: background #f3f4f6 + font-weight:bold
-5. TERMINE com </table> - SEM espaços em branco depois
-6. TODOS os itens encontrados nos documentos
-7. NOMES REAIS das empresas
-8. Calcule a economia (diferença entre maior e menor)
-SEM NENHUMA LINHA VAZIA ANTES OU DEPOIS DA TABELA
-
-SEÇÃO 3️⃣: MIX DE PREÇO
-Se há possibilidade de combinar fornecedores para economia:
-• Empresa A: Itens [Lista] = R$ [subtotal]
-• Empresa B: Itens [Lista] = R$ [subtotal]
-• Total com MIX: R$ [valor] | Economia: R$ [diferença]
-
-Se não há possibilidade (todos itens de uma empresa): Responda "Não aplicável - todos itens de mesma empresa"
-
-SEÇÃO 4️⃣: COMERCIAL - Descontos, Pagamento, Garantia, Prazos (por fornecedor)
-Liste para CADA fornecedor:
-- Desconto oferecido
-- Forma de pagamento
-- Garantia (se informado)
-- Prazo de entrega
-
-SEÇÃO 5️⃣: RANKING - 1º, 2º, 3º lugar com valores e economia
-1º - [Empresa] | Valor Total: R$ [XXX] | Economia: R$ [XXX]
-2º - [Empresa] | Valor Total: R$ [XXX] | Economia: R$ [XXX]
-
-SEÇÃO 6️⃣: RECOMENDAÇÃO
-• CONTRATAR: [Empresa] (melhor custo-benefício)
-• ECONOMIA: R$ [valor]
-• ITENS IGUAIS?: Sim ou Não - explicar brevemente
-• MIX SUGERIDO: Sim (com detalhes) ou Não
-• NEGOCIAR: [Itens específicos com maior variação]
-• DIFERENCIAIS: [Descontos, garantias, prazos]
-
-Instruções críticas:
-- Extraia TODOS os itens, sem exceção
-- Se múltiplos tel/email: liste TODOS
-- Se não encontrar: "Não encontrado"
-- Verde para melhor, vermelho para pior
-- NOMES REAIS das empresas em SEÇÃO 2, não "Forn.1"
-- Mantenha consistência de nomes em todas as seções
-- MIX DE PREÇO: mostre qual combinação economiza mais
-- ITENS IGUAIS: responda se todos fornecedores orçaram os mesmos itens`;
-
-        try {
-          updateLoadingMessage(
-            loadingId,
-            "🚀 Executando análise comparativa consolidada..."
-          );
-          console.log("📊 Preparando prompt consolidado...");
-          console.log("📏 Tamanho do prompt:", promptConsolidado.length);
-          console.log("📄 Tamanho dos documentos:", todosOsDocumentos.length);
-
-          const resultado = await callBackend(
-            promptConsolidado,
-            `ANÁLISE TODOS OS DOCUMENTOS SIMULTANEAMENTE:\n\n${todosOsDocumentos}`
-          );
-          console.log("✅ Resultado recebido do backend");
-
-          updateMessage(loadingId, resultado);
-
-          // Salvar análise na base histórica
-          console.log("💾 Salvando na base histórica...");
-          await salvarNaBaseHistorica(resultado);
-          console.log("✅ structuredAnalysis() CONCLUÍDA COM SUCESSO");
-        } catch (error) {
-          console.error("❌ ERRO em structuredAnalysis():", error);
-          updateMessage(
-            loadingId,
-            `❌ <span style='color:red;'>Erro na análise consolidada: ${error.message}</span>`
-          );
-        }
-      }
+      // Marcador: Funções antigas removidas
 
       async function extractPDFText(file) {
         return new Promise((resolve, reject) => {
@@ -907,96 +937,100 @@ Instruções críticas:
         try {
           let response = "";
 
+          // Prompt unificado - REDUZIDO para melhor performance
+          const promptUnificado = `ANÁLISE COMPARATIVA DE ORÇAMENTOS - SEÇÕES 1-6
+
+Você receberá conteúdo de múltiplos orçamentos. Gere:
+
+SEÇÃO 1️⃣: FORNECEDORES (lista simples)
+Para cada: [Nome] | CNPJ: [XX] | Tel: [todos] | Email: [todos] | End: [Endereço] | Contato: [Nome-Cargo]
+
+SEÇÃO 2️⃣: TABELA COMPARATIVA HTML
+<table border='1' style='border-collapse:collapse;width:100%;font-size:13px'>
+<tr style='background:#0e938f;color:white'><th>Item</th><th>Fornecedor A</th><th>Fornecedor B</th><th>Melhor</th><th>Economia</th></tr>
+<tr><td>[item]</td><td style='background:#dcfce7'>R$ X</td><td style='background:#fecaca'>R$ Y</td><td>A</td><td>R$ Z</td></tr>
+<tr style='background:#f3f4f6;font-weight:bold'><td>TOTAL</td><td>R$ XX</td><td>R$ YY</td><td>A</td><td>R$ ZZ</td></tr>
+</table>
+
+SEÇÃO 3️⃣: MIX DE PREÇO
+(Melhor combinação entre fornecedores para economia máxima)
+
+SEÇÃO 4️⃣: COMERCIAL (Descontos, Pagamento, Garantia, Prazos)
+(Por fornecedor, conforme informado)
+
+SEÇÃO 5️⃣: RANKING (1º, 2º lugar com valores e economia)
+
+SEÇÃO 6️⃣: RECOMENDAÇÃO (Qual contratar e por quê)
+
+REGRAS:
+- Verde (#dcfce7) = MELHOR preço | Vermelho (#fecaca) = PIOR preço
+- Nomes reais das empresas, não "Forn.1"
+- Extrai TODOS os itens encontrados
+- Se não encontrar: "Não informado"
+- Sem linhas vazias antes/depois da tabela`;
+
           if (fileContents && fileContents.length > 0) {
-            // Processar arquivos chunk por chunk
-            for (const file of fileContents) {
-              if (file.chunks && file.chunks.length > 1) {
-                // Arquivo grande - processar em chunks
-                updateLoadingMessage(
-                  loadingId,
-                  `Analisando ${file.name} (${file.chunks.length} partes)...`
-                );
+            // Processar TODOS os arquivos em UMA ÚNICA requisição (não arquivo por arquivo)
+            const chunkSize =
+              Number(safeLocalStorageGetItem("chunk_size")) || 4000;
 
-                let fileAnalysis = `\n\n=== ANÁLISE DE ${file.name.toUpperCase()} ===\n`;
+            updateLoadingMessage(
+              loadingId,
+              `Analisando ${fileContents.length} arquivo${
+                fileContents.length > 1 ? "s" : ""
+              }...`
+            );
 
-                for (let i = 0; i < file.chunks.length; i++) {
-                  const chunk = file.chunks[i];
-                  const chunkMessage = `Analise esta parte ${i + 1} de ${
-                    file.chunks.length
-                  } do arquivo "${file.name}":\n\n${chunk}`;
+            // Consolidar TODOS os arquivos em UMA ÚNICA mensagem - APENAS conteúdo essencial
+            let consolidatedMessage = `ANÁLISE COMPARATIVA INTEGRADA DE ${fileContents.length} ORÇAMENTO(S)\n\n`;
+            let totalContentSize = 0;
 
-                  updateLoadingMessage(
-                    loadingId,
-                    `Analisando ${file.name} - Parte ${i + 1}/${
-                      file.chunks.length
-                    }...`
-                  );
+            // Adicionar APENAS o conteúdo ESSENCIAL de cada arquivo
+            fileContents.forEach((file, fileIndex) => {
+              // ⭐ EXTRAI CONTEÚDO ESSENCIAL (remove decoração, linhas vazias, etc)
+              const essentialContent = extractEssentialContent(file.content);
 
-                  const chunkResponse = await callBackend(
-                    `STOP! NÃO FAÇA ANÁLISE DESCRITIVA!
+              consolidatedMessage += `\n${"═".repeat(50)}\nDOCUMENTO ${
+                fileIndex + 1
+              }: ${file.name}\n${"═".repeat(50)}\n`;
+              consolidatedMessage += essentialContent;
 
-OBRIGATÓRIO: APENAS TABELA COMPARATIVA + NÚMEROS
+              totalContentSize += essentialContent.length;
 
-PASSO 1: EXTRAIR VALORES
-- Encontrar TODOS os preços em R$
-- Identificar empresas/fornecedores
-- Listar itens/serviços cotados
+              // Log para DEBUG
+              console.log(
+                `📄 Arquivo ${fileIndex + 1} (${file.name}): ${
+                  file.content.length
+                } → ${
+                  essentialContent.length
+                } caracteres (redução: ${Math.round(
+                  ((file.content.length - essentialContent.length) /
+                    file.content.length) *
+                    100
+                )}%)`
+              );
+            });
 
-PASSO 2: CRIAR TABELA HTML (OBRIGATÓRIO)
-<table border='1' style='border-collapse:collapse;width:100%;font-size:14px'>
-<tr style='background:#0e938f;color:white'>
-<th>ITEM/SERVIÇO</th><th>FORNECEDOR</th><th>PREÇO</th><th>OBSERVAÇÕES</th>
-</tr>
-<tr>
-<td>[ITEM]</td><td>[EMPRESA]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td>[OBS]</td>
-</tr>
-</table>
+            // Adicionar instrução final
+            consolidatedMessage += `\n${"═".repeat(
+              50
+            )}\n\nINSTRUÇÃO FINAL:\nAnalise os ${
+              fileContents.length
+            } documento(s) acima e gere UMA ÚNICA análise comparativa com SEÇÕES 1-6 INTEGRADAS, consolidando TODOS os fornecedores e itens.`;
 
-NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
-                    chunkMessage
-                  );
+            // Log de tamanho
+            console.log(
+              `📊 Tamanho consolidado: ${totalContentSize} caracteres (~${Math.ceil(
+                totalContentSize / 3.5
+              )} tokens estimados)`
+            );
 
-                  fileAnalysis += `\n--- Parte ${
-                    i + 1
-                  } ---\n${chunkResponse}\n`;
+            const fileAnalysis = await callBackend(
+              promptUnificado,
+              consolidatedMessage
+            );
 
-                  // Pequena pausa entre chunks
-                  await new Promise((resolve) => setTimeout(resolve, 500));
-                }
-
-                response += fileAnalysis;
-              } else {
-                // Arquivo pequeno - processar normalmente
-                updateLoadingMessage(loadingId, `Analisando ${file.name}...`);
-                const fileResponse = await callBackend(
-                  `STOP! NÃO FAÇA ANÁLISE DESCRITIVA!
-
-OBRIGATÓRIO: APENAS TABELA COMPARATIVA + NÚMEROS
-
-PASSO 1: EXTRAIR VALORES
-- Encontrar TODOS os preços em R$
-- Identificar empresas/fornecedores
-- Listar itens/serviços cotados
-
-PASSO 2: CRIAR TABELA HTML (OBRIGATÓRIO)
-<table border='1' style='border-collapse:collapse;width:100%;font-size:14px'>
-<tr style='background:#0e938f;color:white'>
-<th>ITEM/SERVIÇO</th><th>FORNECEDOR</th><th>PREÇO</th><th>OBSERVAÇÕES</th>
-</tr>
-<tr>
-<td>[ITEM]</td><td>[EMPRESA]</td><td style='background:#dcfce7'>R$ [VALOR]</td><td>[OBS]</td>
-</tr>
-</table>
-
-PASSO 3: TOTAIS POR FORNECEDOR
-• [EMPRESA]: R$ [TOTAL]
-
-NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
-                  `Analise o seguinte documento "${file.name}":\n\n${file.content}`
-                );
-                response += `\n\n=== ANÁLISE DE ${file.name.toUpperCase()} ===\n${fileResponse}\n`;
-              }
-            }
+            response += fileAnalysis;
 
             // Se havia uma mensagem do usuário junto, processar também
             if (message) {
@@ -1049,34 +1083,66 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
 
       async function callBackend(systemPrompt, userMessage) {
         console.log("🔗 INICIANDO callBackend()");
-        console.log(
-          "🎯 Model:",
-          document.getElementById("model").value || "gpt-4"
-        );
-        console.log(
-          "🔢 MaxTokens:",
-          parseInt(document.getElementById("maxTokens").value) || 4000
+
+        const model = document.getElementById("model").value || "gpt-5";
+        // Reduzir max_tokens para evitar respostas gigantes e lentidão
+        const maxTokens = Math.min(
+          parseInt(document.getElementById("maxTokens").value) || 4000,
+          4000
         );
 
-        const model = document.getElementById("model").value || "gpt-4";
-        // ⚠️ AJUSTADO para 3000 tokens (limite: 8192 total - 3000 resposta = 5192 para input)
-        // Isso garante espaço suficiente para PDFs grandes e evita erro de context_length_exceeded
-        const maxTokens =
-          parseInt(document.getElementById("maxTokens").value) || 3000;
+        console.log("🎯 Model:", model);
+        console.log("🔢 MaxTokens:", maxTokens);
 
+        // Nova função: Estimar tokens com precisão
+        function estimateTokens(text, modelType = "gpt-5") {
+          // Aproximação realista:
+          // GPT-5: 1 token ≈ 3.5 caracteres (mais eficiente)
+          // GPT-4: 1 token ≈ 4 caracteres
+          const ratio = modelType === "gpt-5" ? 3.5 : 4;
+          return Math.ceil(text.length / ratio);
+        }
+
+        // Calcular tokens reais
+        const systemTokens = estimateTokens(systemPrompt, model);
+        const userTokens = estimateTokens(userMessage, model);
+        const totalInputTokens = systemTokens + userTokens;
+
+        console.log("📊 ===== ANÁLISE DE TOKENS =====");
         console.log(
           "📝 Tamanho da mensagem do usuário:",
           userMessage.length,
           "caracteres"
         );
+        console.log("🔢 Tokens estimados (user):", userTokens);
         console.log(
           "📋 Tamanho do prompt do sistema:",
           systemPrompt.length,
           "caracteres"
         );
+        console.log("🔢 Tokens estimados (system):", systemTokens);
+        console.log("📊 Total de input tokens:", totalInputTokens);
+        console.log("📊 Max output tokens:", maxTokens);
+        console.log(
+          "📊 Total esperado:",
+          totalInputTokens + maxTokens,
+          "tokens"
+        );
+        console.log("📊 ===============================");
 
-        // ⚠️ NÃO TRUNCAR A MENSAGEM DO USUÁRIO - ISSO QUEBRA A ANÁLISE COMPLETA
-        // A API pode lidar com mensagens maiores e o modelo GPT-4 tem limite de ~8k tokens
+        // Validação de contexto
+        const maxContextTokens = model === "gpt-5" ? 128000 : 8000;
+        if (totalInputTokens + maxTokens > maxContextTokens) {
+          const availableTokens = maxContextTokens - totalInputTokens - 2000; // 2k buffer
+          console.warn(
+            `⚠️ AVISO: Tokens insuficientes. ` +
+              `Esperado: ${
+                totalInputTokens + maxTokens
+              }, Limite: ${maxContextTokens}. ` +
+              `Recomendado max_tokens: ${Math.max(100, availableTokens)}`
+          );
+        }
+
         const messages = [
           { role: "system", content: systemPrompt },
           { role: "user", content: userMessage },
@@ -1127,8 +1193,12 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
         console.log("✅ Dados recebidos do backend");
         console.log(
           "📄 Tamanho da resposta:",
-          data.choices[0].message.content.length
+          data.choices[0].message.content.length,
+          "caracteres"
         );
+        if (data.tokens_info) {
+          console.log("📊 Informações de tokens do backend:", data.tokens_info);
+        }
         return data.choices[0].message.content;
       }
 
@@ -1257,7 +1327,7 @@ NÃO ESCREVA TEXTOS DESCRITIVOS! APENAS TABELA + NÚMEROS!`,
                 "🚀 <strong>Iniciando Análise Comparativa Automática...</strong><br>📊 Múltiplas propostas detectadas. Executando análise comparativa direta."
               );
             }
-            await structuredAnalysis();
+            await sendMessage();
           } else if (fileContents.length === 1) {
             // Apenas mensagem simples para arquivo único, SEM exibir o prompt detalhado
             addMessage(

@@ -120,15 +120,76 @@ client = OpenAI(
 def process_openai_request(messages, model, max_tokens):
     """Processa requisição OpenAI com controle de timeout"""
     try:
-        response = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            max_tokens=max_tokens,
-            temperature=0.7,
-            timeout=OPENAI_TIMEOUT
-        )
-        return response, None
+        print(f"� DEBUG: Preparando requisição para {model}...")
+        print(f"   Max Tokens: {max_tokens}")
+        print(f"   Messages count: {len(messages)}")
+        
+        # ⚠️ GPT-5 usa Responses API, não Chat Completions!
+        if model.startswith('gpt-5'):
+            print("� Usando Responses API para GPT-5...")
+            
+            # Combinar mensagens para input único (Responses API requer input, não messages)
+            user_message = ""
+            for msg in messages:
+                if msg.get("role") == "user":
+                    user_message = msg.get("content", "")
+                    break
+            
+            response = client.responses.create(
+                model=model,
+                input=user_message,
+                max_output_tokens=max_tokens,
+                reasoning={"effort": "low"},  # Baixo esforço para velocidade
+                text={"verbosity": "high"}  # Alta verbosidade para análise completa
+            )
+            print(f"✅ Resposta GPT-5 recebida | Output tokens: {max_tokens}")
+            
+            # Converter resposta para formato compatível com Chat Completions
+            class CompatResponse:
+                class Choice:
+                    class Message:
+                        def __init__(self, content):
+                            self.content = content
+                    def __init__(self, content):
+                        self.message = self.Message(content)
+                        self.finish_reason = "stop"
+                
+                def __init__(self, content):
+                    self.choices = [self.Choice(content)]
+            
+            return CompatResponse(response.output_text), None
+        
+        else:
+            # Chat Completions API para outros modelos (GPT-4, etc)
+            print(f"🔄 Usando Chat Completions API para {model}...")
+            temperature = 0.7
+            
+            try:
+                response = client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    max_completion_tokens=max_tokens,
+                    temperature=temperature,
+                    timeout=OPENAI_TIMEOUT
+                )
+                print(f"✅ Usando max_completion_tokens: {max_tokens} | temperature: {temperature}")
+                return response, None
+            except TypeError:
+                # Fallback para versão antiga do SDK
+                response = client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    timeout=OPENAI_TIMEOUT
+                )
+                print(f"✅ Usando max_tokens (compatibilidade): {max_tokens}")
+                return response, None
+                
     except Exception as e:
+        print(f"❌ ERRO CRÍTICO em process_openai_request: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return None, str(e)
 
 # Função assíncrona para salvar histórico
@@ -182,14 +243,25 @@ def chat():
             print(f"❌ ERRO na API OpenAI: {error}")
             return jsonify({'error': f'Erro na API OpenAI: {error}'}), 500
         
-        if not response or not response.choices:
-            return jsonify({'error': 'Resposta vazia da OpenAI'}), 500
+        if not response:
+            print("❌ Response é None!")
+            return jsonify({'error': 'Resposta nula da OpenAI'}), 500
+
+        if not response.choices:
+            print("❌ Response.choices vazio!")
+            return jsonify({'error': 'Resposta vazia da OpenAI (choices vazio)'}), 500
 
         content = response.choices[0].message.content
+        
+        if not content:
+            print("⚠️ WARNING: Content é None ou vazio!")
+            print(f"   Finish reason: {response.choices[0].finish_reason}")
+            content = "(Resposta vazia recebida da OpenAI)"
+        
         processing_time = time.time() - start_time
         
         print("✅ Resposta da OpenAI recebida com sucesso!")
-        print(f"📄 Tamanho da resposta: {len(content)} caracteres")
+        print(f"📄 Tamanho da resposta: {len(content) if content else 0} caracteres")
         print(f"⏱️ Tempo de processamento: {processing_time:.2f}s")
         print("=" * 50)
 
